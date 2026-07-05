@@ -1,14 +1,21 @@
 import { useMemo, useState } from "react";
+import Tilt from "react-parallax-tilt";
+import { FoilOverlay } from "card-foil/react";
+import "card-foil/style.css";
 import {
   Binoculars,
+  Bell,
   Camera,
   Cards,
+  CaretDown,
   Compass,
   FunnelSimple,
   HandTap,
-  HouseLine,
   Info,
+  Leaf,
+  LockKey,
   MapPin,
+  PawPrint,
   ShareFat,
   Sparkle,
   Stack,
@@ -28,10 +35,25 @@ const cardData = [
     finish: "Holo Foil",
     confidence: 92,
     location: "Prospect Park",
-    date: "Today, 8:47 AM",
+    date: "Jul 4, 2026",
     privacy: "Approx location",
     note: "Bold, noisy, and usually spotted near mature street trees.",
     className: "legendary",
+  },
+  {
+    id: "rock-pigeon",
+    name: "Rock Pigeon",
+    latin: "Columba livia",
+    image: "/assets/rock-pigeon.png",
+    stars: 1,
+    rarity: "Common",
+    finish: "Matte",
+    confidence: 96,
+    location: "Downtown curb",
+    date: "Jul 1",
+    privacy: "Public area",
+    note: "The everyday city classic. Best seen around plazas, rooftops, and train stations.",
+    className: "common",
   },
   {
     id: "squirrel",
@@ -97,13 +119,20 @@ const cardData = [
 
 const navItems = [
   { id: "explore", label: "Explore", icon: Compass },
-  { id: "friends", label: "Friends", icon: Stack },
+  { id: "map", label: "Map", icon: MapPin },
   { id: "capture", label: "Capture", icon: Camera, primary: true },
   { id: "cards", label: "Cards", icon: Cards },
   { id: "profile", label: "Profile", icon: UserCircle },
 ];
 
 const rarityFilters = ["All", "1-2", "3-4", "5-6"];
+const binderCards = [
+  cardData.find((card) => card.id === "rock-pigeon"),
+  cardData.find((card) => card.id === "flower"),
+  cardData.find((card) => card.id === "squirrel"),
+  cardData.find((card) => card.id === "butterfly"),
+  cardData.find((card) => card.id === "mushroom"),
+].filter(Boolean);
 
 function Stars({ count, compact = false }) {
   return (
@@ -124,117 +153,165 @@ function CreatureCard({
   size = "medium",
   interactive = false,
   flipped = false,
+  motionEnabled = false,
   onFlip,
   onSelect,
 }) {
-  const [tilt, setTilt] = useState({ x: 0, y: 0, shineX: 50, shineY: 50 });
   const [pressed, setPressed] = useState(false);
+  const isHero = size === "hero";
+  const isMini = size === "mini";
+  const isStack = size.includes("stack");
+  const canTilt = interactive || isStack || size === "large";
+  const foilFinish = card.stars >= 6 ? "oil-slick" : card.stars === 5 ? "foil" : card.stars === 4 ? "galaxy" : "etched";
+  const foilIntensity = card.stars >= 6 ? 1.06 : card.stars === 5 ? 0.86 : card.stars === 4 ? 0.66 : card.stars === 3 ? 0.38 : 0;
 
-  function handlePointerMove(event) {
-    if (!interactive) return;
-    const rect = event.currentTarget.getBoundingClientRect();
-    const px = (event.clientX - rect.left) / rect.width;
-    const py = (event.clientY - rect.top) / rect.height;
-    setTilt({
-      x: (py - 0.5) * -14,
-      y: (px - 0.5) * 18,
-      shineX: px * 100,
-      shineY: py * 100,
-    });
-  }
-
-  function resetTilt() {
-    setTilt({ x: 0, y: 0, shineX: 50, shineY: 50 });
+  function resetPress() {
     setPressed(false);
   }
 
-  const style = interactive
-    ? {
-        "--tilt-x": `${tilt.x}deg`,
-        "--tilt-y": `${tilt.y}deg`,
-        "--shine-x": `${tilt.shineX}%`,
-        "--shine-y": `${tilt.shineY}%`,
-      }
-    : undefined;
-
   return (
-    <button
-      type="button"
-      className={`creature-card ${size} ${card.className} ${interactive ? "interactive" : ""} ${
-        flipped ? "is-flipped" : ""
-      } ${pressed ? "is-pressed" : ""}`}
-      style={style}
-      onPointerMove={handlePointerMove}
-      onPointerDown={() => interactive && setPressed(true)}
-      onPointerUp={() => setPressed(false)}
-      onPointerLeave={resetTilt}
-      onClick={onSelect}
-      aria-label={`${card.name}, ${card.stars} star ${card.rarity} card`}
+    <Tilt
+      className={`card-tilt-shell ${size} ${card.className} ${canTilt ? "tilt-enabled" : ""}`}
+      tiltEnable={canTilt && !flipped}
+      tiltReverse
+      tiltMaxAngleX={isHero ? 12 : 6}
+      tiltMaxAngleY={isHero ? 14 : 7}
+      perspective={isHero ? 820 : 980}
+      scale={interactive ? 1.015 : 1}
+      transitionSpeed={220}
+      gyroscope={interactive && motionEnabled}
+      glareEnable={interactive}
+      glareMaxOpacity={0.14}
+      glareColor="#ffffff"
+      glarePosition="all"
+      glareBorderRadius={isHero ? "1.28rem" : "1rem"}
     >
-      <span className="card-inner">
-        <span className="card-face card-front">
-          <span className="rarity-corner">
-            <strong>{card.stars}</strong>
-            <Star size={size === "mini" ? 10 : 14} weight="fill" />
-          </span>
-          <span className="card-finish">{card.rarity}</span>
-          <span className="photo-frame">
-            <img src={card.image} alt="" />
-          </span>
-          <span className="card-copy">
-            <span>
-              <strong>{card.name}</strong>
-              <em>{card.latin}</em>
+      <button
+        type="button"
+        className={`creature-card ${size} ${card.className} ${interactive ? "interactive" : ""} ${
+          flipped ? "is-flipped" : ""
+        } ${pressed ? "is-pressed" : ""}`}
+        onPointerDown={() => interactive && setPressed(true)}
+        onPointerUp={() => setPressed(false)}
+        onPointerCancel={resetPress}
+        onPointerLeave={resetPress}
+        onClick={onSelect}
+        aria-label={`${card.name}, ${card.stars} star ${card.rarity} card`}
+      >
+        <span className="card-inner">
+          <span className="card-face card-front">
+            <span className="rarity-corner">
+              <strong>{card.stars}</strong>
+              {isHero && <small>stars</small>}
+              {!isHero && <Star size={isMini ? 10 : 14} weight="fill" />}
             </span>
-            <Stars count={card.stars} compact={size !== "hero"} />
-          </span>
-          {size !== "mini" && (
-            <span className="card-meta">
-              <span>
-                <small>Rarity</small>
-                {card.rarity}
-              </span>
-              <span>
-                <small>AI match</small>
-                {card.confidence}%
-              </span>
+            {isHero && (
+              <>
+                <span className="hero-star-strip">
+                  <Stars count={card.stars} />
+                </span>
+                <span className="photo-stamp">
+                  <Camera size={20} weight="fill" />
+                  <small>My photo</small>
+                </span>
+                <span className="location-pill">
+                  <MapPin size={14} weight="fill" />
+                  {card.privacy}
+                  <Info size={13} weight="bold" />
+                </span>
+              </>
+            )}
+            <span className="card-finish">
+              {isHero ? card.rarity.toUpperCase() : card.rarity}
+              {isHero && <PawPrint size={18} weight="fill" />}
             </span>
-          )}
-          {card.stars === 6 && <span className="holo-sheen" />}
-        </span>
-        <span className="card-face card-back">
-          <span className="back-mark">WG</span>
-          <strong>{card.name}</strong>
-          <em>{card.latin}</em>
-          <p>{card.note}</p>
-          <span className="back-row">
-            <MapPin size={15} weight="fill" />
-            {card.privacy}
+            <span className="photo-frame">
+              <img src={card.image} alt="" />
+            </span>
+            <span className="card-copy">
+              <span>
+                <strong>{card.name}</strong>
+                <em>{card.latin}</em>
+              </span>
+              <Stars count={card.stars} compact={!isHero} />
+            </span>
+            {isHero && (
+              <span className="hero-bottom-stars">
+                <Stars count={card.stars} />
+              </span>
+            )}
+            {!isMini && (
+              <span className="card-meta">
+                <span>
+                  <small>Rarity</small>
+                  {card.rarity}
+                </span>
+                <span>
+                  <small>AI match</small>
+                  <b>{card.confidence}%</b>
+                  {isHero && (
+                    <i style={{ "--confidence": `${card.confidence}%` }} aria-hidden="true" />
+                  )}
+                </span>
+                {isHero && (
+                  <span>
+                    <small>First seen</small>
+                    {card.date}
+                  </span>
+                )}
+              </span>
+            )}
+            {isHero && (
+              <span className="privacy-strip">
+                <LockKey size={15} weight="fill" />
+                Location softened to protect wildlife
+              </span>
+            )}
+            {foilIntensity > 0 && (
+              <FoilOverlay
+                finish={foilFinish}
+                intensity={foilIntensity}
+                tilt={false}
+                specular
+                shimmer={card.stars >= 5}
+              />
+            )}
+            {card.stars === 6 && <span className="holo-sheen" />}
           </span>
-          <span className="back-row">
-            <Sparkle size={15} weight="fill" />
-            Rarity is discovery difficulty
+          <span className="card-face card-back">
+            <span className="back-mark">WG</span>
+            <strong>{card.name}</strong>
+            <em>{card.latin}</em>
+            <p>{card.note}</p>
+            <span className="back-row">
+              <MapPin size={15} weight="fill" />
+              {card.privacy}
+            </span>
+            <span className="back-row">
+              <Sparkle size={15} weight="fill" />
+              Rarity is discovery difficulty
+            </span>
           </span>
         </span>
-      </span>
-      {interactive && (
-        <span className="card-hitbar">
-          <span>Move phone to catch foil</span>
-          <span>{pressed ? "Pressed depth" : "Tilt enabled"}</span>
-        </span>
-      )}
-      {onFlip && (
-        <span
-          className="flip-hotspot"
-          onClick={(event) => {
-            event.stopPropagation();
-            onFlip();
-          }}
-        >
-          Flip
-        </span>
-      )}
-    </button>
+        {interactive && (
+          <span className="card-hitbar">
+            <span>Move phone or finger to catch foil</span>
+            <span>{pressed ? "Pressed depth" : "Library tilt active"}</span>
+          </span>
+        )}
+        {onFlip && (
+          <span
+            className="flip-hotspot"
+            onClick={(event) => {
+              event.stopPropagation();
+              onFlip();
+            }}
+          >
+            Flip
+          </span>
+        )}
+      </button>
+    </Tilt>
   );
 }
 
@@ -242,29 +319,34 @@ function TopBar({ activeView }) {
   const titles = {
     capture: "New card unlocked",
     cards: "My Binder",
-    friends: "Friends' Finds",
+    map: "Soft Map",
     explore: "Today nearby",
     profile: "City Explorer",
   };
   const title = titles[activeView] ?? "Wild Go";
 
   return (
-    <header className="topbar">
-      <div>
+    <header className={`topbar topbar-${activeView}`}>
+      <div className="brand-lockup">
         <p className="brand">Wild Go</p>
         <h1>{title}</h1>
       </div>
+      <span className="top-divider" />
       <div className="progress-cluster" aria-label="NYC collection progress">
-        <span>NYC</span>
-        <strong>243 / 500</strong>
+        <span>NYC Collection <CaretDown size={13} weight="fill" /></span>
+        <strong>243 / 500 species</strong>
         <div className="progress-track">
           <span style={{ width: "49%" }} />
         </div>
       </div>
       <div className="level-badge">
         <small>Lv.</small>
-        24
+        23
       </div>
+      <button className="bell-button" type="button" aria-label="Notifications">
+        <Bell size={27} />
+        <span />
+      </button>
     </header>
   );
 }
@@ -272,7 +354,19 @@ function TopBar({ activeView }) {
 function CaptureView({ selected, setSelected }) {
   const [flipped, setFlipped] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [motionEnabled, setMotionEnabled] = useState(false);
   const featured = selected ?? cardData[0];
+
+  async function enableMotion() {
+    const orientation = window.DeviceOrientationEvent;
+    if (orientation?.requestPermission) {
+      const result = await orientation.requestPermission();
+      setMotionEnabled(result === "granted");
+      return;
+    }
+
+    setMotionEnabled(true);
+  }
 
   return (
     <section className="view capture-view">
@@ -289,14 +383,15 @@ function CaptureView({ selected, setSelected }) {
         size="hero"
         interactive
         flipped={flipped}
+        motionEnabled={motionEnabled}
         onFlip={() => setFlipped((value) => !value)}
       />
 
       <div className="gesture-row" aria-label="Card physical interactions">
-        <button type="button">
+        <button type="button" onClick={enableMotion} className={motionEnabled ? "is-on" : ""}>
           <Swap size={22} />
           <strong>Tilt</strong>
-          <span>Catch foil</span>
+          <span>{motionEnabled ? "Live motion" : "Catch foil"}</span>
         </button>
         <button type="button">
           <HandTap size={22} />
@@ -323,11 +418,12 @@ function CaptureView({ selected, setSelected }) {
 
       <div className="quick-binder">
         <div className="section-heading">
-          <span>Binder preview</span>
+          <span>Your Binder</span>
+          <small>134 cards</small>
           <button type="button">See all</button>
         </div>
         <div className="mini-card-row">
-          {cardData.slice(1).map((card) => (
+          {binderCards.map((card) => (
             <CreatureCard
               key={card.id}
               card={card}
@@ -339,6 +435,14 @@ function CaptureView({ selected, setSelected }) {
             />
           ))}
         </div>
+      </div>
+
+      <FriendsPreview />
+
+      <div className="wildlife-note">
+        <Leaf size={19} weight="bold" />
+        <span>Rarity is discovery difficulty, not conservation status.</span>
+        <span>Wildlife first. Observe from a distance.</span>
       </div>
     </section>
   );
@@ -415,33 +519,39 @@ function CardsView({ selected, setSelected }) {
   );
 }
 
-function FriendsView() {
+function FriendsPreview() {
   const [showcased, setShowcased] = useState(false);
 
   return (
-    <section className="view friends-view">
+    <section className="friends-preview">
       <div className="view-title">
         <div>
           <h2>Friends' Finds</h2>
-          <p>Collection milestones from your city circle.</p>
+          <p>Maya unlocked a 5-star Monarch Butterfly</p>
+          <small>Prospect Park · 2h ago</small>
         </div>
-        <span className="stat-pill">+70 XP</span>
+        <button type="button">See all</button>
       </div>
 
       <div className={`social-stack ${showcased ? "is-showcased" : ""}`}>
-        <CreatureCard card={cardData[2]} size="stack back" />
-        <CreatureCard card={cardData[1]} size="stack mid" />
-        <CreatureCard card={cardData[0]} size="stack front" />
+        <button
+          type="button"
+          className="stack-drop-zone"
+          aria-pressed={showcased}
+          onClick={() => setShowcased((value) => !value)}
+        >
+          <HandTap size={17} weight="fill" />
+          <span>{showcased ? "Showcase live" : "Drop to showcase"}</span>
+        </button>
+        <CreatureCard card={cardData[3]} size="stack back" />
+        <CreatureCard card={cardData[2]} size="stack mid" />
+        <CreatureCard card={cardData[4]} size="stack front" />
       </div>
 
       <div className="share-tray">
         <button type="button">
           <ShareFat size={20} />
-          Send Card
-        </button>
-        <button type="button">
-          <Swap size={20} />
-          Compare
+          Share
         </button>
         <button type="button" onClick={() => setShowcased((value) => !value)}>
           <Star size={20} weight="fill" />
@@ -449,10 +559,18 @@ function FriendsView() {
         </button>
       </div>
 
+    </section>
+  );
+}
+
+function FriendsView() {
+  return (
+    <section className="view friends-view">
+      <FriendsPreview />
       <div className="activity-list">
         {[
-          ["Maya", "unlocked a 5-star Monarch Butterfly", cardData[3], "+50 XP"],
-          ["Leo", "added a new Honey Mushroom card", cardData[4], "+20 XP"],
+          ["Maya", "unlocked a 5-star Monarch Butterfly", cardData[4], "+50 XP"],
+          ["Leo", "added a new Honey Mushroom card", cardData[5], "+20 XP"],
           ["Joey", "completed Morning Flyers 3/3", cardData[0], "+1 badge"],
         ].map(([name, text, card, reward]) => (
           <article key={name} className="activity-item">
@@ -507,6 +625,27 @@ function ExploreView() {
   );
 }
 
+function MapView() {
+  return (
+    <section className="view explore-view">
+      <div className="view-title">
+        <div>
+          <h2>Soft Map</h2>
+          <p>Approximate neighborhoods by default, never exact rare-card pins.</p>
+        </div>
+        <MapPin size={28} weight="duotone" />
+      </div>
+      <div className="map-panel">
+        <span className="pin pin-a" />
+        <span className="pin pin-b" />
+        <span className="pin pin-c" />
+        <strong>Brooklyn nature map</strong>
+        <p>Sensitive finds are softened to a wider area before sharing.</p>
+      </div>
+    </section>
+  );
+}
+
 function ProfileView() {
   return (
     <section className="view profile-view">
@@ -549,6 +688,7 @@ export function App() {
         {activeView === "capture" && <CaptureView selected={selected} setSelected={setSelected} />}
         {activeView === "cards" && <CardsView selected={selected} setSelected={setSelected} />}
         {activeView === "friends" && <FriendsView />}
+        {activeView === "map" && <MapView />}
         {activeView === "explore" && <ExploreView />}
         {activeView === "profile" && <ProfileView />}
 

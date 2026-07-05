@@ -6,13 +6,22 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
-    "preview": "vite preview --host 127.0.0.1"
+    "preview": "vite preview --host 127.0.0.1",
+    "ios:sync": "npm run build && cap sync ios",
+    "ios:open": "cap open ios"
   },
   "dependencies": {
+    "@capacitor/core": "^8.4.1",
+    "@capacitor/ios": "^8.4.1",
     "@phosphor-icons/react": "^2.1.10",
     "@vitejs/plugin-react": "5.0.4",
+    "card-foil": "^0.1.1",
     "react": "19.2.0",
     "react-dom": "19.2.0",
+    "react-parallax-tilt": "^1.7.333",
     "vite": "6.4.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.4.1"
   }
 }

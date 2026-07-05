@@ -1,0 +1,7 @@
+{
+  "files": ["index.html"],
+  "insertBefore": "</body>",
+  "commentSyntax": "html",
+  "generatedFiles": ["dist/**", "ios/App/App/public/**", "ios/App/build/**"],
+  "cspChecked": true
+}

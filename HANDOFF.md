@@ -31,6 +31,8 @@ src/App.jsx
 src/styles.css
 public/assets/
 docs/card-visuals/
+capacitor.config.json
+ios/App/App.xcodeproj
 design-qa.md
 qa-shots/
 ```
@@ -60,11 +62,18 @@ Card visual rules from these references:
 - Cards should support physical interactions: tilt to shimmer, press for depth, flip for details, drag/showcase for social use.
 - Rarity is app discovery difficulty, not conservation status.
 
+Implementation note: card physics and material are intentionally built on existing MIT-licensed GitHub packages rather than custom one-off math:
+
+- [`react-parallax-tilt`](https://github.com/mkosir/react-parallax-tilt) handles pointer/touch tilt, perspective, glare, and gyroscope support.
+- [`card-foil`](https://github.com/sawyerWeld/card-foil) handles foil, etched, galaxy, and oil-slick finishes with reduced-motion-aware shimmer.
+
 ## What Is Implemented
 
 - Mobile-first Vite + React prototype.
+- Capacitor iOS shell that builds and runs in the iPhone simulator.
+- Restored iOS AppIcon asset catalog and LaunchScreen storyboard build resources.
 - Six-star holographic unlock card for the capture result.
-- Creature cards using real generated nature photo assets.
+- Creature cards using bitmap nature photo assets, including a target-matched rock pigeon card crop.
 - Visible rarity system from 1 to 6 stars.
 - Rarity is treated as app discovery difficulty, not conservation status.
 - Distinct card finishes:
@@ -76,14 +85,15 @@ Card visual rules from these references:
   - 6 stars: city legend holo foil
 - Card interactions:
   - pointer/touch tilt shimmer
+  - opt-in device-orientation foil movement on supported phones
   - press depth
   - flip to card back
   - add-to-binder state
   - rarity filtering
-  - social showcase toggle
+  - social showcase toggle with a visible drop/showcase slot
 - Bottom navigation:
   - Explore
-  - Friends
+  - Map
   - Capture
   - Cards
   - Profile
@@ -99,16 +109,25 @@ Commands run:
 ```bash
 npm install
 npm run build
+npm run ios:sync
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -project ios/App/App.xcodeproj -target App -configuration Debug -sdk iphonesimulator26.5 CODE_SIGNING_ALLOWED=NO build
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcrun simctl install booted ios/App/build/Debug-iphonesimulator/App.app
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcrun simctl launch booted com.wildgo.mvp
 ```
 
 QA artifacts:
 
 ```text
 design-qa.md
-qa-shots/capture-viewport.png
-qa-shots/cards-viewport.png
-qa-shots/friends-viewport.png
-qa-shots/comparison-source-implementation.png
+public/assets/wild-go-combo-target.png
+qa-shots/ios-simulator-final-compact.png
+qa-shots/ios-simulator-final-material.png
+qa-shots/material-capture.png
+qa-shots/material-cards.png
+qa-shots/material-friends-stack.png
+qa-shots/tuned-capture.png
+qa-shots/tuned-cards.png
+qa-shots/tuned-map.png
 ```
 
 QA result:
@@ -126,7 +145,9 @@ Browser checks covered:
 - Flip interaction reveals card back content.
 - Add to Binder updates button state.
 - 5-6 rarity filter returns the five-star and six-star cards.
-- Showcase action toggles state on the Friends screen.
+- Map, binder, and capture screens render without visual overlap.
+- Friends showcase stack keeps intentional card overflow without colliding with the bottom navigation.
+- iOS simulator launches full screen with restored app icon and launch storyboard resources compiled by Xcode.
 
 ## Run Locally
 
@@ -141,6 +162,19 @@ Then open:
 ```text
 http://127.0.0.1:5173
 ```
+
+## Run iOS
+
+```bash
+cd wild-go-mvp
+npm install
+npm run ios:sync
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -project ios/App/App.xcodeproj -target App -configuration Debug -sdk iphonesimulator26.5 CODE_SIGNING_ALLOWED=NO build
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcrun simctl install booted ios/App/build/Debug-iphonesimulator/App.app
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcrun simctl launch booted com.wildgo.mvp
+```
+
+Use `npm run ios:open` to continue in Xcode.
 
 ## Product Notes
 
@@ -157,7 +191,7 @@ Capture -> AI likely match -> six-star/rarity reveal -> add to binder -> share/s
 1. Add real camera/photo upload input.
 2. Replace mocked AI match data with an identification API.
 3. Persist card collection state in Supabase or Firebase.
-4. Add device-orientation foil movement on mobile.
+4. Add native camera permissions and a real capture pipeline in Capacitor.
 5. Expand card backs with habitat, seasonality, safety guidance, and confidence alternatives.
 6. Add share-card export as an image.
 7. Add privacy rules for sensitive species and exact locations.
@@ -167,5 +201,4 @@ Capture -> AI likely match -> six-star/rarity reveal -> add to binder -> share/s
 - All data is currently mocked in `src/App.jsx`.
 - Photos are generated local assets, not user uploads.
 - The app has no backend, authentication, or persistence yet.
-- Foil movement uses pointer/touch position, not physical device gyroscope.
-- The MVP is optimized for mobile web, not packaged as React Native yet.
+- Device-orientation foil depends on browser/webview sensor permission and device support.
