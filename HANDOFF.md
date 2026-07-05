@@ -30,9 +30,35 @@ Core files:
 src/App.jsx
 src/styles.css
 public/assets/
+docs/card-visuals/
 design-qa.md
 qa-shots/
 ```
+
+## Card Visual References
+
+These three source visuals are the canonical card-system direction for the MVP:
+
+| Visual | File | Role |
+| --- | --- | --- |
+| Binder rarity grid | [`docs/card-visuals/binder-rarity-grid.png`](./docs/card-visuals/binder-rarity-grid.png) | Collection view showing the full binder, card scale hierarchy, and rarity guide. |
+| Capture holo unlock | [`docs/card-visuals/capture-holo-unlock.png`](./docs/card-visuals/capture-holo-unlock.png) | Post-capture reveal for the most exciting moment: a six-star holographic card unlock. |
+| Friends showcase stack | [`docs/card-visuals/friends-showcase-stack.png`](./docs/card-visuals/friends-showcase-stack.png) | Social/share direction using draggable physical card stacks instead of a generic feed. |
+
+![Binder rarity grid](./docs/card-visuals/binder-rarity-grid.png)
+
+![Capture holo unlock](./docs/card-visuals/capture-holo-unlock.png)
+
+![Friends showcase stack](./docs/card-visuals/friends-showcase-stack.png)
+
+Card visual rules from these references:
+
+- Every organism photo becomes a collectible card, not a plain observation tile.
+- Rarity must be visible directly from the card face through star count, border material, label, finish, and accent color.
+- Six stars is the maximum rarity and should read as a holographic/foil chase card.
+- Lower rarities should still feel collectible: 1-star matte, 2-star colored, 3-star metallic, 4-star iridescent, 5-star foil, 6-star holo foil.
+- Cards should support physical interactions: tilt to shimmer, press for depth, flip for details, drag/showcase for social use.
+- Rarity is app discovery difficulty, not conservation status.
 
 ## What Is Implemented
 
