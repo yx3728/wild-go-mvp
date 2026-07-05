@@ -3,18 +3,25 @@ import Tilt from "react-parallax-tilt";
 import { FoilOverlay } from "card-foil/react";
 import "card-foil/style.css";
 import {
+  ArrowLeft,
   Binoculars,
   Bell,
+  BookOpen,
   Camera,
   Cards,
   CaretDown,
   Compass,
+  Flag,
   FunnelSimple,
+  GridFour,
+  Handshake,
   HandTap,
   Info,
   Leaf,
+  ListBullets,
   LockKey,
   MapPin,
+  PaperPlaneTilt,
   PawPrint,
   ShareFat,
   Sparkle,
@@ -22,6 +29,7 @@ import {
   Star,
   Swap,
   UserCircle,
+  Users,
 } from "@phosphor-icons/react";
 
 const cardData = [
@@ -134,6 +142,112 @@ const binderCards = [
   cardData.find((card) => card.id === "mushroom"),
 ].filter(Boolean);
 
+const captureCard = {
+  ...cardData[0],
+  image: "/assets/capture-blue-jay-gen.png",
+  note: "Common and bold in the city. Often seen in parks and tree-lined streets.",
+  serial: "#WGO-26-0704-1178",
+  time: "8:47 AM",
+};
+
+const binderVisualCards = [
+  {
+    id: "cardinal",
+    name: "Northern Cardinal",
+    latin: "Cardinalis cardinalis",
+    image: "/assets/binder-cardinal-gen.png",
+    stars: 6,
+    rarity: "City Legend",
+    className: "legendary",
+    confidence: 92,
+    location: "Brooklyn, NY",
+    date: "Jul 4, 2026",
+  },
+  {
+    id: "squirrel-gen",
+    name: "Eastern Gray Squirrel",
+    latin: "Sciurus carolinensis",
+    image: "/assets/binder-squirrel-gen.png",
+    stars: 3,
+    rarity: "Rare",
+    className: "rare",
+    confidence: 86,
+    location: "Prospect Park",
+    date: "Jul 1, 2026",
+  },
+  {
+    id: "pigeon-gen",
+    name: "Rock Pigeon",
+    latin: "Columba livia",
+    image: "/assets/binder-pigeon-gen.png",
+    stars: 1,
+    rarity: "Common",
+    className: "common",
+    confidence: 90,
+    location: "Williamsburg",
+    date: "Jun 30, 2026",
+  },
+  {
+    id: "flower-gen",
+    name: "Black-eyed Susan",
+    latin: "Rudbeckia hirta",
+    image: "/assets/binder-flower-gen.png",
+    stars: 2,
+    rarity: "Uncommon",
+    className: "uncommon",
+    confidence: 88,
+    location: "Fort Greene Park",
+    date: "Jul 2, 2026",
+  },
+  {
+    id: "butterfly-gen",
+    name: "Monarch Butterfly",
+    latin: "Danaus plexippus",
+    image: "/assets/binder-butterfly-gen.png",
+    stars: 4,
+    rarity: "Seasonal",
+    className: "seasonal",
+    confidence: 91,
+    location: "Brooklyn Botanic Garden",
+    date: "Jun 28, 2026",
+  },
+  {
+    id: "turkey-tail-gen",
+    name: "Turkey Tail",
+    latin: "Trametes versicolor",
+    image: "/assets/binder-turkey-tail-gen.png",
+    stars: 5,
+    rarity: "Local Special",
+    className: "special",
+    confidence: 83,
+    location: "Greenpoint",
+    date: "Jun 27, 2026",
+  },
+];
+
+const friendActivity = [
+  {
+    name: "Maya",
+    avatar: "/assets/friends-maya-gen.png",
+    text: "unlocked a 5-Star!",
+    species: "Monarch Butterfly",
+    location: "Prospect Park",
+    time: "2h ago",
+    reward: "+50 XP",
+    image: "/assets/friends-butterfly-gen.png",
+  },
+  {
+    name: "Leo",
+    avatar: "/assets/friends-leo-gen.png",
+    text: "added a new card",
+    species: "Honey Mushroom",
+    location: "Bushwick",
+    time: "3h ago",
+    reward: "+20 XP",
+    image: "/assets/friends-mushroom-gen.png",
+  },
+];
+
 function Stars({ count, compact = false }) {
   return (
     <div className={`stars ${compact ? "compact" : ""}`} aria-label={`${count} star rarity`}>
@@ -145,6 +259,171 @@ function Stars({ count, compact = false }) {
         />
       ))}
     </div>
+  );
+}
+
+function CaptureHeroCard({ card, flipped, motionEnabled, onFlip }) {
+  return (
+    <Tilt
+      className="capture-card-shell"
+      tiltEnable={!flipped}
+      tiltReverse
+      tiltMaxAngleX={11}
+      tiltMaxAngleY={13}
+      perspective={820}
+      scale={1.01}
+      transitionSpeed={220}
+      gyroscope={motionEnabled}
+      glareEnable
+      glareMaxOpacity={0.12}
+      glareColor="#ffffff"
+      glarePosition="all"
+      glareBorderRadius="1.45rem"
+    >
+      <button
+        type="button"
+        className={`capture-card ${flipped ? "is-flipped" : ""}`}
+        onClick={onFlip}
+        aria-label={`${card.name}, new six star holo card`}
+      >
+        <span className="capture-card-inner">
+          <span className="capture-face capture-front">
+            <span className="capture-rarity">CITY LEGEND</span>
+            <span className="capture-top-stars"><Stars count={6} /></span>
+            <span className="capture-photo">
+              <img src={card.image} alt="" />
+              <span className="capture-location">
+                <MapPin size={15} weight="regular" />
+                Approx location
+                <Info size={14} weight="bold" />
+              </span>
+            </span>
+            <span className="capture-info">
+              <span className="capture-copy">
+                <strong>{card.name}</strong>
+                <em>{card.latin}</em>
+                <span>{card.note}</span>
+              </span>
+              <span className="capture-confidence">
+                <small>Likely match</small>
+                <b>{card.confidence}%</b>
+                <i aria-hidden="true"><span style={{ width: `${card.confidence}%` }} /></i>
+                <small>AI confidence</small>
+              </span>
+            </span>
+            <span className="capture-foot">
+              <span>
+                <Leaf size={18} weight="bold" />
+                <small>First seen</small>
+                Jul 4, 2026 · {card.time}
+              </span>
+              <b>{card.serial}</b>
+            </span>
+            <FoilOverlay finish="oil-slick" intensity={1.28} tilt={false} specular shimmer />
+            <span className="capture-holo" />
+          </span>
+          <span className="capture-face capture-back">
+            <strong>{card.name}</strong>
+            <em>{card.latin}</em>
+            <p>{card.note}</p>
+          </span>
+        </span>
+      </button>
+    </Tilt>
+  );
+}
+
+function BinderCard({ card, variant = "small" }) {
+  const isLegend = card.stars >= 6;
+  const finish = card.stars >= 6 ? "oil-slick" : card.stars >= 5 ? "foil" : card.stars === 4 ? "galaxy" : "etched";
+  const intensity = card.stars >= 6 ? 1.12 : card.stars >= 5 ? 0.72 : card.stars === 4 ? 0.48 : card.stars === 3 ? 0.28 : 0;
+
+  return (
+    <Tilt
+      className={`binder-card-shell ${variant} ${card.className}`}
+      tiltEnable={variant !== "tiny"}
+      tiltReverse
+      tiltMaxAngleX={variant === "feature" ? 7 : 4}
+      tiltMaxAngleY={variant === "feature" ? 9 : 5}
+      perspective={900}
+      scale={1}
+      glareEnable={isLegend}
+      glareMaxOpacity={0.1}
+      glareBorderRadius={variant === "feature" ? "1rem" : "0.72rem"}
+    >
+      <article className={`binder-card ${variant} ${card.className}`}>
+        <span className="binder-card-top">
+          <span className="binder-star-badge">
+            {variant === "feature" ? (
+              <>
+                <strong>{card.stars}</strong>
+                <small>STARS</small>
+              </>
+            ) : (
+              <Stars count={card.stars} compact />
+            )}
+          </span>
+          {variant === "feature" && <Stars count={6} />}
+          <span className="binder-kind"><Leaf size={18} weight="fill" /></span>
+        </span>
+        <span className="binder-photo">
+          <img src={card.image} alt="" />
+          {variant === "feature" && <span className="tilt-chip"><Swap size={15} />TILT TO SHIMMER</span>}
+        </span>
+        <span className="binder-card-copy">
+          <strong>{card.name}</strong>
+          <em>{card.latin}</em>
+        </span>
+        <span className="binder-card-meta">
+          <span>
+            <small>APP RARITY</small>
+            {card.rarity}
+          </span>
+          <span>
+            <small>AI CONFIDENCE</small>
+            {card.confidence}%
+            <i aria-hidden="true" />
+          </span>
+        </span>
+        {variant === "feature" && (
+          <span className="binder-feature-foot">
+            <span><LockKey size={15} weight="fill" /> Location softened</span>
+            <span>{card.location}<br />{card.date}</span>
+          </span>
+        )}
+        {intensity > 0 && <FoilOverlay finish={finish} intensity={intensity} tilt={false} specular shimmer={isLegend} />}
+      </article>
+    </Tilt>
+  );
+}
+
+function ShowcaseCard({ card, className = "" }) {
+  const finish = card.stars >= 6 ? "oil-slick" : card.stars >= 3 ? "etched" : "foil";
+  return (
+    <Tilt
+      className={`showcase-card-shell ${className} ${card.className}`}
+      tiltEnable
+      tiltReverse
+      tiltMaxAngleX={5}
+      tiltMaxAngleY={7}
+      perspective={900}
+      glareEnable={card.stars >= 6}
+      glareMaxOpacity={0.1}
+      glareBorderRadius="1.1rem"
+    >
+      <article className={`showcase-card ${card.className}`}>
+        <span className="showcase-stars">{card.stars}<Star size={18} weight="fill" /></span>
+        <span className="showcase-rarity">{card.stars >= 6 ? "URBAN LEGEND" : card.rarity.toUpperCase()}</span>
+        <img src={card.image} alt="" />
+        <span className="showcase-copy">
+          <strong>{card.name}</strong>
+          <em>{card.latin}</em>
+          <Stars count={Math.min(card.stars, 6)} />
+        </span>
+        {card.stars >= 6 && <span className="round-stamp">MY PHOTO<br />BROOKLYN, NY</span>}
+        {card.stars >= 3 && <FoilOverlay finish={finish} intensity={card.stars >= 6 ? 1 : 0.35} tilt={false} specular shimmer={card.stars >= 6} />}
+      </article>
+    </Tilt>
   );
 }
 
@@ -355,7 +634,7 @@ function CaptureView({ selected, setSelected }) {
   const [flipped, setFlipped] = useState(false);
   const [saved, setSaved] = useState(false);
   const [motionEnabled, setMotionEnabled] = useState(false);
-  const featured = selected ?? cardData[0];
+  const featured = captureCard;
 
   async function enableMotion() {
     const orientation = window.DeviceOrientationEvent;
@@ -370,18 +649,20 @@ function CaptureView({ selected, setSelected }) {
 
   return (
     <section className="view capture-view">
-      <div className="stage-copy">
-        <span className="stage-kicker">
-          <Sparkle size={16} weight="fill" />
-          Six-star holo foil
-        </span>
-        <p>Likely match {featured.confidence}% · {featured.privacy}</p>
+      <header className="capture-top">
+        <button type="button" aria-label="Back"><ArrowLeft size={23} weight="bold" /></button>
+        <span><Leaf size={31} weight="bold" />Wild Go</span>
+        <button type="button" aria-label="Binder"><BookOpen size={24} weight="bold" /></button>
+      </header>
+
+      <div className="unlock-head">
+        <span aria-hidden="true" />
+        <h1>New card unlocked</h1>
+        <p>Move phone to catch the foil</p>
       </div>
 
-      <CreatureCard
+      <CaptureHeroCard
         card={featured}
-        size="hero"
-        interactive
         flipped={flipped}
         motionEnabled={motionEnabled}
         onFlip={() => setFlipped((value) => !value)}
@@ -395,7 +676,7 @@ function CaptureView({ selected, setSelected }) {
         </button>
         <button type="button">
           <HandTap size={22} />
-          <strong>Press</strong>
+          <strong>Press & Hold</strong>
           <span>Feel depth</span>
         </button>
         <button type="button" onClick={() => setFlipped((value) => !value)}>
@@ -403,6 +684,13 @@ function CaptureView({ selected, setSelected }) {
           <strong>Flip</strong>
           <span>View details</span>
         </button>
+      </div>
+
+      <div className="capture-dots" aria-label="Card tips">
+        <span className="active" />
+        <span />
+        <span />
+        <span />
       </div>
 
       <div className="action-row">
@@ -415,40 +703,11 @@ function CaptureView({ selected, setSelected }) {
           Share Card
         </button>
       </div>
-
-      <div className="quick-binder">
-        <div className="section-heading">
-          <span>Your Binder</span>
-          <small>134 cards</small>
-          <button type="button">See all</button>
-        </div>
-        <div className="mini-card-row">
-          {binderCards.map((card) => (
-            <CreatureCard
-              key={card.id}
-              card={card}
-              size="mini"
-              onSelect={() => {
-                setSelected(card);
-                setFlipped(false);
-              }}
-            />
-          ))}
-        </div>
-      </div>
-
-      <FriendsPreview />
-
-      <div className="wildlife-note">
-        <Leaf size={19} weight="bold" />
-        <span>Rarity is discovery difficulty, not conservation status.</span>
-        <span>Wildlife first. Observe from a distance.</span>
-      </div>
     </section>
   );
 }
 
-function CardsView({ selected, setSelected }) {
+function CardsView({ selected, setSelected, setActiveView }) {
   const [filter, setFilter] = useState("All");
   const cards = useMemo(() => {
     if (filter === "All") return cardData;
@@ -458,63 +717,75 @@ function CardsView({ selected, setSelected }) {
 
   return (
     <section className="view cards-view">
-      <div className="view-title">
+      <header className="binder-head">
         <div>
-          <h2>My Binder</h2>
-          <p>134 cards · 34 places · 6 star ceiling</p>
+          <p className="brand">Wild Go</p>
         </div>
-        <button type="button" className="icon-button">
-          <FunnelSimple size={19} />
+        <div className="binder-progress">
+          <span>NYC Collection <CaretDown size={13} weight="fill" /></span>
+          <i><b style={{ width: "49%" }} /></i>
+          <small>243 / 500 species</small>
+        </div>
+        <div className="level-badge">
+          <small>Lv.</small>
+          23
+        </div>
+        <button className="bell-button" type="button" aria-label="Notifications">
+          <Bell size={26} />
+          <span />
         </button>
+      </header>
+
+      <div className="binder-tabs" aria-label="Binder sections">
+        <button type="button" className="active"><BookOpen size={23} />My Binder</button>
+        <button type="button"><Stack size={23} />Stacks</button>
+        <button type="button"><Flag size={23} />Missions</button>
+        <button type="button" onClick={() => setActiveView("friends")}><Users size={23} />Friends</button>
       </div>
 
-      <div className="filter-row" aria-label="Rarity filters">
-        {rarityFilters.map((item) => (
-          <button
-            key={item}
-            type="button"
-            className={filter === item ? "selected" : ""}
-            onClick={() => setFilter(item)}
-          >
-            {item}
-          </button>
-        ))}
+      <div className="binder-toolbar">
+        <button type="button">Recent <CaretDown size={16} weight="bold" /></button>
+        <strong>134 Cards</strong>
+        <span>
+          <button type="button" className="active"><GridFour size={20} weight="fill" /></button>
+          <button type="button"><ListBullets size={21} /></button>
+        </span>
       </div>
 
-      <div className="binder-grid">
-        {cards.map((card) => (
-          <CreatureCard
-            key={card.id}
-            card={card}
-            size={card.id === selected?.id ? "large" : "medium"}
-            onSelect={() => setSelected(card)}
-          />
-        ))}
-      </div>
-
-      <div className="rarity-guide">
-        <div className="section-heading">
-          <span>Rarity guide</span>
-          <Info size={16} />
+      <div className="binder-board">
+        <span className="binder-ring ring-a" />
+        <span className="binder-ring ring-b" />
+        <BinderCard card={binderVisualCards[0]} variant="feature" />
+        <BinderCard card={binderVisualCards[1]} variant="tall" />
+        <div className="binder-minis">
+          {binderVisualCards.slice(2).map((card) => (
+            <BinderCard key={card.id} card={card} variant="tiny" />
+          ))}
         </div>
+      </div>
+
+      <div className="rarity-guide binder-rarity">
+        <small>RARITY GUIDE</small>
         <div className="rarity-scale">
           {[
-            ["1", "Common", "Matte"],
-            ["2", "Uncommon", "Color"],
-            ["3", "Rare", "Metal"],
-            ["4", "Seasonal", "Iridescent"],
-            ["5", "Local", "Foil"],
-            ["6", "Legend", "Holo foil"],
-          ].map(([stars, label, finish]) => (
-            <span key={stars}>
-              <strong>{stars}</strong>
+            ["★", "1", "Common", "Matte"],
+            ["★★", "2", "Uncommon", "Colored"],
+            ["★★★", "3", "Rare", "Metallic"],
+            ["★★★★", "4", "Seasonal", "Iridescent"],
+            ["★★★★★", "5", "Local Special", "Foil"],
+            ["★★★★★★", "6", "City Legend", "Holo Foil"],
+          ].map(([stars, number, label, finish]) => (
+            <span key={number}>
+              <b>{stars}</b>
+              <strong>{number}</strong>
               <small>{label}</small>
               <em>{finish}</em>
             </span>
           ))}
         </div>
-        <p>Rarity is discovery difficulty, not conservation status.</p>
       </div>
+
+      <p className="binder-tip"><Swap size={27} /> Tilt your phone slowly to see the holo cards shimmer. <button type="button"><Info size={18} /> Binder Tips</button></p>
     </section>
   );
 }
@@ -564,26 +835,79 @@ function FriendsPreview() {
 }
 
 function FriendsView() {
+  const [showcased, setShowcased] = useState(false);
+  const legendCard = {
+    ...binderVisualCards[0],
+    image: "/assets/friends-cardinal-gen.png",
+    rarity: "Six Star",
+  };
+
   return (
     <section className="view friends-view">
-      <FriendsPreview />
-      <div className="activity-list">
-        {[
-          ["Maya", "unlocked a 5-star Monarch Butterfly", cardData[4], "+50 XP"],
-          ["Leo", "added a new Honey Mushroom card", cardData[5], "+20 XP"],
-          ["Joey", "completed Morning Flyers 3/3", cardData[0], "+1 badge"],
-        ].map(([name, text, card, reward]) => (
-          <article key={name} className="activity-item">
-            <div className="avatar">{name.slice(0, 1)}</div>
+      <header className="friends-head">
+        <p className="brand">Wild Go</p>
+        <h1>Friends' Finds</h1>
+        <button className="bell-button" type="button" aria-label="Notifications">
+          <Bell size={26} />
+          <span />
+        </button>
+      </header>
+
+      <div className="friends-stats">
+        <img src="/assets/friends-leo-gen.png" alt="" />
+        <div>
+          <strong>Level 24 · City Explorer</strong>
+          <i><b style={{ width: "76%" }} /></i>
+          <span>2,340 <em>/ 3,000 XP</em></span>
+        </div>
+        <span><Cards size={28} /> <b>248</b><small>Cards</small></span>
+        <span><MapPin size={28} /> <b>34</b><small>Places</small></span>
+      </div>
+
+      <div className={`friends-showcase ${showcased ? "is-showcased" : ""}`}>
+        <ShowcaseCard card={{ ...binderVisualCards[2], name: "Oxeye Daisy", latin: "Leucanthemum vulgare", image: "/assets/binder-flower-gen.png" }} className="back" />
+        <ShowcaseCard card={binderVisualCards[1]} className="mid" />
+        <ShowcaseCard card={legendCard} className="front" />
+      </div>
+
+      <div className="friends-drop-row">
+        <button
+          type="button"
+          className="friends-drop-zone"
+          aria-pressed={showcased}
+          onClick={() => setShowcased((value) => !value)}
+        >
+          <HandTap size={24} />
+          Drag to showcase
+        </button>
+        <button type="button" className="friends-flip"><Cards size={24} />Flip</button>
+      </div>
+
+      <section className="friend-activity">
+        <div className="friend-activity-title">
+          <h2>Friend Activity</h2>
+          <button type="button">See all</button>
+        </div>
+        {friendActivity.map((item) => (
+          <article key={item.name} className="friend-row">
+            <img className="friend-avatar" src={item.avatar} alt="" />
             <div>
-              <strong>{name}</strong>
-              <span>{text}</span>
-              <small>{card.location} · {card.privacy}</small>
+              <strong>{item.name} {item.text}</strong>
+              <span>{item.species}</span>
+              <small>{item.location} · {item.time}</small>
             </div>
-            <img src={card.image} alt="" />
-            <em>{reward}</em>
+            <img className="friend-thumb" src={item.image} alt="" />
+            <em>{item.reward}</em>
           </article>
         ))}
+      </section>
+
+      <div className="friends-action-rail">
+        <button type="button"><PaperPlaneTilt size={26} />Send Card</button>
+        <button type="button"><Cards size={26} />Compare</button>
+        <button type="button" className="camera"><Camera size={36} weight="fill" /></button>
+        <button type="button"><Star size={28} />Add to Showcase</button>
+        <button type="button"><Handshake size={28} />Trade Later</button>
       </div>
     </section>
   );
@@ -677,22 +1001,32 @@ function ProfileView() {
 }
 
 export function App() {
-  const [activeView, setActiveView] = useState("capture");
+  const [activeView, setActiveView] = useState(() => {
+    const view = window.location.hash.replace("#", "");
+    return ["capture", "cards", "friends", "map", "explore", "profile"].includes(view) ? view : "capture";
+  });
   const [selected, setSelected] = useState(cardData[0]);
+  const showGlobalTopbar = !["capture", "cards", "friends"].includes(activeView);
+  const showBottomNav = activeView !== "capture";
+
+  function changeView(id) {
+    setActiveView(id);
+    window.history.replaceState(null, "", `#${id}`);
+  }
 
   return (
     <main className="app-shell">
-      <div className="phone-surface">
-        <TopBar activeView={activeView} />
+      <div className={`phone-surface is-${activeView}`}>
+        {showGlobalTopbar && <TopBar activeView={activeView} />}
 
         {activeView === "capture" && <CaptureView selected={selected} setSelected={setSelected} />}
-        {activeView === "cards" && <CardsView selected={selected} setSelected={setSelected} />}
+        {activeView === "cards" && <CardsView selected={selected} setSelected={setSelected} setActiveView={changeView} />}
         {activeView === "friends" && <FriendsView />}
         {activeView === "map" && <MapView />}
         {activeView === "explore" && <ExploreView />}
         {activeView === "profile" && <ProfileView />}
 
-        <nav className="bottom-nav" aria-label="Primary">
+        {showBottomNav && <nav className="bottom-nav" aria-label="Primary">
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -702,7 +1036,7 @@ export function App() {
                 className={`${activeView === item.id ? "active" : ""} ${
                   item.primary ? "capture-button" : ""
                 }`}
-                onClick={() => setActiveView(item.id)}
+                onClick={() => changeView(item.id)}
               >
                 <span>
                   <Icon size={item.primary ? 28 : 22} weight={activeView === item.id ? "fill" : "regular"} />
@@ -711,7 +1045,7 @@ export function App() {
               </button>
             );
           })}
-        </nav>
+        </nav>}
       </div>
     </main>
   );
