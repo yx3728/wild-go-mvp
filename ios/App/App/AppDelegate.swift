@@ -2886,6 +2886,10 @@ struct BinderModeTabs: View {
                     if item.0 == "Friends" {
                         viewModel.selectedTab = .profile
                         viewModel.showToast("Opening Friends")
+                    } else if item.0 == "Stacks" {
+                        viewModel.showToast("Stacks selected")
+                    } else if item.0 == "Missions" {
+                        viewModel.showToast("Missions selected")
                     } else {
                         viewModel.showToast("\(item.0) selected")
                     }

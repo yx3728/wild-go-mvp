@@ -254,6 +254,15 @@ run_capture_suite() {
   wait_for_event "launch:capture"
   refresh_display_metrics
 
+  tap_relative 0.15 0.10 "capture back"
+  wait_for_event "toast:Back to Explore"
+  wait_for_event "tab:explore"
+
+  launch_tab "capture"
+  sleep 2
+  wait_for_event "launch:capture"
+  refresh_display_metrics
+
   tap_relative 0.28 0.665 "capture tilt"
   wait_for_event "toast:Tilt shimmer is active"
 
@@ -295,6 +304,27 @@ run_navigation_suite() {
 
 run_binder_suite() {
   echo "==> Interaction suite: binder"
+  launch_tab "binder"
+  sleep 2
+  wait_for_event "launch:binder"
+  refresh_display_metrics
+
+  tap_relative 0.45 0.095 "binder collection selector"
+  wait_for_event "toast:Collection selector opened"
+
+  tap_relative 0.94 0.095 "binder notifications"
+  wait_for_event "toast:Notifications opened"
+
+  tap_relative 0.36 0.145 "binder stacks tab"
+  wait_for_event "toast:Stacks selected"
+
+  tap_relative 0.56 0.145 "binder missions tab"
+  wait_for_event "toast:Missions selected"
+
+  tap_relative 0.80 0.145 "binder friends tab"
+  wait_for_event "toast:Opening Friends"
+  wait_for_event "tab:profile"
+
   launch_tab "binder"
   sleep 2
   wait_for_event "launch:binder"
