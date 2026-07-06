@@ -10,7 +10,7 @@ LAUNCH_TIMEOUT_SECONDS="${LAUNCH_TIMEOUT_SECONDS:-12}"
 LAUNCH_ATTEMPTS="${LAUNCH_ATTEMPTS:-2}"
 EVENT_TIMEOUT_SECONDS="${EVENT_TIMEOUT_SECONDS:-5}"
 TAP_SETTLE_SECONDS="${TAP_SETTLE_SECONDS:-0.8}"
-QA_INTERACTION_SUITES="${QA_INTERACTION_SUITES:-navigation capture binder profile}"
+QA_INTERACTION_SUITES="${QA_INTERACTION_SUITES:-navigation map capture binder profile}"
 QA_LOG_RELATIVE_PATH="Documents/wildgo-qa-events.log"
 
 if [[ ! -d "$APP_PATH" ]]; then
@@ -302,6 +302,30 @@ run_navigation_suite() {
   wait_for_event "tab:capture"
 }
 
+run_map_suite() {
+  echo "==> Interaction suite: map"
+  launch_tab "map"
+  sleep 2
+  wait_for_event "launch:map"
+  refresh_display_metrics
+
+  tap_relative 0.20 0.62 "map near me"
+  wait_for_event "toast:Map centered nearby"
+
+  tap_relative 0.50 0.62 "map capture"
+  wait_for_event "toast:Opening Capture from Map"
+  wait_for_event "tab:capture"
+
+  launch_tab "map"
+  sleep 2
+  wait_for_event "launch:map"
+  refresh_display_metrics
+
+  tap_relative 0.80 0.62 "map cards"
+  wait_for_event "toast:Opening Binder from Map"
+  wait_for_event "tab:binder"
+}
+
 run_binder_suite() {
   echo "==> Interaction suite: binder"
   launch_tab "binder"
@@ -373,6 +397,9 @@ for suite in "${suites[@]}"; do
   case "$suite" in
     navigation)
       run_navigation_suite
+      ;;
+    map)
+      run_map_suite
       ;;
     capture)
       run_capture_suite

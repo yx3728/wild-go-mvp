@@ -3539,11 +3539,18 @@ struct BinderTipRow: View {
 }
 
 struct SoftMapScreen: View {
+    @EnvironmentObject private var viewModel: WildGoViewModel
     @Query(sort: \WildObservation.createdAt, order: .reverse) private var observations: [WildObservation]
-    @State private var cameraPosition: MapCameraPosition = .region(MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 40.6602, longitude: -73.9690),
-        span: MKCoordinateSpan(latitudeDelta: 0.06, longitudeDelta: 0.06)
-    ))
+    @State private var cameraPosition: MapCameraPosition = .region(Self.region(center: Self.defaultCoordinate))
+
+    private static let defaultCoordinate = CLLocationCoordinate2D(latitude: 40.6602, longitude: -73.9690)
+
+    private static func region(center: CLLocationCoordinate2D) -> MKCoordinateRegion {
+        MKCoordinateRegion(
+            center: center,
+            span: MKCoordinateSpan(latitudeDelta: 0.06, longitudeDelta: 0.06)
+        )
+    }
 
     var cards: [WildObservation] {
         observations.isEmpty ? WildObservation.samples : observations
@@ -3590,6 +3597,31 @@ struct SoftMapScreen: View {
                 }
                 .padding(.horizontal, 16)
 
+                HStack(spacing: 10) {
+                    MapActionButton(icon: "location.fill", title: "Near me") {
+                        let coordinate = viewModel.locationManager.currentCoordinate ?? Self.defaultCoordinate
+                        viewModel.locationManager.requestLocation()
+                        withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) {
+                            cameraPosition = .region(Self.region(center: coordinate))
+                        }
+                        viewModel.showToast("Map centered nearby")
+                    }
+                    .accessibilityIdentifier("map.nearMe")
+
+                    MapActionButton(icon: "camera.viewfinder", title: "Capture") {
+                        viewModel.selectedTab = .capture
+                        viewModel.showToast("Opening Capture from Map")
+                    }
+                    .accessibilityIdentifier("map.capture")
+
+                    MapActionButton(icon: "rectangle.stack", title: "Cards") {
+                        viewModel.selectedTab = .binder
+                        viewModel.showToast("Opening Binder from Map")
+                    }
+                    .accessibilityIdentifier("map.cards")
+                }
+                .padding(.horizontal, 16)
+
                 VStack(spacing: 18) {
                     SafetyRow(icon: "shield.checkered", title: "Location softened automatically", detail: "Rare and sensitive finds are widened to a safer area before sharing.")
                     SafetyRow(icon: "viewfinder", title: "Observation first", detail: "The map supports recall and learning, not exact public collection routes.")
@@ -3604,6 +3636,32 @@ struct SoftMapScreen: View {
             .background(WildGoBackground())
             .toolbar(.hidden, for: .navigationBar)
         }
+        .onReceive(viewModel.locationManager.$currentCoordinate.compactMap { $0 }) { coordinate in
+            withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) {
+                cameraPosition = .region(Self.region(center: coordinate))
+            }
+        }
+    }
+}
+
+struct MapActionButton: View {
+    var icon: String
+    var title: String
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Label(title, systemImage: icon)
+                .font(.footnote.weight(.heavy))
+                .lineLimit(1)
+                .minimumScaleFactor(0.74)
+                .foregroundStyle(Color.wildInk)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 11)
+                .background(.white.opacity(0.82), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.wildInk.opacity(0.16), lineWidth: 1))
+        }
+        .buttonStyle(.plain)
     }
 }
 
