@@ -31,8 +31,8 @@ src/App.jsx
 src/styles.css
 public/assets/
 docs/card-visuals/
-capacitor.config.json
 ios/App/App.xcodeproj
+supabase/
 design-qa.md
 qa-shots/
 ```
@@ -62,15 +62,20 @@ Card visual rules from these references:
 - Cards should support physical interactions: tilt to shimmer, press for depth, flip for details, drag/showcase for social use.
 - Rarity is app discovery difficulty, not conservation status.
 
-Implementation note: card physics and material are intentionally built on existing MIT-licensed GitHub packages rather than custom one-off math:
+Implementation note: card physics and material should use existing MIT-licensed GitHub packages rather than custom one-off math:
 
 - [`react-parallax-tilt`](https://github.com/mkosir/react-parallax-tilt) handles pointer/touch tilt, perspective, glare, and gyroscope support.
-- [`card-foil`](https://github.com/sawyerWeld/card-foil) handles foil, etched, galaxy, and oil-slick finishes with reduced-motion-aware shimmer.
+- [`Sticker`](https://github.com/bpisano/Sticker) is wired into the native SwiftUI target as an SPM dependency for Pokemon-style Metal foil shaders and motion-driven shimmer. Native foil art now uses Sticker-driven border, card-surface, and constrained spectral photo layers with the package README's example shader parameters instead of hand-written gradient art. On iOS 18+, Sticker shaders are precompiled on launch.
 
 ## What Is Implemented
 
-- Mobile-first Vite + React prototype.
-- Capacitor iOS shell that builds and runs in the iPhone simulator.
+- Mobile-first Vite + React prototype retained for design comparison.
+- Native SwiftUI iOS shell that builds and runs in the iPhone simulator.
+- SwiftData local persistence, AVFoundation camera preview and still capture, PhotosUI import, MapKit location views, and CoreLocation capture metadata.
+- Captured/imported JPEGs are normalized, saved under the app support `ObservationPhotos` folder, and referenced by SwiftData cards so newly identified observations use the user's photo instead of a static demo asset.
+- Cloud-first species recognition through the Supabase Edge Function, with private Storage upload and Postgres observation persistence.
+- Signed-in collection sync now pushes local-only SwiftData cards to Postgres, pulls the user's cloud observations back into SwiftData, and caches private Storage images locally when the authenticated download succeeds.
+- Vision/Core ML local recognition is wired through `VNCoreMLRequest`; adding a compiled `WildGoSpeciesClassifier.mlmodelc` to the app bundle enables local fallback/offline classification.
 - Restored iOS AppIcon asset catalog and LaunchScreen storyboard build resources.
 - Six-star holographic unlock card for the capture result.
 - Creature cards using bitmap nature photo assets, including a target-matched rock pigeon card crop.
@@ -87,10 +92,11 @@ Implementation note: card physics and material are intentionally built on existi
   - pointer/touch tilt shimmer
   - opt-in device-orientation foil movement on supported phones
   - press depth
-  - flip to card back
+  - flip to card back with field notes, habitat, privacy, and wildlife guidance
   - add-to-binder state
+  - simulator-safe add-to-binder fallback when AVFoundation has no active photo video connection
   - rarity filtering
-  - social showcase toggle with a visible drop/showcase slot
+  - social showcase toggle with a visible drop/showcase slot and a flippable showcase card back
 - Bottom navigation:
   - Explore
   - Map
@@ -109,10 +115,12 @@ Commands run:
 ```bash
 npm install
 npm run build
-npm run ios:sync
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -project ios/App/App.xcodeproj -target App -configuration Debug -sdk iphonesimulator26.5 CODE_SIGNING_ALLOWED=NO build
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcrun simctl install booted ios/App/build/Debug-iphonesimulator/App.app
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcrun simctl launch booted com.wildgo.mvp
+deno check supabase/functions/identify-species/index.ts
+plutil -lint ios/App/App/Info.plist
+npm run ios:build
+xcrun simctl install booted ios/App/build-native/Build/Products/Debug-iphonesimulator/App.app
+xcrun simctl launch booted com.wildgo.mvp --wildgo-tab binder
+xcrun simctl launch booted com.wildgo.mvp --wildgo-tab capture
 ```
 
 QA artifacts:
@@ -122,9 +130,36 @@ design-qa.md
 public/assets/wild-go-combo-target.png
 qa-shots/ios-simulator-final-compact.png
 qa-shots/ios-simulator-final-material.png
+qa-shots/interaction-binder-smoke.png
+qa-shots/interaction-capture-smoke.png
+qa-shots/interaction-profile-smoke.png
 qa-shots/material-capture.png
 qa-shots/material-cards.png
 qa-shots/material-friends-stack.png
+qa-shots/swiftui-native-binder-sticker-foil-v3.png
+qa-shots/swiftui-native-binder-v7.png
+qa-shots/swiftui-native-binder-grid-layout-final.png
+qa-shots/swiftui-native-binder-list-interaction-v1.png
+qa-shots/swiftui-native-binder-sort-rarity-v1.png
+qa-shots/swiftui-native-capture-sticker-foil-v3.png
+qa-shots/swiftui-native-capture-sticker-example-params-v1.png
+qa-shots/swiftui-native-capture-holo-texture-v6.png
+qa-shots/swiftui-native-capture-layout-final.png
+qa-shots/swiftui-native-capture-back-layout-final.png
+qa-shots/swiftui-native-capture-photo-pipeline-v1.png
+qa-shots/swiftui-native-capture-card-back-v1.png
+qa-shots/swiftui-native-capture-depth-card-back-v1.png
+qa-shots/swiftui-native-capture-flip-back-v2.png
+qa-shots/swiftui-native-capture-depth-button-v2.png
+qa-shots/swiftui-native-capture-add-to-binder-v2.png
+qa-shots/swiftui-native-capture-share-sheet-v2.png
+qa-shots/swiftui-native-capture-tilt-button-v2.png
+qa-shots/swiftui-native-capture-v2.png
+qa-shots/swiftui-native-friends-sticker-foil-v3.png
+qa-shots/swiftui-native-friends-profile-v13.png
+qa-shots/swiftui-native-friends-profile-v16.png
+qa-shots/swiftui-native-profile-interactions-v2.png
+qa-shots/swiftui-native-profile-showcase-back-dropped-v1.png
 qa-shots/tuned-capture.png
 qa-shots/tuned-cards.png
 qa-shots/tuned-map.png
@@ -143,6 +178,17 @@ Browser checks covered:
 - All creature images load.
 - Bottom navigation renders all five destinations.
 - Flip interaction reveals card back content.
+- Capture Press & Hold changes card depth, and Capture Flip swaps the six-star card to a field-notes back.
+- Capture unlock layout now keeps the hero card, interaction controls, Add to Binder, and Share Card fully visible on the iPhone 17 Pro simulator.
+- Capture Share Card opens the native share sheet; Flip and Press & Hold were re-verified after the responsive layout pass.
+- Capture foil art was reworked onto Sticker's GitHub Metal shader package with layered border/photo/surface passes and then reset to the package README's example shader parameters; `swiftui-native-capture-sticker-example-params-v1.png` is the current reference QA screenshot.
+- Real-coordinate automation verified Capture Tilt, Press & Hold, Flip, Add to Binder, and Share Card. Add to Binder now stays in-app and falls back to the demo image on Simulator instead of crashing when AVFoundation has no active video connection.
+- Friends Flip swaps the showcase card to its back, and Drag/Add to Showcase changes the visible showcase slot state.
+- Friends/Profile `v16` tightens the reference-style action rail so long labels fit, restores a visible trade/friends icon with a supported SF Symbol, and reduces the back-card typography so the small cards read as a physical stack instead of cropped posters.
+- Real-coordinate automation verified Friends Drag to showcase, Flip, Trade Later, and Compare after the `v16` visual pass.
+- Binder List view now switches to a real list board, and Grid view returns to the reference-style binder grid.
+- Binder sorting changes both the menu label and the visible card ordering; Rarity sorting was verified in Simulator.
+- Binder Tips opens the native alert, and toast feedback renders below the Dynamic Island safe area.
 - Add to Binder updates button state.
 - 5-6 rarity filter returns the five-star and six-star cards.
 - Map, binder, and capture screens render without visual overlap.
@@ -168,13 +214,14 @@ http://127.0.0.1:5173
 ```bash
 cd wild-go-mvp
 npm install
-npm run ios:sync
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -project ios/App/App.xcodeproj -target App -configuration Debug -sdk iphonesimulator26.5 CODE_SIGNING_ALLOWED=NO build
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcrun simctl install booted ios/App/build/Debug-iphonesimulator/App.app
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcrun simctl launch booted com.wildgo.mvp
+npm run ios:build
+xcrun simctl install booted ios/App/build-native/Build/Products/Debug-iphonesimulator/App.app
+xcrun simctl launch booted com.wildgo.mvp
 ```
 
-Use `npm run ios:open` to continue in Xcode.
+Use `npm run ios:open` to continue in Xcode. Configure `SUPABASE_URL` and `SUPABASE_ANON_KEY` in `ios/debug.xcconfig` or Xcode build settings before testing against a live Supabase project.
+
+For visual QA, pass a tab override such as `xcrun simctl launch booted com.wildgo.mvp --wildgo-tab capture`, `--wildgo-tab binder`, or `--wildgo-tab profile` to open native target screens directly.
 
 ## Product Notes
 
@@ -188,17 +235,19 @@ Capture -> AI likely match -> six-star/rarity reveal -> add to binder -> share/s
 
 ## Recommended Next Steps
 
-1. Add real camera/photo upload input.
-2. Replace mocked AI match data with an identification API.
-3. Persist card collection state in Supabase or Firebase.
-4. Add native camera permissions and a real capture pipeline in Capacitor.
-5. Expand card backs with habitat, seasonality, safety guidance, and confidence alternatives.
-6. Add share-card export as an image.
-7. Add privacy rules for sensitive species and exact locations.
+1. Configure live Supabase project values and secrets for end-to-end cloud recognition/storage.
+   - Copy `ios/debug.xcconfig.example` to `ios/debug.xcconfig` and add your project URL + anon key.
+   - Set `OPENAI_API_KEY`; the Edge Function now fails fast without it unless `ALLOW_DEMO_IDENTIFICATION=true` is explicitly enabled for local demos.
+2. ~~Add Supabase Auth screens and user-account syncing for card collections.~~ **Done:** Profile avatar opens the auth sheet; signed-in users push local binder cards to Postgres and pull cloud observations back into SwiftData.
+3. Test AVFoundation still-photo capture on physical devices and tune simulator fallbacks.
+4. Train/export `WildGoSpeciesClassifier.mlmodelc` and add it to the Xcode target to activate local/offline classification.
+5. ~~Expand card backs with habitat, seasonality, safety guidance, and confidence alternatives.~~ **Done:** `SpeciesFieldGuide` powers capture card backs and cloud responses can return `alternativeMatches`.
+6. ~~Add share-card export as an image.~~ **Done:** Share Card now exports a rendered card image plus text through the native share sheet.
+7. ~~Add privacy rules for sensitive species and exact locations.~~ **Done:** `PrivacyLocationPolicy` softens map pins and locality labels for sensitive/high-rarity finds.
 
 ## Known Limitations
 
-- All data is currently mocked in `src/App.jsx`.
-- Photos are generated local assets, not user uploads.
-- The app has no backend, authentication, or persistence yet.
-- Device-orientation foil depends on browser/webview sensor permission and device support.
+- The SwiftUI app includes local SwiftData persistence and a Supabase Edge Function path for Storage/Postgres persistence, but live cloud recognition requires project secrets. Missing `OPENAI_API_KEY` is now a hard configuration error unless local demo fallback is explicitly enabled.
+- Authentication is implemented with email/password against Supabase Auth. Magic-link confirmation may still be required depending on project auth settings.
+- Collection sync now has a bidirectional Postgres/SwiftData merge, but conflict handling is intentionally simple: local rows are matched by UUID or uploaded Storage path, and remote-only rows use generated placeholder art when private Storage image download is unavailable.
+- Vision + Core ML local recognition is implemented as a runtime path, but still needs a bundled compiled model before it can classify offline.

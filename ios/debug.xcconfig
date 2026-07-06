@@ -1,1 +1,4 @@
-CAPACITOR_DEBUG = true
+// Local Supabase values for Debug builds.
+// Keep this file free of secrets in commits; override locally or through Xcode Cloud/Vercel secrets.
+SUPABASE_URL =
+SUPABASE_ANON_KEY =

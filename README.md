@@ -13,27 +13,28 @@ Open `http://127.0.0.1:5173`.
 
 ## iOS MVP
 
-This repo now includes a Capacitor iOS shell.
+The iOS app has been moved to a native SwiftUI shell with SwiftData, AVFoundation camera preview and still capture, MapKit, PhotosUI, and CoreLocation.
+Six-star foil rendering in the native target uses the MIT-licensed [`Sticker`](https://github.com/bpisano/Sticker) Swift Package for Metal-based Pokemon-style foil shaders instead of hand-written gradient art. The capture card now layers Sticker-driven foil border, surface, and constrained spectral photo passes using the package README's example shader parameters, with iOS 18+ shader precompilation on launch.
 
 ```bash
-npm install
-npm run ios:sync
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -project ios/App/App.xcodeproj -target App -configuration Debug -sdk iphonesimulator26.5 CODE_SIGNING_ALLOWED=NO build
+npm run ios:build
 ```
 
 To open the project in Xcode:
 
 ```bash
-npm run ios:open
+open ios/App/App.xcodeproj
 ```
 
-The native app starts the Capacitor bridge programmatically and includes the restored LaunchScreen storyboard plus AppIcon asset catalog for the current local Xcode/simulator setup.
+The native app uses generated image assets from `ios/App/App/GeneratedAssets` for demo cards, while newly captured or imported JPEGs are saved under the app support `ObservationPhotos` folder and referenced from SwiftData cards. Supabase setup lives in `supabase/`; local app keys are read from `ios/debug.xcconfig` or Xcode build settings (`ios/debug.xcconfig.example` is provided). Captured images are sent to the `identify-species` Edge Function, which uploads to private Supabase Storage and writes card metadata to Postgres with the service role key. Profile → avatar opens Supabase email/password auth, pushes local-only binder cards, pulls the signed-in user's Postgres observations back into SwiftData, and caches private Storage images locally when available.
 
 ## Prototype Highlights
 
 - Six-star holographic card reveal.
-- Physical-feeling card interactions using `react-parallax-tilt` for tilt/glare and `card-foil` for rarity foil finishes.
-- Rarity-based card binder.
+- Physical-feeling card interactions in the SwiftUI shell: foil shimmer, press-depth, front/back card flip, add-to-binder fallback, share sheet, and a social showcase drop state.
+- Cloud-first species recognition through a Supabase Edge Function, private Storage upload, Postgres persistence, and a Vision/Core ML local-recognition path that runs when a compiled `WildGoSpeciesClassifier.mlmodelc` is bundled.
+- Real capture/import photos become local collectible card images before syncing to cloud Storage.
+- Rarity-based card binder with reference-style grid, real list toggle, and sorting that reorders visible cards.
 - Friends activity built around card stacks, visible showcase slots, and collection milestones.
 - Privacy and wildlife-safety copy baked into the card system.
 
