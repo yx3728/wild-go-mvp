@@ -120,6 +120,7 @@ npm run build
 deno check supabase/functions/identify-species/index.ts
 plutil -lint ios/App/App/Info.plist
 npm run ios:build
+npm run ios:verify-events
 npm run ios:smoke
 npm run ios:interactions
 xcrun simctl install booted ios/App/build-native/Build/Products/Debug-iphonesimulator/App.app
@@ -187,7 +188,7 @@ Browser checks covered:
 - Capture Share Card opens the native share sheet; Flip and Press & Hold were re-verified after the responsive layout pass.
 - Capture foil art was reworked onto Sticker's GitHub Metal shader package with layered border/photo/surface passes and then reset to the package README's example shader parameters; `swiftui-native-capture-sticker-example-params-v1.png` is the current reference QA screenshot.
 - Real-coordinate automation verified Capture Tilt, Press & Hold, Flip, Add to Binder, and Share Card. Add to Binder now stays in-app and falls back to the demo image on Simulator instead of crashing when AVFoundation has no active video connection.
-- `npm run ios:interactions` now repeats the native button checks with real Simulator-window coordinate taps and validates the SwiftUI actions through the app's QA-only event log.
+- `npm run ios:interactions` now repeats the native button checks with real Simulator-window coordinate taps and validates the SwiftUI actions through the app's QA-only event log. It covers the full bottom navigation plus Capture, Cards, and Profile/Friends controls. It is gated by `npm run ios:verify-events`, a Simulator-free check that fails fast if any `wait_for_event` assertion no longer maps to a `showToast` string (or tab `qaName`) in `AppDelegate.swift`.
 - Friends Flip swaps the showcase card to its back, and Drag/Add to Showcase changes the visible showcase slot state.
 - Friends/Profile `v16` tightens the reference-style action rail so long labels fit, restores a visible trade/friends icon with a supported SF Symbol, and reduces the back-card typography so the small cards read as a physical stack instead of cropped posters.
 - Real-coordinate automation verified Friends Drag to showcase, Flip, Trade Later, and Compare after the `v16` visual pass.
@@ -230,7 +231,7 @@ Use `npm run ios:open` to continue in Xcode. Configure `SUPABASE_URL` and `SUPAB
 
 For visual QA, run `npm run ios:smoke` with a booted Simulator. The script installs the app, launches the key tabs with a timeout, and writes screenshots under the ignored `qa-shots/native-smoke/` folder. You can still pass a tab override manually, such as `xcrun simctl launch booted com.wildgo.mvp --wildgo-tab capture`, `--wildgo-tab binder`, or `--wildgo-tab profile`.
 
-For interaction QA, run `npm run ios:interactions` with the Simulator window visible and macOS Accessibility click permission enabled for the shell. The script uses real window-coordinate taps against Capture, Cards, and Profile/Friends, then reads `Documents/wildgo-qa-events.log` from the app's Simulator data container to confirm each SwiftUI button action fired.
+For interaction QA, run `npm run ios:interactions` with the Simulator window visible and macOS Accessibility click permission enabled for the shell. The script uses real window-coordinate taps against the full bottom navigation plus Capture, Cards, and Profile/Friends, then reads `Documents/wildgo-qa-events.log` from the app's Simulator data container to confirm each SwiftUI button action fired. It first runs `npm run ios:verify-events` (`ios/qa-check-events.sh`), which needs no Simulator or build and can run in CI to catch toast-string or tab-name drift before spending time on a launch.
 
 ## Product Notes
 

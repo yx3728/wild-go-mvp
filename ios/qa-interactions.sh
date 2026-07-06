@@ -10,7 +10,7 @@ LAUNCH_TIMEOUT_SECONDS="${LAUNCH_TIMEOUT_SECONDS:-12}"
 LAUNCH_ATTEMPTS="${LAUNCH_ATTEMPTS:-2}"
 EVENT_TIMEOUT_SECONDS="${EVENT_TIMEOUT_SECONDS:-5}"
 TAP_SETTLE_SECONDS="${TAP_SETTLE_SECONDS:-0.8}"
-QA_INTERACTION_SUITES="${QA_INTERACTION_SUITES:-capture binder profile}"
+QA_INTERACTION_SUITES="${QA_INTERACTION_SUITES:-navigation capture binder profile}"
 QA_LOG_RELATIVE_PATH="Documents/wildgo-qa-events.log"
 
 if [[ ! -d "$APP_PATH" ]]; then
@@ -267,6 +267,29 @@ run_capture_suite() {
   wait_for_event "toast:Capturing card..."
 }
 
+run_navigation_suite() {
+  echo "==> Interaction suite: navigation"
+  launch_tab "explore"
+  sleep 2
+  wait_for_event "launch:explore"
+  refresh_display_metrics
+
+  tap_relative 0.33 0.94 "tab map"
+  wait_for_event "tab:map"
+
+  tap_relative 0.67 0.94 "tab cards"
+  wait_for_event "tab:binder"
+
+  tap_relative 0.85 0.94 "tab profile"
+  wait_for_event "tab:profile"
+
+  tap_relative 0.15 0.94 "tab explore"
+  wait_for_event "tab:explore"
+
+  tap_relative 0.50 0.94 "tab capture"
+  wait_for_event "tab:capture"
+}
+
 run_binder_suite() {
   echo "==> Interaction suite: binder"
   launch_tab "binder"
@@ -315,6 +338,9 @@ xcrun simctl install "$DEVICE_ID" "$APP_PATH"
 IFS=' ' read -r -a suites <<< "$QA_INTERACTION_SUITES"
 for suite in "${suites[@]}"; do
   case "$suite" in
+    navigation)
+      run_navigation_suite
+      ;;
     capture)
       run_capture_suite
       ;;

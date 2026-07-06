@@ -28,11 +28,22 @@ npm run ios:smoke
 ```
 
 To verify the main SwiftUI controls with real Simulator-window coordinate taps,
-run the interaction smoke. It launches Capture, Cards, and Profile/Friends,
-taps key controls, and checks the app's QA-only action log:
+run the interaction smoke. It launches the app, taps the full bottom navigation
+bar plus Capture, Cards, and Profile/Friends controls, and checks the app's
+QA-only action log:
 
 ```bash
 npm run ios:interactions
+```
+
+`ios:interactions` first runs a fast, Simulator-free consistency check that
+confirms every `wait_for_event` assertion in `ios/qa-interactions.sh` still maps
+to a `showToast` string (or tab `qaName`) in `AppDelegate.swift`, so renamed or
+inverted toast copy fails immediately instead of after a full build + launch. Run
+it on its own in CI with:
+
+```bash
+npm run ios:verify-events
 ```
 
 To open the project in Xcode:

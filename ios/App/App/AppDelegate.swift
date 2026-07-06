@@ -1924,6 +1924,9 @@ struct WildGoRootView: View {
                 }
             }
         }
+        .onChange(of: viewModel.selectedTab) { _, selectedTab in
+            QAInteractionProbe.record("tab:\(selectedTab.qaName)")
+        }
         .environmentObject(viewModel)
         .environmentObject(auth)
         .tint(Color.wildInk)
