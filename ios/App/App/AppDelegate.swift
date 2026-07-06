@@ -2001,7 +2001,11 @@ struct CaptureScreen: View {
         NavigationStack {
             GeometryReader { proxy in
                 let compactHeight = proxy.size.height < 880
-                let cardScale: CGFloat = compactHeight ? 0.88 : 0.94
+                let maximumCardScale: CGFloat = compactHeight ? 0.98 : 1.05
+                let minimumCardScale: CGFloat = proxy.size.height < 780 ? 0.84 : (compactHeight ? 0.94 : 0.98)
+                let widthScale = (proxy.size.width - (compactHeight ? 50 : 42)) / 306
+                let heightScale = (proxy.size.height - (compactHeight ? 400 : 390)) / 456
+                let cardScale = max(minimumCardScale, min(maximumCardScale, widthScale, heightScale))
                 let stageWidth: CGFloat = 306 * cardScale + 6
                 let stageHeight: CGFloat = 456 * cardScale + 8
 
@@ -2009,7 +2013,7 @@ struct CaptureScreen: View {
                     CameraHeroBackground(camera: camera)
 
                     ScrollView(showsIndicators: false) {
-                        VStack(spacing: compactHeight ? 7 : 10) {
+                        VStack(spacing: compactHeight ? 5 : 9) {
                             CaptureTopBar(selectedPhoto: $selectedPhoto) {
                                 viewModel.selectedTab = .explore
                                 viewModel.showToast("Back to Explore")
@@ -2026,19 +2030,19 @@ struct CaptureScreen: View {
                             )
                             .scaleEffect(cardScale)
                             .frame(width: stageWidth, height: stageHeight)
-                            .padding(.top, compactHeight ? 0 : 6)
+                            .padding(.top, compactHeight ? -4 : 2)
 
                             InteractionStrip(
                                 state: viewModel.recognitionState,
                                 isCardFlipped: $isCardFlipped,
                                 isDepthPreviewing: $isDepthPreviewing
                             )
-                                .padding(.top, compactHeight ? -2 : 2)
+                                .padding(.top, compactHeight ? -6 : 0)
 
                             PageDots(activeIndex: isCardFlipped ? 1 : 0)
-                                .padding(.top, compactHeight ? -2 : 2)
+                                .padding(.top, compactHeight ? -5 : 1)
 
-                            VStack(spacing: compactHeight ? 11 : 14) {
+                            VStack(spacing: compactHeight ? 9 : 14) {
                                 Button {
                                     viewModel.showToast("Capturing card...")
                                     Task {
@@ -2063,7 +2067,7 @@ struct CaptureScreen: View {
                                 .accessibilityIdentifier("capture.shareCard")
                             }
                             .frame(maxWidth: 350)
-                            .padding(.top, compactHeight ? 2 : 6)
+                            .padding(.top, compactHeight ? 0 : 6)
                         }
                         .padding(.horizontal, compactHeight ? 24 : 28)
                         .padding(.bottom, compactHeight ? 24 : 34)

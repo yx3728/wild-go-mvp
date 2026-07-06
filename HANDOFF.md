@@ -186,10 +186,10 @@ Browser checks covered:
 - Bottom navigation renders all five destinations.
 - Flip interaction reveals card back content.
 - Capture Press & Hold changes card depth, and Capture Flip swaps the six-star card to a field-notes back.
-- Capture unlock layout now keeps the hero card, interaction controls, Add to Binder, and Share Card fully visible on the iPhone 17 Pro simulator.
+- Capture unlock layout now uses geometry-based card scaling so the six-star hero card occupies more of the iPhone 17 Pro viewport like the concept reference while keeping the interaction controls, Add to Binder, and Share Card fully visible.
 - Capture Share Card opens the native share sheet; Flip and Press & Hold were re-verified after the responsive layout pass.
 - Capture foil art was reworked onto Sticker's GitHub Metal shader package with layered border/photo/surface passes and then reset to the package README's example shader parameters; `swiftui-native-capture-sticker-example-params-v1.png` is the current reference QA screenshot.
-- Real-coordinate automation verified Capture Tilt, Press & Hold, Flip, Add to Binder, and Share Card. Add to Binder now stays in-app and falls back to the demo image on Simulator instead of crashing when AVFoundation has no active video connection.
+- Real-coordinate automation verified Capture Tilt, Press & Hold, Flip, Add to Binder, and Share Card. Add to Binder now stays in-app and falls back to the demo image on Simulator instead of crashing when AVFoundation has no active video connection; Share Card opens the native share sheet and is now part of `ios/qa-interactions.sh`.
 - `npm run ios:interactions` now repeats the native button checks with real Simulator-window coordinate taps and validates the SwiftUI actions through the app's QA-only event log. It covers the full bottom navigation plus Capture, Cards, and Profile/Friends controls. It is gated by `npm run ios:verify-events`, a Simulator-free check that fails fast if any `wait_for_event` assertion no longer maps to a `showToast` string (or tab `qaName`) in `AppDelegate.swift`.
 - `npm run supabase:test` covers the cloud-recognition result contract without live secrets, including OpenAI output normalization for confidence percentages, out-of-range stars, tier/finish synonyms, missing notes, and invalid JSON.
 - Friends Flip swaps the showcase card to its back, and Drag/Add to Showcase changes the visible showcase slot state.
