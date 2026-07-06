@@ -121,6 +121,7 @@ deno check supabase/functions/identify-species/index.ts
 plutil -lint ios/App/App/Info.plist
 npm run ios:build
 npm run ios:smoke
+npm run ios:interactions
 xcrun simctl install booted ios/App/build-native/Build/Products/Debug-iphonesimulator/App.app
 xcrun simctl launch booted com.wildgo.mvp --wildgo-tab binder
 xcrun simctl launch booted com.wildgo.mvp --wildgo-tab capture
@@ -186,6 +187,7 @@ Browser checks covered:
 - Capture Share Card opens the native share sheet; Flip and Press & Hold were re-verified after the responsive layout pass.
 - Capture foil art was reworked onto Sticker's GitHub Metal shader package with layered border/photo/surface passes and then reset to the package README's example shader parameters; `swiftui-native-capture-sticker-example-params-v1.png` is the current reference QA screenshot.
 - Real-coordinate automation verified Capture Tilt, Press & Hold, Flip, Add to Binder, and Share Card. Add to Binder now stays in-app and falls back to the demo image on Simulator instead of crashing when AVFoundation has no active video connection.
+- `npm run ios:interactions` now repeats the native button checks with real Simulator-window coordinate taps and validates the SwiftUI actions through the app's QA-only event log.
 - Friends Flip swaps the showcase card to its back, and Drag/Add to Showcase changes the visible showcase slot state.
 - Friends/Profile `v16` tightens the reference-style action rail so long labels fit, restores a visible trade/friends icon with a supported SF Symbol, and reduces the back-card typography so the small cards read as a physical stack instead of cropped posters.
 - Real-coordinate automation verified Friends Drag to showcase, Flip, Trade Later, and Compare after the `v16` visual pass.
@@ -219,6 +221,7 @@ cd wild-go-mvp
 npm install
 npm run ios:build
 npm run ios:smoke
+npm run ios:interactions
 xcrun simctl install booted ios/App/build-native/Build/Products/Debug-iphonesimulator/App.app
 xcrun simctl launch booted com.wildgo.mvp
 ```
@@ -226,6 +229,8 @@ xcrun simctl launch booted com.wildgo.mvp
 Use `npm run ios:open` to continue in Xcode. Configure `SUPABASE_URL` and `SUPABASE_ANON_KEY` in `ios/debug.xcconfig` or Xcode build settings before testing against a live Supabase project.
 
 For visual QA, run `npm run ios:smoke` with a booted Simulator. The script installs the app, launches the key tabs with a timeout, and writes screenshots under the ignored `qa-shots/native-smoke/` folder. You can still pass a tab override manually, such as `xcrun simctl launch booted com.wildgo.mvp --wildgo-tab capture`, `--wildgo-tab binder`, or `--wildgo-tab profile`.
+
+For interaction QA, run `npm run ios:interactions` with the Simulator window visible and macOS Accessibility click permission enabled for the shell. The script uses real window-coordinate taps against Capture, Cards, and Profile/Friends, then reads `Documents/wildgo-qa-events.log` from the app's Simulator data container to confirm each SwiftUI button action fired.
 
 ## Product Notes
 

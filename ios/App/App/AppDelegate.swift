@@ -87,6 +87,21 @@ enum WildGoTab: Hashable {
     case capture
     case binder
     case profile
+
+    var qaName: String {
+        switch self {
+        case .explore:
+            return "explore"
+        case .map:
+            return "map"
+        case .capture:
+            return "capture"
+        case .binder:
+            return "binder"
+        case .profile:
+            return "profile"
+        }
+    }
 }
 
 extension Array where Element == String {
@@ -140,6 +155,51 @@ struct InteractionToast: Identifiable, Equatable {
     var message: String
 }
 
+enum QAInteractionProbe {
+    private static let fileName = "wildgo-qa-events.log"
+
+    private static var arguments: [String] {
+        ProcessInfo.processInfo.arguments
+    }
+
+    static var isEnabled: Bool {
+        arguments.contains("--wildgo-qa-interactions")
+    }
+
+    static func prepareForLaunch() {
+        if arguments.contains("--wildgo-reset-qa-log") {
+            try? FileManager.default.removeItem(at: logURL)
+        }
+    }
+
+    static func record(_ event: String) {
+        guard isEnabled else { return }
+
+        let line = "\(Date().timeIntervalSince1970) \(event)\n"
+        let data = Data(line.utf8)
+        let directory = logURL.deletingLastPathComponent()
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+
+        if FileManager.default.fileExists(atPath: logURL.path),
+           let handle = try? FileHandle(forWritingTo: logURL) {
+            do {
+                try handle.seekToEnd()
+                try handle.write(contentsOf: data)
+                try handle.close()
+            } catch {
+                try? data.write(to: logURL, options: .atomic)
+            }
+        } else {
+            try? data.write(to: logURL, options: .atomic)
+        }
+    }
+
+    private static var logURL: URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent(fileName)
+    }
+}
+
 @MainActor
 final class WildGoViewModel: ObservableObject {
     @Published var selectedTab: WildGoTab = .explore
@@ -155,6 +215,8 @@ final class WildGoViewModel: ObservableObject {
         if let qaSelectedTab = ProcessInfo.processInfo.arguments.qaSelectedTab {
             selectedTab = qaSelectedTab
         }
+        QAInteractionProbe.prepareForLaunch()
+        QAInteractionProbe.record("launch:\(selectedTab.qaName)")
     }
 
     func identify(imageData: Data, modelContext: ModelContext, accessToken: String? = nil) async {
@@ -226,6 +288,7 @@ final class WildGoViewModel: ObservableObject {
     }
 
     func showToast(_ message: String) {
+        QAInteractionProbe.record("toast:\(message)")
         let nextToast = InteractionToast(message: message)
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
         withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
@@ -2547,7 +2610,11 @@ struct BinderScreen: View {
     @State private var isShowingBinderTips = false
 
     private var cardsByName: [String: WildObservation] {
-        Dictionary(uniqueKeysWithValues: observations.map { ($0.commonName, $0) })
+        observations.reduce(into: [:]) { cardsByName, observation in
+            if cardsByName[observation.commonName] == nil {
+                cardsByName[observation.commonName] = observation
+            }
+        }
     }
 
     private var referenceCards: [WildObservation] {
@@ -4138,7 +4205,10 @@ struct ProfileScreen: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 10) {
                     FriendsHeader()
-                    FriendsProfileStats(onAccountTap: { isShowingAuthSheet = true })
+                    FriendsProfileStats(onAccountTap: {
+                        isShowingAuthSheet = true
+                        viewModel.showToast("Account sheet opened")
+                    })
                     if auth.isSignedIn {
                         SignedInAccountBanner(email: auth.session?.email ?? "Signed in")
                     }
@@ -4751,7 +4821,7 @@ struct FriendsShowcaseControls: View {
                 withAnimation(.spring(response: 0.42, dampingFraction: 0.78)) {
                     showcaseState.isDropped.wrappedValue.toggle()
                 }
-                viewModel.showToast(showcaseState.isDropped.wrappedValue ? "Removed from Showcase" : "Added to Showcase")
+                viewModel.showToast(showcaseState.isDropped.wrappedValue ? "Added to Showcase" : "Removed from Showcase")
             } label: {
                 Label(showcaseState.isDropped.wrappedValue ? "In showcase" : "Drag to showcase", systemImage: showcaseState.isDropped.wrappedValue ? "checkmark.circle" : "hand.raised")
                     .font(.subheadline.weight(.semibold))

@@ -9,6 +9,7 @@
     "preview": "vite preview --host 127.0.0.1",
     "ios:build": "xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug -sdk iphonesimulator -derivedDataPath ios/App/build-native CODE_SIGNING_ALLOWED=NO build",
     "ios:smoke": "npm run ios:build && ios/qa-smoke.sh",
+    "ios:interactions": "npm run ios:build && ios/qa-interactions.sh",
     "ios:open": "open ios/App/App.xcodeproj"
   },
   "dependencies": {

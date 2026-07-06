@@ -27,6 +27,14 @@ open the key tabs through `--wildgo-tab`, and save verification screenshots:
 npm run ios:smoke
 ```
 
+To verify the main SwiftUI controls with real Simulator-window coordinate taps,
+run the interaction smoke. It launches Capture, Cards, and Profile/Friends,
+taps key controls, and checks the app's QA-only action log:
+
+```bash
+npm run ios:interactions
+```
+
 To open the project in Xcode:
 
 ```bash
