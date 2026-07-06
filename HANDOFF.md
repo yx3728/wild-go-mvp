@@ -120,6 +120,7 @@ npm run build
 deno check supabase/functions/identify-species/index.ts
 plutil -lint ios/App/App/Info.plist
 npm run ios:build
+npm run ios:smoke
 xcrun simctl install booted ios/App/build-native/Build/Products/Debug-iphonesimulator/App.app
 xcrun simctl launch booted com.wildgo.mvp --wildgo-tab binder
 xcrun simctl launch booted com.wildgo.mvp --wildgo-tab capture
@@ -217,13 +218,14 @@ http://127.0.0.1:5173
 cd wild-go-mvp
 npm install
 npm run ios:build
+npm run ios:smoke
 xcrun simctl install booted ios/App/build-native/Build/Products/Debug-iphonesimulator/App.app
 xcrun simctl launch booted com.wildgo.mvp
 ```
 
 Use `npm run ios:open` to continue in Xcode. Configure `SUPABASE_URL` and `SUPABASE_ANON_KEY` in `ios/debug.xcconfig` or Xcode build settings before testing against a live Supabase project.
 
-For visual QA, pass a tab override such as `xcrun simctl launch booted com.wildgo.mvp --wildgo-tab capture`, `--wildgo-tab binder`, or `--wildgo-tab profile` to open native target screens directly.
+For visual QA, run `npm run ios:smoke` with a booted Simulator. The script installs the app, launches the key tabs with a timeout, and writes screenshots under the ignored `qa-shots/native-smoke/` folder. You can still pass a tab override manually, such as `xcrun simctl launch booted com.wildgo.mvp --wildgo-tab capture`, `--wildgo-tab binder`, or `--wildgo-tab profile`.
 
 ## Product Notes
 

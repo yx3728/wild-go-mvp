@@ -20,6 +20,13 @@ Six-star foil rendering in the native target uses the MIT-licensed [`Sticker`](h
 npm run ios:build
 ```
 
+With a Simulator already booted, run the native launch smoke to install the app,
+open the key tabs through `--wildgo-tab`, and save verification screenshots:
+
+```bash
+npm run ios:smoke
+```
+
 To open the project in Xcode:
 
 ```bash
