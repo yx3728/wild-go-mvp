@@ -11,7 +11,8 @@
     "ios:smoke": "npm run ios:build && ios/qa-smoke.sh",
     "ios:verify-events": "ios/qa-check-events.sh",
     "ios:interactions": "ios/qa-check-events.sh && npm run ios:build && ios/qa-interactions.sh",
-    "ios:open": "open ios/App/App.xcodeproj"
+    "ios:open": "open ios/App/App.xcodeproj",
+    "supabase:test": "deno test supabase/functions/identify-species"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.9",

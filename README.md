@@ -56,11 +56,18 @@ The native app uses generated image assets from `ios/App/App/GeneratedAssets` fo
 
 Optional offline recognition is prepared in `ios/ml/`: run `ios/ml/build-model.sh <labeled_dataset>` to train a Create ML image classifier, compile it to `WildGoSpeciesClassifier.mlmodelc`, and install it into `GeneratedAssets` for the next iOS build.
 
+To test the Supabase Edge Function's cloud-recognition result contract without
+live secrets, run:
+
+```bash
+npm run supabase:test
+```
+
 ## Prototype Highlights
 
 - Six-star holographic card reveal.
 - Physical-feeling card interactions in the SwiftUI shell: foil shimmer, press-depth, front/back card flip, add-to-binder fallback, share sheet, and a social showcase drop state.
-- Cloud-first species recognition through a Supabase Edge Function, private Storage upload, Postgres persistence, and a Vision/Core ML local-recognition path that runs when a compiled `WildGoSpeciesClassifier.mlmodelc` is bundled.
+- Cloud-first species recognition through a Supabase Edge Function, private Storage upload, Postgres persistence, model-output normalization, and a Vision/Core ML local-recognition path that runs when a compiled `WildGoSpeciesClassifier.mlmodelc` is bundled.
 - Real capture/import photos become local collectible card images before syncing to cloud Storage.
 - Rarity-based card binder with reference-style grid, real list toggle, and sorting that reorders visible cards.
 - Friends activity built around card stacks, visible showcase slots, and collection milestones.

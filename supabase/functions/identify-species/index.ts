@@ -1,3 +1,5 @@
+import { speciesResultFromOutputText, type SpeciesResult } from "./species-result.ts"
+
 type IdentifyRequest = {
   imageBase64?: string
   imageMimeType?: string
@@ -5,18 +7,6 @@ type IdentifyRequest = {
   latitude?: number
   longitude?: number
   capturedAt?: string
-}
-
-type SpeciesResult = {
-  commonName: string
-  latinName: string
-  rarity: string
-  finish: string
-  stars: number
-  confidence: number
-  note: string
-  storagePath?: string
-  alternativeMatches?: string[]
 }
 
 const OPENAI_MODEL = Deno.env.get("OPENAI_VISION_MODEL") ?? "gpt-4.1-mini"
@@ -139,10 +129,11 @@ Deno.serve(async (request) => {
     return json({ error: "OpenAI returned no structured text" }, 502)
   }
 
-  const result = {
-    ...JSON.parse(outputText) as SpeciesResult,
-    storagePath,
+  const result = speciesResultFromOutputText(outputText, storagePath)
+  if (!result) {
+    return json({ error: "OpenAI returned an invalid species result" }, 502)
   }
+
   await persistObservation(result, body, request, "cloud_api")
   return json(result, 200)
 })
