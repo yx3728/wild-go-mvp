@@ -887,6 +887,12 @@ struct SupabaseSession: Codable {
     var refreshToken: String
     var userId: UUID
     var email: String
+    var expiresAt: Date?
+
+    func needsRefresh(leeway: TimeInterval = 120) -> Bool {
+        guard let expiresAt else { return true }
+        return expiresAt <= Date().addingTimeInterval(leeway)
+    }
 }
 
 @MainActor
@@ -903,6 +909,26 @@ final class SupabaseAuthService: ObservableObject {
 
     var isSignedIn: Bool { session != nil }
     var accessToken: String? { session?.accessToken }
+
+    func validAccessToken(leeway: TimeInterval = 120) async throws -> String {
+        guard let currentSession = session else {
+            throw WildGoError.authFailed("Sign in again to sync your binder.")
+        }
+
+        guard currentSession.needsRefresh(leeway: leeway) else {
+            return currentSession.accessToken
+        }
+
+        return try await refreshSession()
+    }
+
+    func validSession(leeway: TimeInterval = 120) async throws -> SupabaseSession {
+        _ = try await validAccessToken(leeway: leeway)
+        guard let session else {
+            throw WildGoError.authFailed("Sign in again to sync your binder.")
+        }
+        return session
+    }
 
     func restoreSession() {
         guard let data = UserDefaults.standard.data(forKey: storageKey),
@@ -941,18 +967,8 @@ final class SupabaseAuthService: ObservableObject {
         }
 
         if let tokenResponse = try? JSONDecoder().decode(SupabaseTokenResponse.self, from: data),
-           let accessToken = tokenResponse.accessToken,
-           let refreshToken = tokenResponse.refreshToken,
-           let userId = tokenResponse.user?.id,
-           let userEmail = tokenResponse.user?.email {
-            persistSession(
-                SupabaseSession(
-                    accessToken: accessToken,
-                    refreshToken: refreshToken,
-                    userId: userId,
-                    email: userEmail
-                )
-            )
+           let nextSession = Self.session(from: tokenResponse) {
+            persistSession(nextSession)
             statusMessage = "Account created"
             return
         }
@@ -994,22 +1010,51 @@ final class SupabaseAuthService: ObservableObject {
         }
 
         let tokenResponse = try JSONDecoder().decode(SupabaseTokenResponse.self, from: data)
-        guard let accessToken = tokenResponse.accessToken,
-              let refreshToken = tokenResponse.refreshToken,
-              let userId = tokenResponse.user?.id,
-              let userEmail = tokenResponse.user?.email else {
+        guard let nextSession = Self.session(from: tokenResponse) else {
             throw WildGoError.authFailed("Supabase did not return a session.")
         }
 
-        persistSession(
-            SupabaseSession(
-                accessToken: accessToken,
-                refreshToken: refreshToken,
-                userId: userId,
-                email: userEmail
-            )
-        )
-        statusMessage = "Signed in as \(userEmail)"
+        persistSession(nextSession)
+        statusMessage = "Signed in as \(nextSession.email)"
+    }
+
+    private func refreshSession() async throws -> String {
+        guard let currentSession = session else {
+            throw WildGoError.authFailed("Sign in again to sync your binder.")
+        }
+        guard let projectURL = SupabaseConfiguration.projectURL,
+              let anonKey = SupabaseConfiguration.anonKey else {
+            throw WildGoError.missingSupabaseConfiguration
+        }
+
+        isBusy = true
+        defer { isBusy = false }
+
+        var components = URLComponents(url: projectURL.appending(path: "auth/v1/token"), resolvingAgainstBaseURL: false)
+        components?.queryItems = [URLQueryItem(name: "grant_type", value: "refresh_token")]
+
+        var request = URLRequest(url: components?.url ?? projectURL.appending(path: "auth/v1/token"))
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(anonKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer \(anonKey)", forHTTPHeaderField: "Authorization")
+        request.httpBody = try JSONEncoder().encode([
+            "refresh_token": currentSession.refreshToken
+        ])
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard (response as? HTTPURLResponse)?.statusCode ?? 500 < 300 else {
+            signOut()
+            throw WildGoError.authFailed(Self.errorMessage(from: data))
+        }
+
+        let tokenResponse = try JSONDecoder().decode(SupabaseTokenResponse.self, from: data)
+        guard let refreshedSession = Self.session(from: tokenResponse, fallback: currentSession) else {
+            throw WildGoError.authFailed("Supabase did not refresh the session.")
+        }
+
+        persistSession(refreshedSession)
+        return refreshedSession.accessToken
     }
 
     private func persistSession(_ nextSession: SupabaseSession) {
@@ -1025,16 +1070,49 @@ final class SupabaseAuthService: ObservableObject {
         }
         return "Authentication failed."
     }
+
+    private static func session(from tokenResponse: SupabaseTokenResponse, fallback: SupabaseSession? = nil) -> SupabaseSession? {
+        guard let accessToken = tokenResponse.accessToken,
+              let refreshToken = tokenResponse.refreshToken else {
+            return nil
+        }
+
+        let userId = tokenResponse.user?.id ?? fallback?.userId
+        let email = tokenResponse.user?.email ?? fallback?.email
+        guard let userId, let email else { return nil }
+
+        return SupabaseSession(
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+            userId: userId,
+            email: email,
+            expiresAt: expirationDate(from: tokenResponse) ?? fallback?.expiresAt
+        )
+    }
+
+    private static func expirationDate(from tokenResponse: SupabaseTokenResponse) -> Date? {
+        if let expiresAt = tokenResponse.expiresAt {
+            return Date(timeIntervalSince1970: expiresAt)
+        }
+        if let expiresIn = tokenResponse.expiresIn {
+            return Date().addingTimeInterval(expiresIn)
+        }
+        return nil
+    }
 }
 
 struct SupabaseTokenResponse: Decodable {
     var accessToken: String?
     var refreshToken: String?
+    var expiresIn: TimeInterval?
+    var expiresAt: TimeInterval?
     var user: SupabaseAuthUser?
 
     enum CodingKeys: String, CodingKey {
         case accessToken = "access_token"
         case refreshToken = "refresh_token"
+        case expiresIn = "expires_in"
+        case expiresAt = "expires_at"
         case user
     }
 }
@@ -1897,10 +1975,11 @@ struct CaptureScreen: View {
                 viewModel.showToast("Importing photo...")
                 if let data = try? await item.loadTransferable(type: Data.self) {
                     viewModel.selectedUIImage = UIImage(data: data)
+                    let accessToken = await accessTokenForCloudRequest()
                     await viewModel.identify(
                         imageData: data,
                         modelContext: modelContext,
-                        accessToken: auth.accessToken
+                        accessToken: accessToken
                     )
                     if case .success(let result) = viewModel.recognitionState {
                         viewModel.showToast("\(result.commonName) added to Binder")
@@ -1915,10 +1994,11 @@ struct CaptureScreen: View {
     private func identifyDemoImage() async {
         guard let image = UIImage.namedInWildGoBundle("capture-blue-jay-gen.png"),
               let data = image.jpegData(compressionQuality: 0.88) else { return }
+        let accessToken = await accessTokenForCloudRequest()
         await viewModel.identify(
             imageData: data,
             modelContext: modelContext,
-            accessToken: auth.accessToken
+            accessToken: accessToken
         )
     }
 
@@ -1931,10 +2011,11 @@ struct CaptureScreen: View {
         do {
             let data = try await camera.capturePhotoData()
             viewModel.selectedUIImage = UIImage(data: data)
+            let accessToken = await accessTokenForCloudRequest()
             await viewModel.identify(
                 imageData: data,
                 modelContext: modelContext,
-                accessToken: auth.accessToken
+                accessToken: accessToken
             )
             if case .success(let result) = viewModel.recognitionState {
                 viewModel.showToast("\(result.commonName) added to Binder")
@@ -1945,6 +2026,18 @@ struct CaptureScreen: View {
         } catch {
             viewModel.recognitionState = .failure(error.localizedDescription)
             viewModel.showToast("Capture failed")
+        }
+    }
+
+    @MainActor
+    private func accessTokenForCloudRequest() async -> String? {
+        guard auth.isSignedIn else { return nil }
+
+        do {
+            return try await auth.validAccessToken()
+        } catch {
+            viewModel.showToast("Sign in again to sync")
+            return nil
         }
     }
 }
@@ -4029,14 +4122,19 @@ struct ProfileScreen: View {
                 .environmentObject(viewModel)
         }
         .task(id: auth.session?.userId) {
-            guard let session = auth.session else { return }
-            let summary = await CollectionSyncService.syncCollection(
-                observations,
-                modelContext: modelContext,
-                session: session
-            )
-            if summary.changedCount > 0 {
-                viewModel.showToast(summary.toastMessage)
+            guard auth.isSignedIn else { return }
+            do {
+                let session = try await auth.validSession()
+                let summary = await CollectionSyncService.syncCollection(
+                    observations,
+                    modelContext: modelContext,
+                    session: session
+                )
+                if summary.changedCount > 0 {
+                    viewModel.showToast(summary.toastMessage)
+                }
+            } catch {
+                viewModel.showToast(error.localizedDescription)
             }
         }
     }

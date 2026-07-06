@@ -74,6 +74,7 @@ Implementation note: card physics and material should use existing MIT-licensed 
 - SwiftData local persistence, AVFoundation camera preview and still capture, PhotosUI import, MapKit location views, and CoreLocation capture metadata.
 - Captured/imported JPEGs are normalized, saved under the app support `ObservationPhotos` folder, and referenced by SwiftData cards so newly identified observations use the user's photo instead of a static demo asset.
 - Cloud-first species recognition through the Supabase Edge Function, with Supabase Auth-verified signed-in user tokens, private Storage upload, and Postgres observation persistence.
+- Supabase Auth sessions persist the refresh token and expiry time; capture/import recognition and Profile collection sync refresh stale access tokens before sending signed-in cloud requests.
 - Signed-in collection sync now uploads local-only SwiftData card photos to private Storage when the app still has the local JPEG, pushes card metadata to Postgres, pulls the user's cloud observations back into SwiftData, and caches private Storage images locally when the authenticated download succeeds.
 - Vision/Core ML local recognition is wired through `VNCoreMLRequest`; adding a compiled `WildGoSpeciesClassifier.mlmodelc` to the app bundle enables local fallback/offline classification.
 - Restored iOS AppIcon asset catalog and LaunchScreen storyboard build resources.
@@ -239,7 +240,7 @@ Capture -> AI likely match -> six-star/rarity reveal -> add to binder -> share/s
    - Copy `ios/debug.xcconfig.example` to `ios/debug.xcconfig` and add your project URL + anon key.
    - Set `OPENAI_API_KEY`; the Edge Function now fails fast without it unless `ALLOW_DEMO_IDENTIFICATION=true` is explicitly enabled for local demos.
    - Confirm `SUPABASE_ANON_KEY` is available to the Edge Function so signed-in user JWTs can be verified through Supabase Auth before `user_id` is trusted for Storage/Postgres writes.
-2. ~~Add Supabase Auth screens and user-account syncing for card collections.~~ **Done:** Profile avatar opens the auth sheet; signed-in users upload local card photos to private Storage when available, push binder metadata to Postgres, and pull cloud observations back into SwiftData.
+2. ~~Add Supabase Auth screens and user-account syncing for card collections.~~ **Done:** Profile avatar opens the auth sheet; signed-in users refresh expired access tokens, upload local card photos to private Storage when available, push binder metadata to Postgres, and pull cloud observations back into SwiftData.
 3. Test AVFoundation still-photo capture on physical devices and tune simulator fallbacks.
 4. Train/export `WildGoSpeciesClassifier.mlmodelc` and add it to the Xcode target to activate local/offline classification.
 5. ~~Expand card backs with habitat, seasonality, safety guidance, and confidence alternatives.~~ **Done:** `SpeciesFieldGuide` powers capture card backs and cloud responses can return `alternativeMatches`.
@@ -249,6 +250,6 @@ Capture -> AI likely match -> six-star/rarity reveal -> add to binder -> share/s
 ## Known Limitations
 
 - The SwiftUI app includes local SwiftData persistence and a Supabase Edge Function path for Storage/Postgres persistence, but live cloud recognition requires project secrets. Missing `OPENAI_API_KEY` is now a hard configuration error unless local demo fallback is explicitly enabled.
-- Authentication is implemented with email/password against Supabase Auth. Edge Function requests with signed-in JWTs are verified through Supabase Auth before assigning `user_id`; magic-link confirmation may still be required depending on project auth settings.
+- Authentication is implemented with email/password against Supabase Auth, including persisted refresh-token sessions for capture/import recognition and Profile sync. Edge Function requests with signed-in JWTs are verified through Supabase Auth before assigning `user_id`; magic-link confirmation may still be required depending on project auth settings.
 - Collection sync now has a bidirectional Postgres/SwiftData merge plus authenticated local-photo Storage upload, but conflict handling is intentionally simple: local rows are matched by UUID or uploaded Storage path, and remote-only rows use generated placeholder art when private Storage image download is unavailable.
 - Vision + Core ML local recognition is implemented as a runtime path, but still needs a bundled compiled model before it can classify offline.
