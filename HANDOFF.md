@@ -76,7 +76,8 @@ Implementation note: card physics and material should use existing MIT-licensed 
 - Cloud-first species recognition through the Supabase Edge Function, with Supabase Auth-verified signed-in user tokens, private Storage upload, and Postgres observation persistence.
 - Supabase Auth sessions persist the refresh token and expiry time; capture/import recognition and Profile collection sync refresh stale access tokens before sending signed-in cloud requests.
 - Signed-in collection sync now uploads local-only SwiftData card photos to private Storage when the app still has the local JPEG, pushes card metadata to Postgres, pulls the user's cloud observations back into SwiftData, and caches private Storage images locally when the authenticated download succeeds.
-- Vision/Core ML local recognition is wired through `VNCoreMLRequest`; adding a compiled `WildGoSpeciesClassifier.mlmodelc` to the app bundle enables local fallback/offline classification.
+- Vision/Core ML local recognition is wired through `VNCoreMLRequest`. `ios/ml/build-model.sh` trains (Create ML), compiles, and installs `WildGoSpeciesClassifier.mlmodelc` into the bundled `GeneratedAssets/` folder; `LocalSpeciesRecognizer` auto-discovers it there to enable local fallback/offline classification without any Xcode target edits.
+- Camera capture is Simulator-hardened: `CameraSession` skips configuration on Simulator, waits briefly for a ready photo connection on device, and prevents overlapping captures, so `Add to Binder` reliably uses the demo fallback when no hardware capture is available.
 - Restored iOS AppIcon asset catalog and LaunchScreen storyboard build resources.
 - Six-star holographic unlock card for the capture result.
 - Creature cards using bitmap nature photo assets, including a target-matched rock pigeon card crop.
@@ -236,13 +237,15 @@ Capture -> AI likely match -> six-star/rarity reveal -> add to binder -> share/s
 
 ## Recommended Next Steps
 
-1. Configure live Supabase project values and secrets for end-to-end cloud recognition/storage.
+1. Configure live Supabase project values and secrets for end-to-end cloud recognition/storage. **Tooling provided:**
    - Copy `ios/debug.xcconfig.example` to `ios/debug.xcconfig` and add your project URL + anon key.
-   - Set `OPENAI_API_KEY`; the Edge Function now fails fast without it unless `ALLOW_DEMO_IDENTIFICATION=true` is explicitly enabled for local demos.
+   - Run `supabase/deploy.sh` (links project, `db push`, sets secrets, deploys the function). See `supabase/functions/identify-species/.env.example` for local serving.
+   - Set `OPENAI_API_KEY`; the Edge Function fails fast without it unless `ALLOW_DEMO_IDENTIFICATION=true` is explicitly enabled for local demos.
    - Confirm `SUPABASE_ANON_KEY` is available to the Edge Function so signed-in user JWTs can be verified through Supabase Auth before `user_id` is trusted for Storage/Postgres writes.
+   - Secrets are now gitignored (`ios/debug.xcconfig` holds only the public anon key + URL; `.env`/service-role/OpenAI keys never get committed).
 2. ~~Add Supabase Auth screens and user-account syncing for card collections.~~ **Done:** Profile avatar opens the auth sheet; signed-in users refresh expired access tokens, upload local card photos to private Storage when available, push binder metadata to Postgres, and pull cloud observations back into SwiftData.
-3. Test AVFoundation still-photo capture on physical devices and tune simulator fallbacks.
-4. Train/export `WildGoSpeciesClassifier.mlmodelc` and add it to the Xcode target to activate local/offline classification.
+3. Test AVFoundation still-photo capture on physical devices (needs hardware). ~~Tune simulator fallbacks.~~ **Done:** `CameraSession` short-circuits on Simulator, polls up to 1.5s for a ready photo connection before falling back, and guards against overlapping captures so the demo fallback stays reliable.
+4. ~~Train/export `WildGoSpeciesClassifier.mlmodelc` and add it to the Xcode target to activate local/offline classification.~~ **Tooling provided:** `ios/ml/` has a Create ML training script, a `build-model.sh` that trains + compiles + installs the model into `GeneratedAssets`, and a README. `LocalSpeciesRecognizer` auto-discovers a model dropped into `GeneratedAssets/` — run `ios/ml/build-model.sh <dataset>` with a labeled dataset to activate offline classification (no `.pbxproj` edits needed).
 5. ~~Expand card backs with habitat, seasonality, safety guidance, and confidence alternatives.~~ **Done:** `SpeciesFieldGuide` powers capture card backs and cloud responses can return `alternativeMatches`.
 6. ~~Add share-card export as an image.~~ **Done:** Share Card now exports a rendered card image plus text through the native share sheet.
 7. ~~Add privacy rules for sensitive species and exact locations.~~ **Done:** `PrivacyLocationPolicy` softens map pins and locality labels for sensitive/high-rarity finds.
@@ -252,4 +255,5 @@ Capture -> AI likely match -> six-star/rarity reveal -> add to binder -> share/s
 - The SwiftUI app includes local SwiftData persistence and a Supabase Edge Function path for Storage/Postgres persistence, but live cloud recognition requires project secrets. Missing `OPENAI_API_KEY` is now a hard configuration error unless local demo fallback is explicitly enabled.
 - Authentication is implemented with email/password against Supabase Auth, including persisted refresh-token sessions for capture/import recognition and Profile sync. Edge Function requests with signed-in JWTs are verified through Supabase Auth before assigning `user_id`; magic-link confirmation may still be required depending on project auth settings.
 - Collection sync now has a bidirectional Postgres/SwiftData merge plus authenticated local-photo Storage upload, but conflict handling is intentionally simple: local rows are matched by UUID or uploaded Storage path, and remote-only rows use generated placeholder art when private Storage image download is unavailable.
-- Vision + Core ML local recognition is implemented as a runtime path, but still needs a bundled compiled model before it can classify offline.
+- Vision + Core ML local recognition is implemented as a runtime path with a full training/export pipeline (`ios/ml/`); it still needs a labeled dataset run through `ios/ml/build-model.sh` to produce the bundled model before it can classify offline.
+- Physical-device AVFoundation capture still needs on-hardware verification; the Simulator path is covered by the demo fallback.

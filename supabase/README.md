@@ -33,7 +33,23 @@ The Edge Function uses `SUPABASE_SERVICE_ROLE_KEY` for controlled server-side wr
 
 ## Deploy
 
+For the usual project setup, export the required values and run the helper:
+
+```bash
+SUPABASE_PROJECT_REF=abcd1234 \
+OPENAI_API_KEY=sk-... \
+SUPABASE_SERVICE_ROLE_KEY=... \
+SUPABASE_ANON_KEY=... \
+supabase/deploy.sh
+```
+
+The script links the project, applies migrations, sets Edge Function secrets, and deploys `identify-species`.
+
+Manual deploy:
+
 ```bash
 supabase db push
 supabase functions deploy identify-species
 ```
+
+For local function serving, copy `functions/identify-species/.env.example` to an ignored `.env.local` and fill in local values.

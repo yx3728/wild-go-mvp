@@ -361,6 +361,12 @@ final class CameraSession: NSObject, ObservableObject, AVCapturePhotoCaptureDele
     }
 
     func start() {
+        // No capture hardware on Simulator; capture falls back to the demo card.
+        guard !Self.isSimulator else {
+            isCaptureReady = false
+            return
+        }
+
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
             isAuthorized = true
@@ -418,15 +424,33 @@ final class CameraSession: NSObject, ObservableObject, AVCapturePhotoCaptureDele
         }
     }
 
+    static var isSimulator: Bool {
+        #if targetEnvironment(simulator)
+        return true
+        #else
+        return false
+        #endif
+    }
+
     func capturePhotoData() async throws -> Data {
+        // The Simulator has no capture hardware; fail fast so the demo fallback runs.
+        guard !Self.isSimulator else { throw WildGoError.cameraUnavailable }
         guard isAuthorized else { throw WildGoError.cameraUnavailable }
 
         if !session.isRunning || !session.outputs.contains(photoOutput) {
             configureAndStart()
         }
 
-        guard hasReadyPhotoConnection else {
+        // `startRunning()` runs on a background queue, so the connection may not be
+        // ready on the first tap right after the view appears. Poll briefly before
+        // giving up and letting the caller fall back.
+        if !(await waitForReadyPhotoConnection()) {
             throw WildGoError.cameraUnavailable
+        }
+
+        // Guard against an in-flight capture (e.g. rapid double taps).
+        guard captureContinuation == nil else {
+            throw WildGoError.cameraCaptureFailed
         }
 
         return try await withCheckedThrowingContinuation { continuation in
@@ -437,6 +461,21 @@ final class CameraSession: NSObject, ObservableObject, AVCapturePhotoCaptureDele
             settings.photoQualityPrioritization = .quality
             photoOutput.capturePhoto(with: settings, delegate: self)
         }
+    }
+
+    private func waitForReadyPhotoConnection(
+        timeout: TimeInterval = 1.5,
+        pollInterval: UInt64 = 100_000_000
+    ) async -> Bool {
+        if hasReadyPhotoConnection { return true }
+
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            try? await Task.sleep(nanoseconds: pollInterval)
+            if hasReadyPhotoConnection { return true }
+        }
+
+        return hasReadyPhotoConnection
     }
 
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
@@ -597,7 +636,20 @@ struct LocalSpeciesRecognizer: SpeciesRecognizing {
             return namedURL
         }
 
-        return Bundle.main.urls(forResourcesWithExtension: "mlmodelc", subdirectory: nil)?.first
+        // Models dropped into the bundled GeneratedAssets folder (see ios/ml/build-model.sh).
+        if let generatedURL = Bundle.main.url(
+            forResource: "WildGoSpeciesClassifier",
+            withExtension: "mlmodelc",
+            subdirectory: "GeneratedAssets"
+        ) {
+            return generatedURL
+        }
+
+        if let topLevelModel = Bundle.main.urls(forResourcesWithExtension: "mlmodelc", subdirectory: nil)?.first {
+            return topLevelModel
+        }
+
+        return Bundle.main.urls(forResourcesWithExtension: "mlmodelc", subdirectory: "GeneratedAssets")?.first
     }
 }
 
