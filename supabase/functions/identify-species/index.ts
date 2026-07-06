@@ -23,6 +23,7 @@ const OPENAI_MODEL = Deno.env.get("OPENAI_VISION_MODEL") ?? "gpt-4.1-mini"
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY")
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
+const SUPABASE_AUTH_API_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? SUPABASE_SERVICE_ROLE_KEY
 const ALLOW_DEMO_IDENTIFICATION = flagEnabled(Deno.env.get("ALLOW_DEMO_IDENTIFICATION"))
 
 const fallback: SpeciesResult = {
@@ -186,7 +187,7 @@ async function uploadObservationImage(request: IdentifyRequest, httpRequest: Req
     return undefined
   }
 
-  const userId = userIdFromAuthHeader(httpRequest)
+  const userId = await verifiedUserIdFromAuthHeader(httpRequest)
   const clientId = sanitizePathSegment(request.clientId ?? "anonymous")
   const extension = imageExtension(mimeType)
   const storagePath = userId
@@ -233,7 +234,7 @@ async function persistObservation(
     return
   }
 
-  const userId = userIdFromAuthHeader(httpRequest)
+  const userId = await verifiedUserIdFromAuthHeader(httpRequest)
 
   await fetch(`${SUPABASE_URL}/rest/v1/observations`, {
     method: "POST",
@@ -304,22 +305,31 @@ function imageExtension(mimeType: string): string {
   }
 }
 
-function userIdFromAuthHeader(request: Request): string | null {
+async function verifiedUserIdFromAuthHeader(request: Request): Promise<string | null> {
   const header = request.headers.get("Authorization")
   if (!header?.startsWith("Bearer ")) {
     return null
   }
 
   const token = header.slice("Bearer ".length)
-  const parts = token.split(".")
-  if (parts.length < 2) {
+  if (!SUPABASE_URL || !SUPABASE_AUTH_API_KEY || token === SUPABASE_SERVICE_ROLE_KEY) {
     return null
   }
 
-  try {
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/"))) as { sub?: string }
-    return typeof payload.sub === "string" ? payload.sub : null
-  } catch {
+  const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "apikey": SUPABASE_AUTH_API_KEY,
+    },
+  }).catch(() => undefined)
+
+  if (!response?.ok) {
     return null
   }
+
+  const payload = await response.json().catch(() => null) as { id?: string; sub?: string } | null
+  if (typeof payload?.id === "string") {
+    return payload.id
+  }
+  return typeof payload?.sub === "string" ? payload.sub : null
 }
