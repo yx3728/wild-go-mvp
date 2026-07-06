@@ -26,7 +26,7 @@ To open the project in Xcode:
 open ios/App/App.xcodeproj
 ```
 
-The native app uses generated image assets from `ios/App/App/GeneratedAssets` for demo cards, while newly captured or imported JPEGs are saved under the app support `ObservationPhotos` folder and referenced from SwiftData cards. Supabase setup lives in `supabase/`; local app keys are read from `ios/debug.xcconfig` or Xcode build settings (`ios/debug.xcconfig.example` is provided). Captured images are sent to the `identify-species` Edge Function, which uploads to private Supabase Storage and writes card metadata to Postgres with the service role key. Profile → avatar opens Supabase email/password auth, pushes local-only binder cards, pulls the signed-in user's Postgres observations back into SwiftData, and caches private Storage images locally when available.
+The native app uses generated image assets from `ios/App/App/GeneratedAssets` for demo cards, while newly captured or imported JPEGs are saved under the app support `ObservationPhotos` folder and referenced from SwiftData cards. Supabase setup lives in `supabase/`; local app keys are read from `ios/debug.xcconfig` or Xcode build settings (`ios/debug.xcconfig.example` is provided). Captured images are sent to the `identify-species` Edge Function, which uploads to private Supabase Storage and writes card metadata to Postgres with the service role key. Profile → avatar opens Supabase email/password auth, uploads local-only card photos to private Storage when available, pushes binder card metadata, pulls the signed-in user's Postgres observations back into SwiftData, and caches private Storage images locally when available.
 
 ## Prototype Highlights
 

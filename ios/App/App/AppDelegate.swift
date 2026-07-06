@@ -280,6 +280,11 @@ enum ObservationPhotoStore {
         return UIImage(contentsOfFile: url.path)
     }
 
+    static func data(named reference: String) -> Data? {
+        guard let url = localURL(for: reference) else { return nil }
+        return try? Data(contentsOf: url)
+    }
+
     private static func localURL(for reference: String) -> URL? {
         guard reference.hasPrefix(referencePrefix) else { return nil }
         let rawFilename = String(reference.dropFirst(referencePrefix.count))
@@ -1099,6 +1104,8 @@ enum CollectionSyncService {
 
         var syncedCount = 0
         for observation in observations where observation.uploadedPath == nil {
+            let pendingStoragePath = await uploadLocalObservationImage(observation, session: session)
+
             var components = URLComponents(url: projectURL.appending(path: "rest/v1/observations"), resolvingAgainstBaseURL: false)
             components?.queryItems = [URLQueryItem(name: "on_conflict", value: "id")]
 
@@ -1123,7 +1130,7 @@ enum CollectionSyncService {
                 "note": observation.note,
                 "latitude": observation.latitude,
                 "longitude": observation.longitude,
-                "image_path": observation.uploadedPath,
+                "image_path": pendingStoragePath,
                 "source": "cloud_api",
                 "captured_at": ISO8601DateFormatter().string(from: observation.createdAt)
             ]
@@ -1131,6 +1138,7 @@ enum CollectionSyncService {
             request.httpBody = try? JSONSerialization.data(withJSONObject: payload.compactMapValues { $0 })
             if let (_, response) = try? await URLSession.shared.data(for: request),
                (response as? HTTPURLResponse)?.statusCode ?? 500 < 300 {
+                observation.uploadedPath = pendingStoragePath
                 syncedCount += 1
             }
         }
@@ -1224,6 +1232,31 @@ enum CollectionSyncService {
         return try? JSONDecoder().decode([RemoteObservationRow].self, from: data)
     }
 
+    private static func uploadLocalObservationImage(_ observation: WildObservation, session: SupabaseSession) async -> String? {
+        guard observation.uploadedPath == nil,
+              let imageData = ObservationPhotoStore.data(named: observation.imageName),
+              let uploadURL = storageObjectURL(path: storagePath(for: observation, session: session)),
+              let anonKey = SupabaseConfiguration.anonKey else {
+            return nil
+        }
+
+        let storagePath = storagePath(for: observation, session: session)
+        var request = URLRequest(url: uploadURL)
+        request.httpMethod = "POST"
+        request.setValue(anonKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer \(session.accessToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("image/jpeg", forHTTPHeaderField: "Content-Type")
+        request.setValue("true", forHTTPHeaderField: "x-upsert")
+        request.httpBody = imageData
+
+        guard let (_, response) = try? await URLSession.shared.data(for: request),
+              (response as? HTTPURLResponse)?.statusCode ?? 500 < 300 else {
+            return nil
+        }
+
+        return storagePath
+    }
+
     @MainActor
     private static func apply(_ row: RemoteObservationRow, to observation: WildObservation, session: SupabaseSession) async -> Bool {
         var changed = false
@@ -1269,17 +1302,9 @@ enum CollectionSyncService {
     }
 
     private static func downloadObservationImage(path: String, session: SupabaseSession) async -> Data? {
-        guard let projectURL = SupabaseConfiguration.projectURL,
+        guard let url = storageObjectURL(path: path),
               let anonKey = SupabaseConfiguration.anonKey else {
             return nil
-        }
-
-        var url = projectURL.appendingPathComponent("storage")
-            .appendingPathComponent("v1")
-            .appendingPathComponent("object")
-            .appendingPathComponent("observations")
-        for component in path.split(separator: "/") {
-            url.appendPathComponent(String(component))
         }
 
         var request = URLRequest(url: url)
@@ -1292,6 +1317,24 @@ enum CollectionSyncService {
         }
 
         return data
+    }
+
+    private static func storagePath(for observation: WildObservation, session: SupabaseSession) -> String {
+        "\(session.userId.uuidString.lowercased())/\(observation.id.uuidString.lowercased()).jpg"
+    }
+
+    private static func storageObjectURL(path: String) -> URL? {
+        guard let projectURL = SupabaseConfiguration.projectURL else { return nil }
+
+        var url = projectURL.appendingPathComponent("storage")
+            .appendingPathComponent("v1")
+            .appendingPathComponent("object")
+            .appendingPathComponent("observations")
+        for component in path.split(separator: "/") {
+            url.appendPathComponent(String(component))
+        }
+
+        return url
     }
 
     private static func fallbackImageName(for row: RemoteObservationRow) -> String {

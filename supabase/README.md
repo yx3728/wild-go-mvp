@@ -27,7 +27,7 @@ Do not enable `ALLOW_DEMO_IDENTIFICATION` in production. It records `source = 'f
 
 The app reads `SUPABASE_URL` and `SUPABASE_ANON_KEY` from `Info.plist` build settings. Add those values in an `.xcconfig` or Xcode build settings before testing against a real Supabase project. The native app sends JPEG image data, a stable local `clientId`, optional location, and capture time to the Edge Function.
 
-The app does not upload capture images directly with the anon key. The Edge Function uses `SUPABASE_SERVICE_ROLE_KEY` to place anonymous images in `observations/devices/{clientId}/...`; when the iOS app sends a signed-in user JWT, uploads move to `observations/{userId}/...` and observations persist with `user_id`. Signed-in collection sync can also read the user's Postgres rows and authenticated private Storage objects back into the local SwiftData binder.
+The Edge Function uses `SUPABASE_SERVICE_ROLE_KEY` to place anonymous images in `observations/devices/{clientId}/...`; when the iOS app sends a signed-in user JWT, uploads move to `observations/{userId}/...` and observations persist with `user_id`. Signed-in collection sync can also upload remaining local-only JPEGs directly with the user's JWT to `observations/{userId}/{observationId}.jpg`, read the user's Postgres rows, and cache authenticated private Storage objects back into the local SwiftData binder.
 
 ## Deploy
 

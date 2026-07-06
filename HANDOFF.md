@@ -74,7 +74,7 @@ Implementation note: card physics and material should use existing MIT-licensed 
 - SwiftData local persistence, AVFoundation camera preview and still capture, PhotosUI import, MapKit location views, and CoreLocation capture metadata.
 - Captured/imported JPEGs are normalized, saved under the app support `ObservationPhotos` folder, and referenced by SwiftData cards so newly identified observations use the user's photo instead of a static demo asset.
 - Cloud-first species recognition through the Supabase Edge Function, with private Storage upload and Postgres observation persistence.
-- Signed-in collection sync now pushes local-only SwiftData cards to Postgres, pulls the user's cloud observations back into SwiftData, and caches private Storage images locally when the authenticated download succeeds.
+- Signed-in collection sync now uploads local-only SwiftData card photos to private Storage when the app still has the local JPEG, pushes card metadata to Postgres, pulls the user's cloud observations back into SwiftData, and caches private Storage images locally when the authenticated download succeeds.
 - Vision/Core ML local recognition is wired through `VNCoreMLRequest`; adding a compiled `WildGoSpeciesClassifier.mlmodelc` to the app bundle enables local fallback/offline classification.
 - Restored iOS AppIcon asset catalog and LaunchScreen storyboard build resources.
 - Six-star holographic unlock card for the capture result.
@@ -238,7 +238,7 @@ Capture -> AI likely match -> six-star/rarity reveal -> add to binder -> share/s
 1. Configure live Supabase project values and secrets for end-to-end cloud recognition/storage.
    - Copy `ios/debug.xcconfig.example` to `ios/debug.xcconfig` and add your project URL + anon key.
    - Set `OPENAI_API_KEY`; the Edge Function now fails fast without it unless `ALLOW_DEMO_IDENTIFICATION=true` is explicitly enabled for local demos.
-2. ~~Add Supabase Auth screens and user-account syncing for card collections.~~ **Done:** Profile avatar opens the auth sheet; signed-in users push local binder cards to Postgres and pull cloud observations back into SwiftData.
+2. ~~Add Supabase Auth screens and user-account syncing for card collections.~~ **Done:** Profile avatar opens the auth sheet; signed-in users upload local card photos to private Storage when available, push binder metadata to Postgres, and pull cloud observations back into SwiftData.
 3. Test AVFoundation still-photo capture on physical devices and tune simulator fallbacks.
 4. Train/export `WildGoSpeciesClassifier.mlmodelc` and add it to the Xcode target to activate local/offline classification.
 5. ~~Expand card backs with habitat, seasonality, safety guidance, and confidence alternatives.~~ **Done:** `SpeciesFieldGuide` powers capture card backs and cloud responses can return `alternativeMatches`.
@@ -249,5 +249,5 @@ Capture -> AI likely match -> six-star/rarity reveal -> add to binder -> share/s
 
 - The SwiftUI app includes local SwiftData persistence and a Supabase Edge Function path for Storage/Postgres persistence, but live cloud recognition requires project secrets. Missing `OPENAI_API_KEY` is now a hard configuration error unless local demo fallback is explicitly enabled.
 - Authentication is implemented with email/password against Supabase Auth. Magic-link confirmation may still be required depending on project auth settings.
-- Collection sync now has a bidirectional Postgres/SwiftData merge, but conflict handling is intentionally simple: local rows are matched by UUID or uploaded Storage path, and remote-only rows use generated placeholder art when private Storage image download is unavailable.
+- Collection sync now has a bidirectional Postgres/SwiftData merge plus authenticated local-photo Storage upload, but conflict handling is intentionally simple: local rows are matched by UUID or uploaded Storage path, and remote-only rows use generated placeholder art when private Storage image download is unavailable.
 - Vision + Core ML local recognition is implemented as a runtime path, but still needs a bundled compiled model before it can classify offline.
