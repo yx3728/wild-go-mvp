@@ -28,6 +28,38 @@ checkFile("iOS app source", "ios/App/App/AppDelegate.swift", [
   "MLModel(contentsOf:",
 ]);
 
+checkFile("Sticker Swift package dependency", "ios/App/App.xcodeproj/project.pbxproj", [
+  "https://github.com/bpisano/sticker",
+  "minimumVersion = 1.3.0",
+  "productName = Sticker",
+  "Sticker in Frameworks",
+]);
+
+checkFile(
+  "Sticker Swift package resolved pin",
+  "ios/App/App.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved",
+  [
+    "\"identity\" : \"sticker\"",
+    "\"location\" : \"https://github.com/bpisano/sticker\"",
+    "\"revision\" : \"301b9e0fb802c01edb2ed25695b3ba62e9c61da3\"",
+    "\"version\" : \"1.4.0\"",
+  ],
+);
+
+checkFile("Sticker foil implementation", "ios/App/App/AppDelegate.swift", [
+  "import Sticker",
+  "ShaderLibrary.compileStickerShaders()",
+  "FoilCardFrame(cornerRadius:",
+  "CardFoilBloom(cornerRadius:",
+  "stickerExampleEffect()",
+  "stickerEffect()",
+  ".stickerColorIntensity(0.5)",
+  ".stickerNoiseScale(200)",
+  ".stickerLightIntensity(0.5)",
+  "stickerMotionEffect(.dragGesture(intensity: intensity))",
+  "stickerMotionEffect(.accelerometer(intensity: intensity, maxRotation: .degrees(42), updateInterval: 0.025))",
+]);
+
 checkFile("Supabase migration", "supabase/migrations/20260705220500_initial_wild_go.sql", [
   "create table if not exists public.observations",
   "alter table public.observations enable row level security",
@@ -98,6 +130,7 @@ checkAsset("Capture native reference", "qa-shots/swiftui-native-capture-layout-f
 checkAsset("Binder native reference", "qa-shots/swiftui-native-binder-grid-layout-final.png");
 checkAsset("Profile native reference", "qa-shots/swiftui-native-friends-profile-v16.png");
 checkAsset("Map native reference", "qa-shots/tuned-map.png");
+checkAsset("Sticker example native reference", "qa-shots/swiftui-native-capture-sticker-example-params-v1.png");
 
 const failures = checks.filter((check) => !check.ok);
 for (const check of checks) {
