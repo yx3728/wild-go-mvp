@@ -123,6 +123,7 @@ npm run supabase:test
 plutil -lint ios/App/App/Info.plist
 npm run ios:build
 npm run ios:verify-events
+npm run ios:visual-check
 npm run ios:smoke
 npm run ios:interactions
 xcrun simctl install booted ios/App/build-native/Build/Products/Debug-iphonesimulator/App.app
@@ -201,6 +202,7 @@ Browser checks covered:
 - Add to Binder updates button state.
 - 5-6 rarity filter returns the five-star and six-star cards.
 - Map, binder, and capture screens render without visual overlap.
+- `npm run ios:visual-check` parses the generated native smoke PNGs without GUI access and fails if any core tab screenshot is missing, too small, mostly transparent, too low-contrast, or visually collapsed into too few sampled color buckets.
 - Friends showcase stack keeps intentional card overflow without colliding with the bottom navigation.
 - iOS simulator launches full screen with restored app icon and launch storyboard resources compiled by Xcode.
 
@@ -225,6 +227,7 @@ cd wild-go-mvp
 npm install
 npm run ios:build
 npm run ios:smoke
+npm run ios:visual-check
 npm run ios:interactions
 xcrun simctl install booted ios/App/build-native/Build/Products/Debug-iphonesimulator/App.app
 xcrun simctl launch booted com.wildgo.mvp
