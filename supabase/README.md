@@ -7,6 +7,7 @@ This folder is the backend target for the native SwiftUI MVP.
 - `migrations/20260705220500_initial_wild_go.sql` creates the `observations` Postgres table, indexes, authenticated Row Level Security policies, and the private `observations` Storage bucket.
 - `functions/identify-species` is a Deno Edge Function that calls the OpenAI Responses API for cloud species recognition, verifies any signed-in user JWT through Supabase Auth, uploads the observation image to Storage with the service role key, and writes the resulting card metadata to Postgres.
 - `functions/identify-species/species-result.ts` normalizes generous model output into card-safe rarity, finish, star, confidence, note, and alternative-match values before the result is returned or persisted.
+- `functions/identify-species/request-utils.ts` keeps the request-side contract testable: data URL/base64 decoding, private Storage path construction, path-segment sanitization, MIME suffix mapping, and Supabase Auth bearer-token verification.
 
 ## Required secrets
 
@@ -62,3 +63,5 @@ Run the function-level contract tests without live Supabase or OpenAI secrets:
 ```bash
 npm run supabase:test
 ```
+
+The test suite covers model-output normalization plus request utilities, including signed-in versus anonymous Storage paths and the rule that service-role tokens are never trusted as end-user identity.

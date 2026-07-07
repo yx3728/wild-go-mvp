@@ -1,4 +1,10 @@
 import { speciesResultFromOutputText, type SpeciesResult } from "./species-result.ts"
+import {
+  decodeBase64Image,
+  storagePathForObservation,
+  stripDataURLPrefix,
+  verifiedUserIdFromAuthHeader,
+} from "./request-utils.ts"
 
 type IdentifyRequest = {
   imageBase64?: string
@@ -178,12 +184,16 @@ async function uploadObservationImage(request: IdentifyRequest, httpRequest: Req
     return undefined
   }
 
-  const userId = await verifiedUserIdFromAuthHeader(httpRequest)
-  const clientId = sanitizePathSegment(request.clientId ?? "anonymous")
-  const extension = imageExtension(mimeType)
-  const storagePath = userId
-    ? `${sanitizePathSegment(userId)}/${crypto.randomUUID()}.${extension}`
-    : `devices/${clientId}/${crypto.randomUUID()}.${extension}`
+  const userId = await verifiedUserIdFromAuthHeader(httpRequest, {
+    supabaseUrl: SUPABASE_URL,
+    authApiKey: SUPABASE_AUTH_API_KEY,
+    serviceRoleKey: SUPABASE_SERVICE_ROLE_KEY,
+  })
+  const storagePath = storagePathForObservation({
+    userId,
+    clientId: request.clientId,
+    mimeType,
+  })
   const uploadURL = `${SUPABASE_URL}/storage/v1/object/observations/${storagePath}`
   let imageBytes: Uint8Array
 
@@ -225,7 +235,11 @@ async function persistObservation(
     return
   }
 
-  const userId = await verifiedUserIdFromAuthHeader(httpRequest)
+  const userId = await verifiedUserIdFromAuthHeader(httpRequest, {
+    supabaseUrl: SUPABASE_URL,
+    authApiKey: SUPABASE_AUTH_API_KEY,
+    serviceRoleKey: SUPABASE_SERVICE_ROLE_KEY,
+  })
 
   await fetch(`${SUPABASE_URL}/rest/v1/observations`, {
     method: "POST",
@@ -257,70 +271,4 @@ async function persistObservation(
 
 function flagEnabled(value: string | undefined): boolean {
   return ["1", "true", "yes"].includes((value ?? "").trim().toLowerCase())
-}
-
-function decodeBase64Image(imageBase64 = ""): Uint8Array {
-  const normalized = stripDataURLPrefix(imageBase64)
-  const binary = atob(normalized)
-  const bytes = new Uint8Array(binary.length)
-  for (let index = 0; index < binary.length; index += 1) {
-    bytes[index] = binary.charCodeAt(index)
-  }
-  return bytes
-}
-
-function stripDataURLPrefix(imageBase64 = ""): string {
-  const commaIndex = imageBase64.indexOf(",")
-  return commaIndex >= 0 ? imageBase64.slice(commaIndex + 1) : imageBase64
-}
-
-function sanitizePathSegment(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9-]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 80) || "anonymous"
-}
-
-function imageExtension(mimeType: string): string {
-  switch (mimeType) {
-    case "image/png":
-      return "png"
-    case "image/heic":
-      return "heic"
-    case "image/heif":
-      return "heif"
-    default:
-      return "jpg"
-  }
-}
-
-async function verifiedUserIdFromAuthHeader(request: Request): Promise<string | null> {
-  const header = request.headers.get("Authorization")
-  if (!header?.startsWith("Bearer ")) {
-    return null
-  }
-
-  const token = header.slice("Bearer ".length)
-  if (!SUPABASE_URL || !SUPABASE_AUTH_API_KEY || token === SUPABASE_SERVICE_ROLE_KEY) {
-    return null
-  }
-
-  const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "apikey": SUPABASE_AUTH_API_KEY,
-    },
-  }).catch(() => undefined)
-
-  if (!response?.ok) {
-    return null
-  }
-
-  const payload = await response.json().catch(() => null) as { id?: string; sub?: string } | null
-  if (typeof payload?.id === "string") {
-    return payload.id
-  }
-  return typeof payload?.sub === "string" ? payload.sub : null
 }
