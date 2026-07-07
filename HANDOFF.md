@@ -118,6 +118,7 @@ Commands run:
 ```bash
 npm install
 npm run build
+npm run goal:audit
 deno check supabase/functions/identify-species/index.ts
 npm run supabase:test
 plutil -lint ios/App/App/Info.plist
@@ -193,6 +194,7 @@ Browser checks covered:
 - Real-coordinate automation verified Capture Tilt, Press & Hold, Flip, Add to Binder, and Share Card. Add to Binder now stays in-app and falls back to the demo image on Simulator instead of crashing when AVFoundation has no active video connection; Share Card opens the native share sheet and is now part of `ios/qa-interactions.sh`.
 - `npm run ios:interactions` now repeats the native button checks with real Simulator-window coordinate taps and validates the SwiftUI actions through the app's QA-only event log. It covers the full bottom navigation, Map Near me/Capture/Cards controls, Capture Back/Tilt/Press & Hold/Flip/Add/Share, Cards collection/notifications/mode tabs/layout/Tips controls, and Profile/Friends controls. It is gated by `npm run ios:verify-events`, a Simulator-free check that fails fast if any `wait_for_event` assertion no longer maps to a `showToast` string (or tab `qaName`) in `AppDelegate.swift`.
 - `npm run supabase:test` covers the cloud-recognition backend contract without live secrets, including OpenAI output normalization for confidence percentages, out-of-range stars, tier/finish synonyms, missing notes, invalid JSON, base64/data URL decoding, private Storage path construction, path-segment sanitization, and Supabase Auth bearer-token verification before trusting a `user_id`.
+- `npm run goal:audit` performs a simulator-free static audit that the repo still contains the requested native iOS frameworks, SwiftData model container, AVFoundation capture path, MapKit/PhotosUI/CoreLocation usage, Supabase Postgres/Storage/RLS migration, OpenAI-backed Edge Function, Vision/Core ML fallback path, model-training tooling, concept references, and native visual QA references.
 - Friends Flip swaps the showcase card to its back, and Drag/Add to Showcase changes the visible showcase slot state.
 - Friends/Profile `v16` tightens the reference-style action rail so long labels fit, restores a visible trade/friends icon with a supported SF Symbol, and reduces the back-card typography so the small cards read as a physical stack instead of cropped posters.
 - Real-coordinate automation verified Friends Drag to showcase, Flip, Trade Later, and Compare after the `v16` visual pass.
@@ -225,6 +227,7 @@ http://127.0.0.1:5173
 ```bash
 cd wild-go-mvp
 npm install
+npm run goal:audit
 npm run ios:build
 npm run ios:smoke
 npm run ios:visual-check
