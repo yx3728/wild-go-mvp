@@ -63,6 +63,15 @@ live secrets, run:
 npm run supabase:test
 ```
 
+To run every Simulator-free guard in one gate (goal-stack audit, QA event
+consistency, concept-fidelity audit, Edge Function tests, and the web build),
+use the aggregate command. It fails fast and needs no Mac Simulator, so it is
+the recommended pre-commit / CI check:
+
+```bash
+npm run verify
+```
+
 ## Prototype Highlights
 
 - Six-star holographic card reveal.

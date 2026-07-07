@@ -117,6 +117,7 @@ Commands run:
 
 ```bash
 npm install
+npm run verify   # aggregate, Simulator-free gate: goal:audit + ios:verify-events + concept:audit + supabase:test + build
 npm run build
 npm run goal:audit
 npm run concept:audit

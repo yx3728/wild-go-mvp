@@ -9,6 +9,7 @@
     "preview": "vite preview --host 127.0.0.1",
     "goal:audit": "node scripts/audit-goal-stack.mjs",
     "concept:audit": "node scripts/audit-concept-fidelity.mjs",
+    "verify": "npm run goal:audit && npm run ios:verify-events && npm run concept:audit && npm run supabase:test && npm run build",
     "ios:build": "xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug -sdk iphonesimulator -derivedDataPath ios/App/build-native CODE_SIGNING_ALLOWED=NO build",
     "ios:smoke": "npm run ios:build && ios/qa-smoke.sh",
     "ios:visual-check": "node scripts/verify-native-smoke-images.mjs",
