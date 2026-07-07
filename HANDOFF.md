@@ -119,6 +119,7 @@ Commands run:
 npm install
 npm run build
 npm run goal:audit
+npm run concept:audit
 deno check supabase/functions/identify-species/index.ts
 npm run supabase:test
 plutil -lint ios/App/App/Info.plist
@@ -195,6 +196,7 @@ Browser checks covered:
 - `npm run ios:interactions` now repeats the native button checks with real Simulator-window coordinate taps and validates the SwiftUI actions through the app's QA-only event log. It covers the full bottom navigation, Map Near me/Capture/Cards controls, Capture Back/Tilt/Press & Hold/Flip/Add/Share, Cards collection/notifications/mode tabs/layout/Tips controls, and Profile/Friends controls. It is gated by `npm run ios:verify-events`, a Simulator-free check that fails fast if any `wait_for_event` assertion no longer maps to a `showToast` string (or tab `qaName`) in `AppDelegate.swift`.
 - `npm run supabase:test` covers the cloud-recognition backend contract without live secrets, including OpenAI output normalization for confidence percentages, out-of-range stars, tier/finish synonyms, missing notes, invalid JSON, base64/data URL decoding, private Storage path construction, path-segment sanitization, and Supabase Auth bearer-token verification before trusting a `user_id`.
 - `npm run goal:audit` performs a simulator-free static audit that the repo still contains the requested native iOS frameworks, SwiftData model container, AVFoundation capture path, MapKit/PhotosUI/CoreLocation usage, Supabase Postgres/Storage/RLS migration, OpenAI-backed Edge Function, Vision/Core ML fallback path, model-training tooling, concept references, native visual QA references, and the GitHub Sticker foil package with its pinned version, README example shader parameters, motion path, shader precompile call, and sticker QA reference.
+- `npm run concept:audit` compares the tracked native Capture, Binder, and Friends/Profile reference screenshots against the original concept images with normalized thumbnail, color-histogram, and vertical-band similarity metrics, so future visual changes can prove whether they move closer to or farther from the concept art.
 - Friends Flip swaps the showcase card to its back, and Drag/Add to Showcase changes the visible showcase slot state.
 - Friends/Profile `v16` tightens the reference-style action rail so long labels fit, restores a visible trade/friends icon with a supported SF Symbol, and reduces the back-card typography so the small cards read as a physical stack instead of cropped posters.
 - Real-coordinate automation verified Friends Drag to showcase, Flip, Trade Later, and Compare after the `v16` visual pass.
@@ -228,6 +230,7 @@ http://127.0.0.1:5173
 cd wild-go-mvp
 npm install
 npm run goal:audit
+npm run concept:audit
 npm run ios:build
 npm run ios:smoke
 npm run ios:visual-check

@@ -113,6 +113,7 @@ checkFile("Package scripts", "package.json", [
   "\"ios:interactions\"",
   "\"supabase:test\"",
   "\"goal:audit\"",
+  "\"concept:audit\"",
 ]);
 
 checkFile("Native visual QA", "scripts/verify-native-smoke-images.mjs", [
@@ -121,6 +122,17 @@ checkFile("Native visual QA", "scripts/verify-native-smoke-images.mjs", [
   "swiftui-native-binder-grid-layout-final.png",
   "swiftui-native-friends-profile-v16.png",
   "tuned-map.png",
+]);
+
+checkFile("Concept fidelity QA", "scripts/audit-concept-fidelity.mjs", [
+  "conceptSpecs",
+  "capture-holo-unlock.png",
+  "binder-rarity-grid.png",
+  "friends-showcase-stack.png",
+  "minimumComposite",
+  "thumbnailSimilarity",
+  "histogramSimilarity",
+  "bandSimilarity",
 ]);
 
 checkAsset("Capture concept reference", "docs/card-visuals/capture-holo-unlock.png");
