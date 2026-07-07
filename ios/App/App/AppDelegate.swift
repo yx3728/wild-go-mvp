@@ -2001,10 +2001,10 @@ struct CaptureScreen: View {
         NavigationStack {
             GeometryReader { proxy in
                 let compactHeight = proxy.size.height < 880
-                let maximumCardScale: CGFloat = compactHeight ? 0.98 : 1.05
-                let minimumCardScale: CGFloat = proxy.size.height < 780 ? 0.84 : (compactHeight ? 0.94 : 0.98)
+                let maximumCardScale: CGFloat = compactHeight ? 1.12 : 1.16
+                let minimumCardScale: CGFloat = proxy.size.height < 780 ? 0.84 : (compactHeight ? 0.98 : 1.02)
                 let widthScale = (proxy.size.width - (compactHeight ? 50 : 42)) / 306
-                let heightScale = (proxy.size.height - (compactHeight ? 400 : 390)) / 456
+                let heightScale = (proxy.size.height - (compactHeight ? 340 : 360)) / 456
                 let cardScale = max(minimumCardScale, min(maximumCardScale, widthScale, heightScale))
                 let stageWidth: CGFloat = 306 * cardScale + 6
                 let stageHeight: CGFloat = 456 * cardScale + 8
@@ -2305,7 +2305,7 @@ struct CaptureCardStage: View {
 
     var body: some View {
         ZStack {
-            HeroCollectibleCard(observation: observation)
+            HeroCollectibleCard(observation: observation, localityLabel: "Approx location")
                 .opacity(isFlipped ? 0 : 1)
                 .rotation3DEffect(.degrees(isFlipped ? -180 : 0), axis: (x: 0, y: 1, z: 0), perspective: 0.62)
 
@@ -2547,20 +2547,25 @@ struct InteractionStrip: View {
             }
             .frame(maxWidth: .infinity)
 
-            switch state {
-            case .idle:
-                Text("Cloud recognition ready")
-            case .loading:
-                ProgressView("Identifying with cloud API...")
-                    .tint(.white)
-            case .success(let result):
-                Text("\(result.commonName) saved locally with SwiftData.")
-            case .failure(let message):
-                Text(message)
-            }
+            statusLine
         }
         .font(.footnote.weight(.semibold))
         .foregroundStyle(.white.opacity(0.9))
+    }
+
+    @ViewBuilder
+    private var statusLine: some View {
+        switch state {
+        case .idle:
+            EmptyView()
+        case .loading:
+            ProgressView("Identifying with cloud API...")
+                .tint(.white)
+        case .success(let result):
+            Text("\(result.commonName) saved locally with SwiftData.")
+        case .failure(let message):
+            Text(message)
+        }
     }
 }
 
@@ -5378,6 +5383,7 @@ struct CollectibleCard: View {
 
 struct HeroCollectibleCard: View {
     var observation: WildObservation
+    var localityLabel: String? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -5405,7 +5411,7 @@ struct HeroCollectibleCard: View {
                     .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.wildGold.opacity(0.92), lineWidth: 1.5))
                     .overlay(CardFoilBloom(cornerRadius: 18).opacity(0.62))
 
-                Label(PrivacyLocationPolicy.displayLocality(for: observation), systemImage: "location")
+                Label(localityLabel ?? PrivacyLocationPolicy.displayLocality(for: observation), systemImage: "location")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.white)
                     .padding(.horizontal, 10)

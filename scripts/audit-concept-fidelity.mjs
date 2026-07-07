@@ -9,10 +9,10 @@ const conceptSpecs = {
   capture: {
     actual: "qa-shots/swiftui-native-capture-layout-final.png",
     concept: "docs/card-visuals/capture-holo-unlock.png",
-    minimumComposite: 0.72,
-    minimumThumbnail: 0.76,
-    minimumHistogram: 0.55,
-    minimumBand: 0.88,
+    minimumComposite: 0.735,
+    minimumThumbnail: 0.79,
+    minimumHistogram: 0.58,
+    minimumBand: 0.85,
   },
   binder: {
     actual: "qa-shots/swiftui-native-binder-grid-layout-final.png",

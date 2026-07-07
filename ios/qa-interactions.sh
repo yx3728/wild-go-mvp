@@ -263,19 +263,19 @@ run_capture_suite() {
   wait_for_event "launch:capture"
   refresh_display_metrics
 
-  tap_relative 0.28 0.665 "capture tilt"
+  tap_relative 0.28 0.725 "capture tilt"
   wait_for_event "toast:Tilt shimmer is active"
 
-  tap_relative 0.50 0.665 "capture depth"
+  tap_relative 0.50 0.725 "capture depth"
   wait_for_event "toast:Depth preview opened"
 
-  tap_relative 0.73 0.665 "capture flip"
+  tap_relative 0.73 0.725 "capture flip"
   wait_for_event "toast:Card details side shown"
 
-  tap_relative 0.50 0.785 "capture add to binder"
+  tap_relative 0.50 0.815 "capture add to binder"
   wait_for_event "toast:Capturing card..."
 
-  tap_relative 0.50 0.855 "capture share card"
+  tap_relative 0.50 0.895 "capture share card"
   wait_for_event "toast:Opening share sheet"
 }
 
