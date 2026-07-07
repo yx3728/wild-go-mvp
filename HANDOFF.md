@@ -202,7 +202,7 @@ Browser checks covered:
 - Add to Binder updates button state.
 - 5-6 rarity filter returns the five-star and six-star cards.
 - Map, binder, and capture screens render without visual overlap.
-- `npm run ios:visual-check` parses the generated native smoke PNGs without GUI access and fails if any core tab screenshot is missing, too small, mostly transparent, too low-contrast, or visually collapsed into too few sampled color buckets.
+- `npm run ios:visual-check` parses the generated native smoke PNGs without GUI access and fails if any core tab screenshot is missing, too small, mostly transparent, too low-contrast, visually collapsed into too few sampled color buckets, or materially drifts from the tracked native reference screenshots for Capture, Cards, Profile, and Map.
 - Friends showcase stack keeps intentional card overflow without colliding with the bottom navigation.
 - iOS simulator launches full screen with restored app icon and launch storyboard resources compiled by Xcode.
 

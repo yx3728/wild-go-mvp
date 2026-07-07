@@ -1,5 +1,5 @@
 import { inflateSync } from "node:zlib";
-import { readFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 const repoRoot = new URL("..", import.meta.url).pathname;
@@ -20,6 +20,26 @@ const minimumLumaDeviation = Number(
 const minimumAverageSaturation = Number(
   process.env.WILDGO_VISUAL_MIN_AVERAGE_SATURATION ?? 0.035,
 );
+const referenceCheckEnabled = process.env.WILDGO_VISUAL_REFERENCE_CHECK !== "0";
+const referenceScoreOverride = process.env.WILDGO_VISUAL_MIN_REFERENCE_SCORE;
+const referenceSpecs = {
+  capture: {
+    path: "qa-shots/swiftui-native-capture-layout-final.png",
+    minimumScore: 0.82,
+  },
+  binder: {
+    path: "qa-shots/swiftui-native-binder-grid-layout-final.png",
+    minimumScore: 0.9,
+  },
+  profile: {
+    path: "qa-shots/swiftui-native-friends-profile-v16.png",
+    minimumScore: 0.9,
+  },
+  map: {
+    path: "qa-shots/tuned-map.png",
+    minimumScore: 0.58,
+  },
+};
 
 let failures = 0;
 
@@ -29,6 +49,9 @@ for (const tab of tabs) {
     const fileSize = statSync(imagePath).size;
     const image = parsePng(readFileSync(imagePath));
     const metrics = sampleImage(image);
+    const reference = referenceCheckEnabled
+      ? compareAgainstReference(tab, image)
+      : undefined;
     const issues = [];
 
     if (fileSize < minimumBytes) {
@@ -51,6 +74,13 @@ for (const tab of tabs) {
         `average saturation is ${metrics.averageSaturation.toFixed(3)}`,
       );
     }
+    if (reference && reference.score < reference.minimumScore) {
+      issues.push(
+        `reference score ${reference.score.toFixed(3)} below ${
+          reference.minimumScore.toFixed(3)
+        }`,
+      );
+    }
 
     if (issues.length > 0) {
       failures += 1;
@@ -62,7 +92,8 @@ for (const tab of tabs) {
       `ok ${tab}: ${image.width}x${image.height}, ` +
         `${metrics.uniqueBuckets} color buckets, ` +
         `luma sd ${metrics.lumaDeviation.toFixed(1)}, ` +
-        `avg sat ${metrics.averageSaturation.toFixed(3)}`,
+        `avg sat ${metrics.averageSaturation.toFixed(3)}` +
+        (reference ? `, ref ${reference.score.toFixed(3)}` : ""),
     );
   } catch (error) {
     failures += 1;
@@ -112,33 +143,45 @@ function parsePng(buffer) {
     }
   }
 
-  if (bitDepth !== 8 || colorType !== 6) {
+  if (bitDepth !== 8 || ![2, 6].includes(colorType)) {
     throw new Error(
       `unsupported PNG format bitDepth=${bitDepth} colorType=${colorType}`,
     );
   }
 
   const inflated = inflateSync(Buffer.concat(idatChunks));
-  const bytesPerPixel = 4;
-  const stride = width * bytesPerPixel;
-  const pixels = Buffer.alloc(width * height * bytesPerPixel);
+  const sourceBytesPerPixel = colorType === 6 ? 4 : 3;
+  const sourceStride = width * sourceBytesPerPixel;
+  const pixels = Buffer.alloc(width * height * 4);
   let inputOffset = 0;
-  let previous = Buffer.alloc(stride);
+  let previous = Buffer.alloc(sourceStride);
 
   for (let y = 0; y < height; y += 1) {
     const filter = inflated[inputOffset];
     inputOffset += 1;
     const current = Buffer.from(
-      inflated.subarray(inputOffset, inputOffset + stride),
+      inflated.subarray(inputOffset, inputOffset + sourceStride),
     );
-    inputOffset += stride;
+    inputOffset += sourceStride;
 
-    unfilterScanline(current, previous, filter, bytesPerPixel);
-    current.copy(pixels, y * stride);
+    unfilterScanline(current, previous, filter, sourceBytesPerPixel);
+    copyScanlineToRgba(current, pixels, y * width * 4, sourceBytesPerPixel);
     previous = current;
   }
 
   return { width, height, pixels };
+}
+
+function copyScanlineToRgba(source, target, targetOffset, sourceBytesPerPixel) {
+  for (let sourceOffset = 0; sourceOffset < source.length; sourceOffset += sourceBytesPerPixel) {
+    const targetPixelOffset = targetOffset + (sourceOffset / sourceBytesPerPixel) * 4;
+    target[targetPixelOffset] = source[sourceOffset];
+    target[targetPixelOffset + 1] = source[sourceOffset + 1];
+    target[targetPixelOffset + 2] = source[sourceOffset + 2];
+    target[targetPixelOffset + 3] = sourceBytesPerPixel === 4
+      ? source[sourceOffset + 3]
+      : 255;
+  }
 }
 
 function unfilterScanline(current, previous, filter, bytesPerPixel) {
@@ -176,6 +219,60 @@ function paeth(left, up, upperLeft) {
   }
   if (upDistance <= upperLeftDistance) return up;
   return upperLeft;
+}
+
+function compareAgainstReference(tab, image) {
+  const spec = referenceSpecs[tab];
+  if (!spec) return undefined;
+
+  const referencePath = join(repoRoot, spec.path);
+  if (!existsSync(referencePath)) {
+    throw new Error(`reference image missing: ${spec.path}`);
+  }
+
+  const reference = parsePng(readFileSync(referencePath));
+  return {
+    score: thumbnailSimilarity(image, reference),
+    minimumScore: Number(referenceScoreOverride ?? spec.minimumScore),
+    path: spec.path,
+  };
+}
+
+function thumbnailSimilarity(actual, reference) {
+  const columns = 36;
+  const rows = 72;
+  let totalDistance = 0;
+  let samples = 0;
+  const maximumDistance = Math.sqrt((255 ** 2) * 3);
+
+  for (let row = 0; row < rows; row += 1) {
+    const yRatio = rows === 1 ? 0 : row / (rows - 1);
+    for (let column = 0; column < columns; column += 1) {
+      const xRatio = columns === 1 ? 0 : column / (columns - 1);
+      const actualPixel = pixelAtRatio(actual, xRatio, yRatio);
+      const referencePixel = pixelAtRatio(reference, xRatio, yRatio);
+      const redDistance = actualPixel[0] - referencePixel[0];
+      const greenDistance = actualPixel[1] - referencePixel[1];
+      const blueDistance = actualPixel[2] - referencePixel[2];
+      totalDistance += Math.sqrt(
+        (redDistance ** 2) + (greenDistance ** 2) + (blueDistance ** 2),
+      );
+      samples += 1;
+    }
+  }
+
+  return 1 - ((totalDistance / samples) / maximumDistance);
+}
+
+function pixelAtRatio({ width, height, pixels }, xRatio, yRatio) {
+  const x = Math.max(0, Math.min(width - 1, Math.round(xRatio * (width - 1))));
+  const y = Math.max(0, Math.min(height - 1, Math.round(yRatio * (height - 1))));
+  const offset = ((y * width) + x) * 4;
+  return [
+    pixels[offset],
+    pixels[offset + 1],
+    pixels[offset + 2],
+  ];
 }
 
 function sampleImage({ width, height, pixels }) {
