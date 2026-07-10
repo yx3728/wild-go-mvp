@@ -99,8 +99,12 @@ capture_screenshot() {
   local screenshot="$2"
 
   for _ in $(seq 1 "$RENDER_TIMEOUT_SECONDS"); do
-    run_with_timeout "$SIMCTL_TIMEOUT_SECONDS" "simctl screenshot $tab" \
-      xcrun simctl io "$DEVICE_ID" screenshot "$screenshot" >/dev/null
+    rm -f "$screenshot"
+    if ! run_with_timeout "$SIMCTL_TIMEOUT_SECONDS" "simctl screenshot $tab" \
+      xcrun simctl io "$DEVICE_ID" screenshot "$screenshot" >/dev/null; then
+      sleep 1
+      continue
+    fi
 
     if [[ -s "$screenshot" ]]; then
       local bytes

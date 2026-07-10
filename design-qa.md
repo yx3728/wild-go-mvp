@@ -1,33 +1,36 @@
 **Findings**
-- No P0/P1/P2 findings remain for the shipped MVP pass.
-- Product card imagery now uses generated project assets, not screenshot crops from the reference handoff.
-- The three target screens are implemented as interactive React views, with responsive mobile CSS tuned against the supplied Capture, Binder, and Friends visual references.
+- No P0/P1/P2 findings remain in the current native Capture comparison.
+- The generated 4:3 blue-jay asset is used by the app; no visual-reference screenshot is shipped as card art.
+- The iPhone 17 Pro Dynamic Island remains visible because this is a real Simulator capture, while the concept omits device hardware chrome. This is an expected P3 platform difference.
 
-**Source Truth**
-- Capture reference: `docs/card-visuals/capture-holo-unlock.png`
-- Binder reference: `docs/card-visuals/binder-rarity-grid.png`
-- Friends reference: `docs/card-visuals/friends-showcase-stack.png`
-- Generated asset contact sheet: `qa-shots/generated-asset-contact.png`
+**Comparison Evidence**
+- Source visual truth: `docs/card-visuals/capture-holo-unlock.png` (`853 x 1844`).
+- Native implementation: `qa-shots/swiftui-native-capture-layout-final.png` (`1206 x 2622`).
+- State: six-star Blue Jay unlock, front face, first page dot, idle recognition state.
+- Both images use the same normalized phone aspect and are compared by thumbnail pixels, color histogram, and vertical layout bands.
 
-**Final Screenshots**
-- Capture: `qa-shots/material-capture.png`
-- Binder: `qa-shots/material-cards.png`
-- Friends: `qa-shots/material-friends-stack.png`
-- Viewport: `430 x 922` Chrome headless mobile-width capture
+**Required Fidelity Surfaces**
+- Fonts and typography: rarity stays on one line; six stars, species hierarchy, AI confidence, first-seen metadata, control labels, and CTA text remain readable without truncation.
+- Spacing and layout: the native card now uses a true `324 x 472` pt body, a taller photo window, 84 pt interaction controls, and a CTA stack positioned near the source proportions with no overlap.
+- Colors and visual tokens: dark park backdrop, lime actions, gold metadata, and Sticker-driven spectral material preserve the source hierarchy. Sticker retains the package example parameters.
+- Image quality and assets: `capture-blue-jay-landscape-gen-v2.png` is generated at `1448 x 1086`, uses a landscape park composition, and is bundled independently for native and Web targets.
+- Copy and content: `New card unlocked`, `Approx location`, `Likely match`, `AI confidence`, `First seen`, `Add to Binder`, and `Share Card` match the source state.
 
-**Implementation Notes**
-- Replaced all temporary `*-ref.png` screenshot-derived assets with `*-gen.png` generated assets in `public/assets`.
-- Capture now uses the generated blue jay for both the unlock card and dark background treatment.
-- Binder now uses generated cardinal, squirrel, pigeon, flower, butterfly, and mushroom/turkey-tail card art.
-- Friends now uses generated avatar, cardinal, butterfly, and mushroom imagery.
-- Added dedicated Capture, Binder, and Friends screen chrome to match the supplied references: holo card material, leather binder board, rarity guide, stacked showcase cards, drop zone, and action rail.
-- Locked the reference screens to mobile-safe widths and added narrow-viewport tuning to prevent image or text loss.
+**Iteration Evidence**
+- Before: composite `0.739`, thumbnail `0.801`, histogram `0.593`, bands `0.852`.
+- After: composite `0.767`, thumbnail `0.828`, histogram `0.624`, bands `0.880`.
+- Regression gates were raised to composite `0.760`, thumbnail `0.820`, histogram `0.610`, and bands `0.870`.
 
-**Verification Commands**
-- `npm run build`
-- `node /Users/joey/.codex/skills/impeccable/scripts/detect.mjs --json src/App.jsx src/styles.css index.html`
-- `npm run ios:sync`
-- `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -project ios/App/App.xcodeproj -target App -configuration Debug -sdk iphonesimulator26.5 CODE_SIGNING_ALLOWED=NO build`
+**Implementation Checklist**
+- [x] Use generated landscape wildlife art instead of a screenshot crop.
+- [x] Match card aspect, photo proportion, rarity chrome, confidence block, interaction rail, dots, and CTA rhythm.
+- [x] Preserve Sticker's official example shader parameters and native motion path.
+- [x] Re-run real-coordinate Capture interactions after the layout change. CGEvent taps verified Back, Tilt, Press & Hold, Flip, and Add to Binder; a Computer Use coordinate tap at `198,790` verified Share Card and logged `toast:Opening share sheet` while opening the native share sheet.
+- [x] Pass native build, visual, concept, backend, and Web gates.
+
+**Follow-up Polish**
+- Physical-device review can judge the accelerometer-driven foil phase; static Simulator screenshots only capture one shader angle.
+- Simulator's macOS window does not forward the bottom-edge Share Card CGEvent consistently. Strict failure is the default; `STRICT_SHARE_COORDINATE_QA=0` is available only for diagnosing that host-window limitation. The final clean-state run logged `toast:Opening share sheet` and passed without the fallback.
 
 **Result**
-- Passed for MVP handoff.
+- `final result: passed`

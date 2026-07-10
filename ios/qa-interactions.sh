@@ -11,6 +11,7 @@ LAUNCH_ATTEMPTS="${LAUNCH_ATTEMPTS:-2}"
 EVENT_TIMEOUT_SECONDS="${EVENT_TIMEOUT_SECONDS:-5}"
 TAP_SETTLE_SECONDS="${TAP_SETTLE_SECONDS:-0.8}"
 QA_INTERACTION_SUITES="${QA_INTERACTION_SUITES:-navigation map capture binder profile}"
+STRICT_SHARE_COORDINATE_QA="${STRICT_SHARE_COORDINATE_QA:-1}"
 QA_LOG_RELATIVE_PATH="Documents/wildgo-qa-events.log"
 
 if [[ ! -d "$APP_PATH" ]]; then
@@ -272,11 +273,28 @@ run_capture_suite() {
   tap_relative 0.73 0.725 "capture flip"
   wait_for_event "toast:Card details side shown"
 
-  tap_relative 0.50 0.815 "capture add to binder"
-  wait_for_event "toast:Capturing card..."
+  launch_tab "capture"
+  sleep 2
+  wait_for_event "launch:capture"
+  refresh_display_metrics
 
-  tap_relative 0.50 0.895 "capture share card"
-  wait_for_event "toast:Opening share sheet"
+  tap_relative 0.50 0.87 "capture add to binder"
+  wait_for_event "toast:Capturing card..."
+  wait_for_event "toast:Simulator fallback card added"
+
+  launch_tab "capture"
+  sleep 2
+  wait_for_event "launch:capture"
+  refresh_display_metrics
+
+  tap_relative 0.50 0.945 "capture share card"
+  if ! wait_for_event "toast:Opening share sheet"; then
+    if [[ "$STRICT_SHARE_COORDINATE_QA" == "1" ]]; then
+      return 1
+    fi
+
+    echo "    note: Simulator did not forward the bottom-edge CGEvent; run the Computer Use coordinate check for capture.shareCard"
+  fi
 }
 
 run_navigation_suite() {

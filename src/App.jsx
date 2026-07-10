@@ -66,7 +66,7 @@ const cards = [
     id: "blue-jay",
     name: "Blue Jay",
     latin: "Cyanocitta cristata",
-    image: "/assets/capture-blue-jay-gen.png",
+    image: "/assets/capture-blue-jay-landscape-gen-v2.png",
     stars: 6,
     rarity: "City Legend",
     finish: "Holo Foil",

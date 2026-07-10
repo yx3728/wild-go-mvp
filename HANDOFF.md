@@ -69,7 +69,7 @@ Implementation note: card physics and material should use existing MIT-licensed 
 
 ## What Is Implemented
 
-- Mobile-first Vite + React prototype retained for design comparison.
+- Mobile-first Vite 8 + React 19 prototype retained for design comparison; `@vitejs/plugin-react` is on 6.x and the lockfile is fully current.
 - Native SwiftUI iOS shell that builds and runs in the iPhone simulator.
 - SwiftData local persistence, AVFoundation camera preview and still capture, PhotosUI import, MapKit location views, and CoreLocation capture metadata.
 - Captured/imported JPEGs are normalized, saved under the app support `ObservationPhotos` folder, and referenced by SwiftData cards so newly identified observations use the user's photo instead of a static demo asset.
@@ -81,6 +81,7 @@ Implementation note: card physics and material should use existing MIT-licensed 
 - Camera capture is Simulator-hardened: `CameraSession` skips configuration on Simulator, waits briefly for a ready photo connection on device, and prevents overlapping captures, so `Add to Binder` reliably uses the demo fallback when no hardware capture is available.
 - Restored iOS AppIcon asset catalog and LaunchScreen storyboard build resources.
 - Six-star holographic unlock card for the capture result.
+- Capture uses a generated 4:3 blue-jay park photo (`capture-blue-jay-landscape-gen-v2.png`) in both native and Web targets, avoiding source-reference screenshot crops while matching the concept's wider photo window and subject scale.
 - Creature cards using bitmap nature photo assets, including a target-matched rock pigeon card crop.
 - Visible rarity system from 1 to 6 stars.
 - Rarity is treated as app discovery difficulty, not conservation status.
@@ -117,6 +118,7 @@ Commands run:
 
 ```bash
 npm install
+npm outdated
 npm run verify   # aggregate, Simulator-free gate: goal:audit + ios:verify-events + concept:audit + supabase:test + build
 npm run build
 npm run goal:audit
@@ -192,6 +194,7 @@ Browser checks covered:
 - Capture Press & Hold changes card depth, and Capture Flip swaps the six-star card to a field-notes back.
 - Capture unlock layout now uses geometry-based card scaling so the six-star hero card occupies more of the iPhone 17 Pro viewport like the concept reference while keeping the interaction controls, Add to Binder, and Share Card fully visible.
 - Capture unlock now removes the non-reference "Cloud recognition ready" status line, restores the concept-reference "Approx location" chip on the hero card while leaving privacy softening active elsewhere, and increases the iPhone 17 Pro card scale so the hero card and CTAs fill the viewport more like `capture-holo-unlock.png`.
+- Capture's latest native pass replaces the portrait demo crop with generated 4:3 landscape art, uses a true 324 x 472 pt card body instead of stretching a narrower card, restores one-line rarity and six-star chrome, adds the reference AI-confidence caption, enlarges the photo window and interaction icons, and aligns the CTA stack with the concept. The normalized concept score improved from `0.739` to `0.767` (thumbnail `0.801` to `0.828`, histogram `0.593` to `0.624`, vertical bands `0.852` to `0.880`); the audit thresholds were raised to preserve the gain.
 - Capture Share Card opens the native share sheet; Flip and Press & Hold were re-verified after the responsive layout pass.
 - Capture foil art was reworked onto Sticker's GitHub Metal shader package with layered border/photo/surface passes and then reset to the package README's example shader parameters; `swiftui-native-capture-sticker-example-params-v1.png` is the current reference QA screenshot.
 - Real-coordinate automation verified Capture Tilt, Press & Hold, Flip, Add to Binder, and Share Card. Add to Binder now stays in-app and falls back to the demo image on Simulator instead of crashing when AVFoundation has no active video connection; Share Card opens the native share sheet and is now part of `ios/qa-interactions.sh`. Capture tap coordinates were updated and re-run after the larger concept-aligned unlock-card layout.

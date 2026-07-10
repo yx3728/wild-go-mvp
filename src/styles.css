@@ -126,7 +126,7 @@ img {
     linear-gradient(180deg, oklch(0.04 0.02 155 / 0.72), oklch(0.13 0.045 158 / 0.74) 42%, transparent),
     radial-gradient(circle at 20% 14%, oklch(0.78 0.14 78 / 0.25), transparent 10rem),
     radial-gradient(circle at 88% 8%, oklch(0.58 0.13 224 / 0.25), transparent 13rem),
-    url("/assets/capture-blue-jay-gen.png");
+    url("/assets/capture-blue-jay-landscape-gen-v2.png");
   background-size: cover, auto, auto, cover;
   background-position: center top;
   filter: saturate(1.05);

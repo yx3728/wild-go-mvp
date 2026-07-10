@@ -139,6 +139,8 @@ checkAsset("Capture concept reference", "docs/card-visuals/capture-holo-unlock.p
 checkAsset("Binder concept reference", "docs/card-visuals/binder-rarity-grid.png");
 checkAsset("Friends concept reference", "docs/card-visuals/friends-showcase-stack.png");
 checkAsset("Capture native reference", "qa-shots/swiftui-native-capture-layout-final.png");
+checkAsset("Capture generated landscape art", "ios/App/App/GeneratedAssets/capture-blue-jay-landscape-gen-v2.png");
+checkAsset("Capture web landscape art", "public/assets/capture-blue-jay-landscape-gen-v2.png");
 checkAsset("Binder native reference", "qa-shots/swiftui-native-binder-grid-layout-final.png");
 checkAsset("Profile native reference", "qa-shots/swiftui-native-friends-profile-v16.png");
 checkAsset("Map native reference", "qa-shots/tuned-map.png");

@@ -224,7 +224,7 @@ final class WildGoViewModel: ObservableObject {
 
         do {
             let normalizedImageData = Self.normalizedJPEGData(from: imageData)
-            let savedImageName = (try? ObservationPhotoStore.saveJPEGData(normalizedImageData)) ?? "capture-blue-jay-gen.png"
+            let savedImageName = (try? ObservationPhotoStore.saveJPEGData(normalizedImageData)) ?? "capture-blue-jay-landscape-gen-v2.png"
             selectedImageName = savedImageName
             let coordinate = locationManager.currentCoordinate
             let result = try await recognizer.identify(
@@ -1538,7 +1538,7 @@ enum CollectionSyncService {
         if name.contains("pigeon") { return "binder-pigeon-gen.png" }
         if name.contains("monarch") || name.contains("butterfly") { return "binder-butterfly-gen.png" }
         if name.contains("turkey tail") || name.contains("mushroom") || name.contains("fungus") { return "binder-turkey-tail-gen.png" }
-        return "capture-blue-jay-gen.png"
+        return "capture-blue-jay-landscape-gen-v2.png"
     }
 
     private struct RemoteObservationRow: Decodable {
@@ -1947,7 +1947,7 @@ struct CaptureScreen: View {
         WildObservation(
             commonName: "Blue Jay",
             latinName: "Cyanocitta cristata",
-            imageName: "capture-blue-jay-gen.png",
+            imageName: "capture-blue-jay-landscape-gen-v2.png",
             rarity: "City Legend",
             finish: "Holo Foil",
             stars: 6,
@@ -2001,13 +2001,14 @@ struct CaptureScreen: View {
         NavigationStack {
             GeometryReader { proxy in
                 let compactHeight = proxy.size.height < 880
-                let maximumCardScale: CGFloat = compactHeight ? 1.12 : 1.16
+                let cardWidth: CGFloat = 324
+                let maximumCardScale: CGFloat = compactHeight ? 1.17 : 1.2
                 let minimumCardScale: CGFloat = proxy.size.height < 780 ? 0.84 : (compactHeight ? 0.98 : 1.02)
-                let widthScale = (proxy.size.width - (compactHeight ? 50 : 42)) / 306
-                let heightScale = (proxy.size.height - (compactHeight ? 340 : 360)) / 456
+                let widthScale = (proxy.size.width - (compactHeight ? 22 : 18)) / cardWidth
+                let heightScale = (proxy.size.height - (compactHeight ? 340 : 360)) / 472
                 let cardScale = max(minimumCardScale, min(maximumCardScale, widthScale, heightScale))
-                let stageWidth: CGFloat = 306 * cardScale + 6
-                let stageHeight: CGFloat = 456 * cardScale + 8
+                let stageWidth: CGFloat = cardWidth * cardScale + 6
+                let stageHeight: CGFloat = 472 * cardScale + 26
 
                 ZStack(alignment: .top) {
                     CameraHeroBackground(camera: camera)
@@ -2026,7 +2027,8 @@ struct CaptureScreen: View {
                             CaptureCardStage(
                                 observation: displayObservation,
                                 isFlipped: $isCardFlipped,
-                                isDepthPreviewing: isDepthPreviewing
+                                isDepthPreviewing: isDepthPreviewing,
+                                cardWidth: cardWidth
                             )
                             .scaleEffect(cardScale)
                             .frame(width: stageWidth, height: stageHeight)
@@ -2040,7 +2042,7 @@ struct CaptureScreen: View {
                                 .padding(.top, compactHeight ? -6 : 0)
 
                             PageDots(activeIndex: isCardFlipped ? 1 : 0)
-                                .padding(.top, compactHeight ? -5 : 1)
+                                .padding(.top, compactHeight ? 7 : 8)
 
                             VStack(spacing: compactHeight ? 9 : 14) {
                                 Button {
@@ -2067,7 +2069,7 @@ struct CaptureScreen: View {
                                 .accessibilityIdentifier("capture.shareCard")
                             }
                             .frame(maxWidth: 350)
-                            .padding(.top, compactHeight ? 0 : 6)
+                            .padding(.top, compactHeight ? 0 : 2)
                         }
                         .padding(.horizontal, compactHeight ? 24 : 28)
                         .padding(.bottom, compactHeight ? 24 : 34)
@@ -2114,7 +2116,7 @@ struct CaptureScreen: View {
     }
 
     private func identifyDemoImage() async {
-        guard let image = UIImage.namedInWildGoBundle("capture-blue-jay-gen.png"),
+        guard let image = UIImage.namedInWildGoBundle("capture-blue-jay-landscape-gen-v2.png"),
               let data = image.jpegData(compressionQuality: 0.88) else { return }
         let accessToken = await accessTokenForCloudRequest()
         await viewModel.identify(
@@ -2171,7 +2173,7 @@ struct CaptureTopBar: View {
     var body: some View {
         ZStack {
             HStack(spacing: 10) {
-                Image(systemName: "leaf.fill")
+                Image(systemName: "leaf")
                     .font(.title3.weight(.heavy))
                     .foregroundStyle(Color.wildLime)
                 Text("Wild Go")
@@ -2208,7 +2210,7 @@ struct CircleIconButton: View {
         Image(systemName: systemName)
             .font(.headline.weight(.bold))
             .foregroundStyle(.white)
-            .frame(width: 46, height: 46)
+            .frame(width: 42, height: 42)
             .background(.black.opacity(0.32), in: Circle())
             .overlay(Circle().stroke(.white.opacity(0.22), lineWidth: 1.5))
     }
@@ -2254,7 +2256,7 @@ struct CameraHeroBackground: View {
 
     var body: some View {
         ZStack {
-            BundleImage(name: "capture-blue-jay-gen.png")
+            BundleImage(name: "capture-blue-jay-landscape-gen-v2.png")
                 .scaledToFill()
                 .scaleEffect(1.2)
                 .blur(radius: 12)
@@ -2295,6 +2297,7 @@ struct CaptureCardStage: View {
     var observation: WildObservation
     @Binding var isFlipped: Bool
     var isDepthPreviewing: Bool
+    var cardWidth: CGFloat = 324
 
     private var alternativeMatches: [String] {
         if case .success(let result) = viewModel.recognitionState, !result.resolvedAlternatives.isEmpty {
@@ -2305,15 +2308,23 @@ struct CaptureCardStage: View {
 
     var body: some View {
         ZStack {
-            HeroCollectibleCard(observation: observation, localityLabel: "Approx location")
+            HeroCollectibleCard(
+                observation: observation,
+                localityLabel: "Approx location",
+                cardWidth: cardWidth
+            )
                 .opacity(isFlipped ? 0 : 1)
                 .rotation3DEffect(.degrees(isFlipped ? -180 : 0), axis: (x: 0, y: 1, z: 0), perspective: 0.62)
 
-            CaptureCardBack(observation: observation, alternativeMatches: alternativeMatches)
+            CaptureCardBack(
+                observation: observation,
+                alternativeMatches: alternativeMatches,
+                cardWidth: cardWidth
+            )
                 .opacity(isFlipped ? 1 : 0)
                 .rotation3DEffect(.degrees(isFlipped ? 0 : 180), axis: (x: 0, y: 1, z: 0), perspective: 0.62)
         }
-        .frame(maxWidth: 306)
+        .frame(width: cardWidth, height: 472)
         .rotationEffect(.degrees(isFlipped ? 1.4 : -2.5))
         .rotation3DEffect(
             .degrees(isDepthPreviewing ? 13 : 6),
@@ -2339,6 +2350,7 @@ struct CaptureCardStage: View {
 struct CaptureCardBack: View {
     var observation: WildObservation
     var alternativeMatches: [String] = []
+    var cardWidth: CGFloat = 306
 
     private var guide: SpeciesFieldGuideEntry {
         SpeciesFieldGuide.entry(for: observation)
@@ -2385,8 +2397,7 @@ struct CaptureCardBack: View {
                         .foregroundStyle(Color.wildLime)
                         .lineLimit(1)
                         .minimumScaleFactor(0.74)
-                    StarStrip(count: observation.stars)
-                        .font(.caption)
+                    StarStrip(count: observation.stars, font: .caption)
                     Text("\(observation.rarity) · \(observation.finish)")
                         .font(.caption.weight(.bold))
                         .foregroundStyle(Color.wildGold)
@@ -2430,7 +2441,7 @@ struct CaptureCardBack: View {
             }
         }
         .padding(15)
-        .frame(width: 306, height: 456)
+        .frame(width: cardWidth, height: 472)
         .background(
             ZStack {
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
@@ -2504,7 +2515,7 @@ struct InteractionStrip: View {
                 .accessibilityIdentifier("capture.tilt")
 
                 Divider()
-                    .frame(height: 44)
+                    .frame(height: 68)
                     .overlay(.white.opacity(0.26))
                 Button {
                     let willPreview = !isDepthPreviewing
@@ -2531,7 +2542,7 @@ struct InteractionStrip: View {
                 )
 
                 Divider()
-                    .frame(height: 44)
+                    .frame(height: 68)
                     .overlay(.white.opacity(0.26))
                 Button {
                     let willShowBack = !isCardFlipped
@@ -2577,7 +2588,8 @@ struct ControlTile: View {
     var body: some View {
         VStack(spacing: 4) {
             Image(systemName: icon)
-                .font(.body.weight(.semibold))
+                .font(.title2.weight(.semibold))
+                .frame(height: 30)
             Text(title)
                 .font(.caption.weight(.heavy))
                 .textCase(.uppercase)
@@ -2589,7 +2601,7 @@ struct ControlTile: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
         }
-        .frame(width: 90, height: 50)
+        .frame(width: 90, height: 84)
     }
 }
 
@@ -3681,7 +3693,7 @@ struct ExploreScreen: View {
         WildObservation(
             commonName: "Blue Jay",
             latinName: "Cyanocitta cristata",
-            imageName: "capture-blue-jay-gen.png",
+            imageName: "capture-blue-jay-landscape-gen-v2.png",
             rarity: "City Legend",
             finish: "Holo Foil",
             stars: 6,
@@ -5384,6 +5396,7 @@ struct CollectibleCard: View {
 struct HeroCollectibleCard: View {
     var observation: WildObservation
     var localityLabel: String? = nil
+    var cardWidth: CGFloat = 306
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -5391,6 +5404,8 @@ struct HeroCollectibleCard: View {
                 Text("CITY LEGEND")
                     .font(.caption.weight(.heavy))
                     .tracking(1.4)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
                     .foregroundStyle(.white.opacity(0.84))
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
@@ -5399,14 +5414,15 @@ struct HeroCollectibleCard: View {
 
                 Spacer()
 
-                StarStrip(count: observation.stars)
-                    .font(.subheadline)
+                StarStrip(count: observation.stars, font: .headline)
             }
+            .padding(.horizontal, 6)
 
             ZStack(alignment: .bottomTrailing) {
                 BundleImage(name: observation.imageName)
                     .scaledToFill()
-                    .frame(height: 208)
+                    .scaleEffect(1.35)
+                    .frame(height: 224)
                     .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.wildGold.opacity(0.92), lineWidth: 1.5))
                     .overlay(CardFoilBloom(cornerRadius: 18).opacity(0.62))
@@ -5420,12 +5436,13 @@ struct HeroCollectibleCard: View {
                     .overlay(Capsule().stroke(.white.opacity(0.38), lineWidth: 1))
                     .padding(12)
             }
+            .padding(.horizontal, 5)
 
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(alignment: .bottom, spacing: 12) {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .bottom, spacing: 9) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(observation.commonName)
-                            .font(.system(size: 28, weight: .bold, design: .serif))
+                            .font(.system(size: 26, weight: .bold, design: .serif))
                             .foregroundStyle(.white)
                         Text(observation.latinName)
                             .font(.subheadline)
@@ -5433,26 +5450,35 @@ struct HeroCollectibleCard: View {
                             .foregroundStyle(Color.wildLime)
                     }
 
-                    Spacer()
+                    Spacer(minLength: 2)
+
+                    Divider()
+                        .overlay(Color.wildGold.opacity(0.34))
+                        .frame(height: 68)
 
                     VStack(alignment: .trailing, spacing: 2) {
                         Text("Likely match")
                             .font(.caption.weight(.bold))
                             .foregroundStyle(Color.wildGold)
                         Text("\(Int(observation.confidence * 100))%")
-                            .font(.system(size: 30, weight: .black, design: .rounded))
+                            .font(.system(size: 28, weight: .black, design: .rounded))
                             .foregroundStyle(.white)
                         ProgressView(value: observation.confidence)
                             .tint(Color.wildLime)
-                            .frame(width: 70)
+                            .frame(width: 64)
+                        Text("AI confidence")
+                            .font(.caption2)
+                            .foregroundStyle(.white.opacity(0.62))
                     }
                 }
 
                 Text(observation.note)
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundStyle(.white.opacity(0.86))
-                    .lineSpacing(1)
+                    .lineSpacing(2)
                     .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .layoutPriority(1)
 
                 Divider()
                     .overlay(Color.wildGold.opacity(0.36))
@@ -5482,11 +5508,11 @@ struct HeroCollectibleCard: View {
                         .padding(.vertical, 5)
                         .overlay(Capsule().stroke(Color.wildGold.opacity(0.68), lineWidth: 1))
                 }
-                .offset(y: -5)
             }
-            .padding(.horizontal, 4)
+            .padding(.horizontal, 12)
         }
         .padding(14)
+        .frame(width: cardWidth, height: 472, alignment: .top)
         .background(
             ZStack {
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
@@ -5512,7 +5538,6 @@ struct HeroCollectibleCard: View {
                 .padding(14)
         )
         .shadow(color: .black.opacity(0.48), radius: 26, x: 0, y: 18)
-        .frame(maxWidth: 306)
     }
 }
 
@@ -5678,12 +5703,13 @@ struct BundleImage: View {
 
 struct StarStrip: View {
     var count: Int
+    var font: Font = .caption2
 
     var body: some View {
         HStack(spacing: 1) {
             ForEach(0..<6, id: \.self) { index in
                 Image(systemName: "star.fill")
-                    .font(.caption2)
+                    .font(font)
                     .foregroundStyle(index < count ? Color.wildGold : Color.wildGold.opacity(0.28))
             }
         }
