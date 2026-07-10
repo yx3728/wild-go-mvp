@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Binoculars,
   Camera,
@@ -31,6 +31,11 @@ const cardData = [
     date: "Today, 8:47 AM",
     privacy: "Approx location",
     note: "Bold, noisy, and usually spotted near mature street trees.",
+    category: "Bird",
+    habitat: "Street trees, park edges, backyards, and mature urban canopy.",
+    seasonality: "Year-round in NYC; easier to hear before you see it.",
+    safety: "Observe from a distance and avoid nests or feeding behavior.",
+    alternatives: ["Northern Mockingbird", "Steller's Jay", "Tufted Titmouse"],
     className: "legendary",
   },
   {
@@ -46,6 +51,11 @@ const cardData = [
     date: "Jul 2",
     privacy: "City level",
     note: "Fast park regular. Look for fence lines and old oaks.",
+    category: "Mammal",
+    habitat: "Old trees, fences, lawns, and park trash-can corridors.",
+    seasonality: "Year-round; most active around morning and late afternoon.",
+    safety: "Do not feed. Keep snacks sealed and let it move away first.",
+    alternatives: ["Fox Squirrel", "Red Squirrel", "Eastern Chipmunk"],
     className: "rare",
   },
   {
@@ -61,6 +71,11 @@ const cardData = [
     date: "Jul 2",
     privacy: "Public area",
     note: "A sunny summer find along paths and open garden beds.",
+    category: "Plant",
+    habitat: "Sunny beds, meadows, roadsides, and restored garden edges.",
+    seasonality: "Summer bloom; seed heads persist into early fall.",
+    safety: "Photograph only. Do not pick from managed or wild plantings.",
+    alternatives: ["Brown-eyed Susan", "Coneflower", "False Sunflower"],
     className: "uncommon",
   },
   {
@@ -76,6 +91,11 @@ const cardData = [
     date: "Jun 28",
     privacy: "Approx location",
     note: "A high-value seasonal card. Best near milkweed and asters.",
+    category: "Insect",
+    habitat: "Milkweed patches, meadow gardens, and warm open paths.",
+    seasonality: "Late summer and migration windows are the strongest odds.",
+    safety: "Keep hands off wings and do not disturb feeding flowers.",
+    alternatives: ["Viceroy", "Queen Butterfly", "Painted Lady"],
     className: "special",
   },
   {
@@ -91,6 +111,11 @@ const cardData = [
     date: "Jun 27",
     privacy: "Softened",
     note: "Appears after rain near older trunks and leaf litter.",
+    category: "Fungus",
+    habitat: "Dead wood, old roots, damp mulch, and leaf litter after rain.",
+    seasonality: "Late summer through fall, especially after wet weeks.",
+    safety: "Do not taste or harvest from app identification alone.",
+    alternatives: ["Galerina", "Velvet Foot", "Jack-o'-lantern"],
     className: "seasonal",
   },
 ];
@@ -104,6 +129,29 @@ const navItems = [
 ];
 
 const rarityFilters = ["All", "1-2", "3-4", "5-6"];
+
+function getMockMatchForUpload(sourceFile) {
+  const label = sourceFile.toLowerCase();
+
+  if (label.includes("squirrel")) return cardData[1];
+  if (label.includes("flower") || label.includes("susan")) return cardData[2];
+  if (label.includes("butterfly") || label.includes("monarch")) return cardData[3];
+  if (label.includes("mushroom") || label.includes("fung")) return cardData[4];
+  if (label.includes("blue") || label.includes("jay")) return cardData[0];
+
+  return {
+    ...cardData[0],
+    name: "Northern Cardinal",
+    latin: "Cardinalis cardinalis",
+    confidence: 89,
+    note:
+      "Likely a bright male cardinal. Confirm with crest shape, black face mask, and short orange bill.",
+    category: "Bird",
+    habitat: "Shrubby park edges, street trees, backyards, and dense garden cover.",
+    seasonality: "Year-round city resident; loudest around dawn and early morning.",
+    alternatives: ["Summer Tanager", "House Finch", "Scarlet Tanager"],
+  };
+}
 
 function Stars({ count, compact = false }) {
   return (
@@ -180,6 +228,7 @@ function CreatureCard({
           <span className="card-finish">{card.rarity}</span>
           <span className="photo-frame">
             <img src={card.image} alt="" />
+            {card.isUpload && <span className="upload-ribbon">New photo</span>}
           </span>
           <span className="card-copy">
             <span>
@@ -207,6 +256,20 @@ function CreatureCard({
           <strong>{card.name}</strong>
           <em>{card.latin}</em>
           <p>{card.note}</p>
+          <span className="back-detail-grid">
+            <span className="back-detail">
+              <small>Habitat</small>
+              {card.habitat}
+            </span>
+            <span className="back-detail">
+              <small>Season</small>
+              {card.seasonality}
+            </span>
+          </span>
+          <span className="back-detail back-alternatives">
+            <small>Also compare</small>
+            {card.alternatives?.join(" / ")}
+          </span>
           <span className="back-row">
             <MapPin size={15} weight="fill" />
             {card.privacy}
@@ -214,6 +277,10 @@ function CreatureCard({
           <span className="back-row">
             <Sparkle size={15} weight="fill" />
             Rarity is discovery difficulty
+          </span>
+          <span className="safety-note">
+            <Info size={15} weight="fill" />
+            {card.safety}
           </span>
         </span>
       </span>
@@ -269,19 +336,69 @@ function TopBar({ activeView }) {
   );
 }
 
-function CaptureView({ selected, setSelected }) {
+function CaptureView({ selected, setSelected, onPhotoUpload, scanState }) {
   const [flipped, setFlipped] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [shareLabel, setShareLabel] = useState("Share Card");
   const featured = selected ?? cardData[0];
+  const isAnalyzing = featured.isUpload && scanState === "analyzing";
+
+  useEffect(() => {
+    setSaved(false);
+    setShareLabel("Share Card");
+  }, [featured.id]);
+
+  function handleUpload(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setFlipped(false);
+    setSaved(false);
+    setShareLabel("Share Card");
+    onPhotoUpload(file);
+    event.target.value = "";
+  }
+
+  async function handleShare() {
+    const text = `Wild Go card: ${featured.name} - ${featured.stars} star ${featured.rarity}. ${featured.privacy}.`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: `Wild Go: ${featured.name}`, text });
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(text);
+        setShareLabel("Copied");
+        return;
+      }
+      setShareLabel("Shared");
+    } catch {
+      setShareLabel("Share Card");
+    }
+  }
 
   return (
     <section className="view capture-view">
+      <div className="capture-tools">
+        <label className="photo-upload">
+          <input type="file" accept="image/*" capture="environment" onChange={handleUpload} />
+          <Camera size={23} weight="fill" />
+          <span>
+            <strong>Take or upload photo</strong>
+            <small>{featured.sourceFile ? featured.sourceFile : "Camera roll or live capture"}</small>
+          </span>
+        </label>
+        <span className={`scan-pill ${scanState}`}>
+          {isAnalyzing ? "AI scan running" : featured.isUpload ? "Likely match ready" : "Demo card ready"}
+        </span>
+      </div>
+
       <div className="stage-copy">
         <span className="stage-kicker">
           <Sparkle size={16} weight="fill" />
-          Six-star holo foil
+          {featured.isUpload ? "Fresh photo card" : "Six-star holo foil"}
         </span>
-        <p>Likely match {featured.confidence}% · {featured.privacy}</p>
+        <p>
+          {isAnalyzing ? "Finding likely species" : `Likely match ${featured.confidence}%`} ·{" "}
+          {featured.privacy}
+        </p>
       </div>
 
       <CreatureCard
@@ -311,13 +428,18 @@ function CaptureView({ selected, setSelected }) {
       </div>
 
       <div className="action-row">
-        <button className="primary-action" type="button" onClick={() => setSaved(true)}>
+        <button
+          className="primary-action"
+          type="button"
+          disabled={isAnalyzing}
+          onClick={() => setSaved(true)}
+        >
           <Cards size={22} weight="fill" />
-          {saved ? "Added to Binder" : "Add to Binder"}
+          {isAnalyzing ? "Scanning Match" : saved ? "Added to Binder" : "Add to Binder"}
         </button>
-        <button className="secondary-action" type="button">
+        <button className="secondary-action" type="button" onClick={handleShare}>
           <ShareFat size={21} />
-          Share Card
+          {shareLabel}
         </button>
       </div>
 
@@ -540,13 +662,90 @@ function ProfileView() {
 export function App() {
   const [activeView, setActiveView] = useState("capture");
   const [selected, setSelected] = useState(cardData[0]);
+  const [uploadedUrl, setUploadedUrl] = useState(null);
+  const [scanState, setScanState] = useState("idle");
+  const selectedIdRef = useRef(selected.id);
+  const scanTimerRef = useRef(null);
+
+  useEffect(() => {
+    selectedIdRef.current = selected.id;
+  }, [selected.id]);
+
+  useEffect(() => {
+    return () => {
+      if (uploadedUrl) URL.revokeObjectURL(uploadedUrl);
+    };
+  }, [uploadedUrl]);
+
+  useEffect(() => {
+    return () => {
+      if (scanTimerRef.current) window.clearTimeout(scanTimerRef.current);
+    };
+  }, []);
+
+  function handlePhotoUpload(file) {
+    const nextUrl = URL.createObjectURL(file);
+    const sourceFile = file.name ? file.name.replace(/\.[^.]+$/, "") : "Uploaded photo";
+    const matchedCard = getMockMatchForUpload(sourceFile);
+    const cardId = `upload-${Date.now()}`;
+    const nextCard = {
+      ...matchedCard,
+      id: cardId,
+      name: "Fresh City Find",
+      latin: "AI scan in progress",
+      image: nextUrl,
+      confidence: 0,
+      date: "Just now",
+      note: "Your photo is being checked against likely urban species before it enters the binder.",
+      category: "Unknown",
+      habitat: "Pending likely match",
+      seasonality: "Pending likely match",
+      safety: "Observe from a distance. Do not touch, feed, pick, or move the organism.",
+      alternatives: ["Northern Cardinal", "Blue Jay", "House Finch"],
+      sourceFile,
+      isUpload: true,
+    };
+
+    setUploadedUrl(nextUrl);
+    setSelected(nextCard);
+    selectedIdRef.current = cardId;
+    setActiveView("capture");
+    setScanState("analyzing");
+
+    if (scanTimerRef.current) window.clearTimeout(scanTimerRef.current);
+    scanTimerRef.current = window.setTimeout(() => {
+      if (selectedIdRef.current !== cardId) return;
+
+      setSelected((current) => {
+        if (current?.id !== cardId) return current;
+        return {
+          ...current,
+          ...matchedCard,
+          id: cardId,
+          image: nextUrl,
+          date: "Just now",
+          sourceFile,
+          isUpload: true,
+        };
+      });
+      setScanState("matched");
+      scanTimerRef.current = null;
+    }, 900);
+  }
 
   return (
     <main className="app-shell">
       <div className="phone-surface">
         <TopBar activeView={activeView} />
 
-        {activeView === "capture" && <CaptureView selected={selected} setSelected={setSelected} />}
+        {activeView === "capture" && (
+          <CaptureView
+            selected={selected}
+            setSelected={setSelected}
+            onPhotoUpload={handlePhotoUpload}
+            scanState={scanState}
+          />
+        )}
         {activeView === "cards" && <CardsView selected={selected} setSelected={setSelected} />}
         {activeView === "friends" && <FriendsView />}
         {activeView === "explore" && <ExploreView />}

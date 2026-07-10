@@ -172,6 +172,87 @@ a {
   min-height: calc(100vh - 5rem);
 }
 
+.capture-tools {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.62rem;
+  align-items: stretch;
+}
+
+.photo-upload {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.66rem;
+  min-width: 0;
+  min-height: 3.25rem;
+  padding: 0.55rem 0.72rem;
+  border-radius: 0.95rem;
+  background: oklch(1 0 0 / 0.94);
+  color: var(--primary-dark);
+  box-shadow:
+    inset 0 0 0 1px oklch(1 0 0 / 0.48),
+    var(--shadow-soft);
+  cursor: pointer;
+}
+
+.photo-upload input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.photo-upload > span {
+  display: grid;
+  min-width: 0;
+  gap: 0.08rem;
+}
+
+.photo-upload strong,
+.photo-upload small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.photo-upload strong {
+  color: var(--ink);
+  font-size: 0.82rem;
+  line-height: 1.15;
+  font-weight: 850;
+}
+
+.photo-upload small {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 720;
+}
+
+.scan-pill {
+  display: inline-grid;
+  place-items: center;
+  min-width: 5.85rem;
+  min-height: 3.25rem;
+  padding: 0 0.62rem;
+  border-radius: 0.95rem;
+  background: oklch(0.09 0.024 160 / 0.86);
+  color: oklch(0.86 0.05 160);
+  font-size: 0.68rem;
+  font-weight: 850;
+  text-align: center;
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.12);
+}
+
+.scan-pill.analyzing {
+  color: var(--accent);
+}
+
+.scan-pill.matched {
+  color: oklch(0.82 0.12 155);
+}
+
 .stage-copy {
   display: flex;
   align-items: center;
@@ -278,12 +359,13 @@ a {
 
 .legendary .card-front::before {
   background:
-    repeating-linear-gradient(
-      115deg,
-      oklch(0.9 0.18 80) 0 0.22rem,
-      oklch(0.78 0.16 200) 0.22rem 0.42rem,
-      oklch(0.86 0.18 330) 0.42rem 0.64rem,
-      oklch(0.9 0.15 140) 0.64rem 0.86rem
+    conic-gradient(
+      from 128deg at 50% 45%,
+      oklch(0.9 0.18 80),
+      oklch(0.78 0.16 200),
+      oklch(0.86 0.18 330),
+      oklch(0.9 0.15 140),
+      oklch(0.9 0.18 80)
     );
 }
 
@@ -386,6 +468,21 @@ a {
   text-transform: none;
 }
 
+.upload-ribbon {
+  position: absolute;
+  z-index: 3;
+  left: 0.52rem;
+  bottom: 0.52rem;
+  max-width: calc(100% - 1.04rem);
+  padding: 0.22rem 0.54rem;
+  border-radius: 999px;
+  background: oklch(0.08 0.018 160 / 0.76);
+  color: oklch(0.96 0.05 155);
+  font-size: 0.66rem;
+  font-weight: 850;
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.22);
+}
+
 .card-copy {
   display: grid;
   gap: 0.5rem;
@@ -486,8 +583,38 @@ a {
 .card-back p {
   margin: 0.4rem 0 0.65rem;
   color: oklch(0.88 0.012 160);
-  font-size: 0.88rem;
-  line-height: 1.45;
+  font-size: 0.82rem;
+  line-height: 1.36;
+}
+
+.back-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.46rem;
+  margin-bottom: 0.28rem;
+}
+
+.back-detail {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+  padding: 0.46rem;
+  border-radius: 0.66rem;
+  background: oklch(1 0 0 / 0.07);
+  color: oklch(0.9 0.014 160);
+  font-size: 0.66rem;
+  line-height: 1.24;
+}
+
+.back-detail small {
+  color: oklch(0.74 0.055 155);
+  font-size: 0.54rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.back-alternatives {
+  margin-bottom: 0.22rem;
 }
 
 .back-row {
@@ -498,6 +625,24 @@ a {
   color: oklch(0.86 0.05 160);
   font-size: 0.78rem;
   font-weight: 720;
+}
+
+.safety-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.36rem;
+  margin-top: 0.55rem;
+  padding: 0.54rem 0.6rem;
+  border-radius: 0.75rem;
+  background: oklch(0.24 0.06 80 / 0.34);
+  color: oklch(0.92 0.045 95);
+  font-size: 0.68rem;
+  line-height: 1.28;
+}
+
+.safety-note svg {
+  flex: 0 0 auto;
+  margin-top: 0.04rem;
 }
 
 .hero {
@@ -523,6 +668,9 @@ a {
 
 .hero .card-copy strong {
   font-size: 1.6rem;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
 }
 
 .hero .card-copy em {
@@ -662,6 +810,12 @@ a {
   border: 0;
   background: var(--primary);
   color: oklch(0.07 0.022 160);
+}
+
+.primary-action:disabled {
+  background: oklch(0.72 0.04 160);
+  color: oklch(0.28 0.02 160);
+  cursor: wait;
 }
 
 .secondary-action {

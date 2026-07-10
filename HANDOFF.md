@@ -29,6 +29,7 @@ Core files:
 ```text
 src/App.jsx
 src/styles.css
+PRODUCT.md
 public/assets/
 docs/card-visuals/
 design-qa.md
@@ -63,6 +64,9 @@ Card visual rules from these references:
 ## What Is Implemented
 
 - Mobile-first Vite + React prototype.
+- Camera/photo-library input using `accept="image/*"` and `capture="environment"`.
+- Immediate local preview of the uploaded photo as a new collectible card.
+- Mock likely-match transition with filename-seeded demo results for the bundled species assets.
 - Six-star holographic unlock card for the capture result.
 - Creature cards using real generated nature photo assets.
 - Visible rarity system from 1 to 6 stars.
@@ -81,6 +85,13 @@ Card visual rules from these references:
   - add-to-binder state
   - rarity filtering
   - social showcase toggle
+- Expanded card backs:
+  - habitat
+  - seasonality
+  - similar-species alternatives
+  - location privacy
+  - wildlife-safe guidance
+- Share action using Web Share when available and clipboard copy as the fallback.
 - Bottom navigation:
   - Explore
   - Friends
@@ -109,6 +120,8 @@ qa-shots/capture-viewport.png
 qa-shots/cards-viewport.png
 qa-shots/friends-viewport.png
 qa-shots/comparison-source-implementation.png
+qa-shots/upload-capture-viewport.png
+qa-shots/card-back-details.png
 ```
 
 QA result:
@@ -119,14 +132,19 @@ final result: passed
 
 Browser checks covered:
 
-- 390 x 844 mobile viewport.
+- 390 x 844 primary mobile viewport and 320 x 700 narrow-screen check.
 - No horizontal overflow.
 - All creature images load.
 - Bottom navigation renders all five destinations.
 - Flip interaction reveals card back content.
 - Add to Binder updates button state.
+- Add to Binder stays disabled while the mock identification is running.
+- Uploading the bundled flower photo resolves to Black-eyed Susan and preserves the uploaded image.
+- The upload ribbon stays inside the photo area and does not overlap the card title.
+- Share Card copies the species, rarity, and privacy summary when Web Share is unavailable.
 - 5-6 rarity filter returns the five-star and six-star cards.
 - Showcase action toggles state on the Friends screen.
+- Browser console remains free of errors during the upload and flip flow.
 
 ## Run Locally
 
@@ -154,18 +172,20 @@ Capture -> AI likely match -> six-star/rarity reveal -> add to binder -> share/s
 
 ## Recommended Next Steps
 
-1. Add real camera/photo upload input.
-2. Replace mocked AI match data with an identification API.
-3. Persist card collection state in Supabase or Firebase.
-4. Add device-orientation foil movement on mobile.
-5. Expand card backs with habitat, seasonality, safety guidance, and confidence alternatives.
-6. Add share-card export as an image.
-7. Add privacy rules for sensitive species and exact locations.
+1. Replace the filename-seeded demo matcher with a real identification API that returns candidates and calibrated confidence.
+2. Persist uploaded observations, card state, and binder membership in Supabase or Firebase.
+3. Add upload failure, unsupported-file, retake, and low-confidence states.
+4. Add device-orientation foil movement on mobile with a reduced-motion fallback.
+5. Export the composed card as a shareable image instead of sharing text only.
+6. Add enforceable privacy rules for sensitive species and exact locations.
+7. Package the validated mobile web flow as React Native or a PWA once backend scope is chosen.
 
 ## Known Limitations
 
-- All data is currently mocked in `src/App.jsx`.
-- Photos are generated local assets, not user uploads.
+- Species and social data are currently mocked in `src/App.jsx`.
+- Uploaded photos use temporary browser object URLs and disappear on refresh.
+- AI matching is a filename-seeded demo, not a real model or identification API.
 - The app has no backend, authentication, or persistence yet.
+- Share Card exports text only; it does not render a card image yet.
 - Foil movement uses pointer/touch position, not physical device gyroscope.
 - The MVP is optimized for mobile web, not packaged as React Native yet.
