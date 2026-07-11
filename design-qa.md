@@ -23,6 +23,7 @@
 - Before: composite `0.739`, thumbnail `0.801`, histogram `0.593`, bands `0.852`.
 - After: composite `0.767`, thumbnail `0.828`, histogram `0.624`, bands `0.880`.
 - Regression gates were raised to composite `0.760`, thumbnail `0.820`, histogram `0.610`, and bands `0.870`.
+- Capture vertical alignment: a measured 4 pt stage lift improves composite to `0.768`, histogram to `0.628`, and bands to `0.882` while thumbnail remains `0.827`. Gates are now composite `0.765`, thumbnail `0.825`, histogram `0.620`, and bands `0.880`; the 12 pt trial was rejected because its composite dropped to `0.764`.
 - Binder before: composite `0.780`, thumbnail `0.840`, histogram `0.636`, bands `0.899`; the previous score masked visible card overlap.
 - Binder after: composite `0.813`, thumbnail `0.836`, histogram `0.712`, bands `0.938`. New gates are composite `0.800`, thumbnail `0.830`, histogram `0.700`, and bands `0.930`.
 - Custom-navigation Binder: composite `0.814`, thumbnail `0.841`, histogram `0.700`, bands `0.951`. The flat 62 pt dark bar improves the concept's vertical bands and keeps the raised Capture action.
@@ -34,6 +35,7 @@
 - [x] Match card aspect, photo proportion, rarity chrome, confidence block, interaction rail, dots, and CTA rhythm.
 - [x] Preserve Sticker's official example shader parameters and native motion path.
 - [x] Re-run real-coordinate Capture interactions after the layout change. CGEvent taps verified Back, Tilt, Press & Hold, Flip, and Add to Binder; a Computer Use coordinate tap at `198,790` verified Share Card and logged `toast:Opening share sheet` while opening the native share sheet.
+- [x] Move the Capture card stage upward by the smallest measured amount that improves the normalized concept score, then re-run Back, Tilt, Depth, Flip, Add, and Share using real coordinates.
 - [x] Pass native build, visual, concept, backend, and Web gates.
 - [x] Constrain Binder feature and small-card artwork, text, foil, and backgrounds to measured slots.
 - [x] Match Binder photo heights and reduce the screen saturation to the reference material palette.

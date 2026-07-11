@@ -2136,7 +2136,7 @@ struct CaptureScreen: View {
                             )
                             .scaleEffect(cardScale)
                             .frame(width: stageWidth, height: stageHeight)
-                            .padding(.top, compactHeight ? -4 : 2)
+                            .padding(.top, compactHeight ? -8 : -2)
 
                             InteractionStrip(
                                 state: viewModel.recognitionState,
