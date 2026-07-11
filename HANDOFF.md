@@ -223,6 +223,11 @@ npm install
 npm run dev -- --port 5173
 ```
 
+Local design tooling was force-refreshed from the official
+[`pbakaus/impeccable` `skill-v3.9.1`](https://github.com/pbakaus/impeccable/releases/tag/skill-v3.9.1)
+Codex skill artifact. Reinstall the same pinned artifact with
+`install-skill-from-github.py --repo pbakaus/impeccable --ref skill-v3.9.1 --path .agents/skills/impeccable`.
+
 Then open:
 
 ```text
