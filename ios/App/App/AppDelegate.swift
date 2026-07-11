@@ -2720,7 +2720,7 @@ struct BinderScreen: View {
                             .frame(height: 1)
                     }
 
-                    VStack(spacing: 10) {
+                    VStack(spacing: 7) {
                         BinderFilterBar(sortLabel: $sortLabel, layoutMode: $layoutMode)
                             .padding(.top, 5)
                             .padding(.horizontal, 16)
@@ -2747,7 +2747,7 @@ struct BinderScreen: View {
                             viewModel.showToast("Binder tips opened")
                         }
                             .padding(.horizontal, 18)
-                            .padding(.bottom, 116)
+                            .padding(.bottom, 98)
                     }
                 }
             }
@@ -2767,6 +2767,7 @@ struct BinderScreen: View {
                 Text("Tilt cards to shimmer, switch sort order from Recent, and use the layout toggle to compare grid/list views.")
             }
         }
+        .saturation(0.8)
     }
 
     private func referenceCard(named name: String) -> WildObservation {
@@ -3021,13 +3022,12 @@ struct BinderBoard: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let contentWidth = max(proxy.size.width - 46, 314)
+            let contentWidth = min(max(proxy.size.width - 34, 326), 368)
             let topSpacing: CGFloat = 10
-            let primaryWidth = min((contentWidth - topSpacing) * 0.57, 208)
+            let primaryWidth = min((contentWidth - topSpacing) * 0.57, 204)
             let secondaryWidth = contentWidth - primaryWidth - topSpacing
-            let smallSpacing: CGFloat = 8
-            let smallContentWidth = max(contentWidth - 26, 292)
-            let smallWidth = max((smallContentWidth - smallSpacing * 3) / 4, 70)
+            let smallSpacing: CGFloat = 5
+            let smallWidth = (contentWidth - smallSpacing * 3) / 4
 
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
@@ -3053,30 +3053,42 @@ struct BinderBoard: View {
 
                 VStack(spacing: 11) {
                     HStack(alignment: .bottom, spacing: topSpacing) {
-                        BinderFeatureCard(observation: primary, role: .primary)
-                            .frame(width: primaryWidth, height: 278)
+                        BinderFeatureCard(
+                            observation: primary,
+                            role: .primary,
+                            cardWidth: primaryWidth,
+                            cardHeight: 302
+                        )
                             .zIndex(1)
 
-                        BinderFeatureCard(observation: secondary, role: .secondary)
-                            .frame(width: secondaryWidth, height: 264)
+                        BinderFeatureCard(
+                            observation: secondary,
+                            role: .secondary,
+                            cardWidth: secondaryWidth,
+                            cardHeight: 286
+                        )
                     }
                     .frame(width: contentWidth, alignment: .center)
 
                     HStack(spacing: smallSpacing) {
                         ForEach(smallCards.prefix(4)) { observation in
-                            BinderSmallCard(observation: observation)
-                                .frame(width: smallWidth, height: 162)
+                            BinderSmallCard(
+                                observation: observation,
+                                cardWidth: smallWidth,
+                                cardHeight: 190
+                            )
                         }
                     }
-                    .frame(width: smallContentWidth, alignment: .center)
+                    .frame(width: contentWidth, alignment: .center)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 13)
-                .padding(.leading, 26)
-                .padding(.trailing, 16)
+                .padding(.leading, 20)
+                .padding(.trailing, 14)
             }
+            .clipped()
         }
-        .frame(height: 482)
+        .frame(height: 529)
     }
 }
 
@@ -3142,8 +3154,7 @@ struct BinderListRow: View {
 
                     Spacer(minLength: 6)
 
-                    StarStrip(count: observation.stars)
-                        .font(.system(size: 8))
+                    StarStrip(count: observation.stars, font: .system(size: 8))
                 }
 
                 Text(observation.latinName)
@@ -3205,17 +3216,27 @@ enum BinderCardRole {
 struct BinderFeatureCard: View {
     var observation: WildObservation
     var role: BinderCardRole
+    var cardWidth: CGFloat
+    var cardHeight: CGFloat
 
     private var isPrimary: Bool {
         role == .primary
     }
 
     private var imageHeight: CGFloat {
-        isPrimary ? 142 : 120
+        isPrimary ? 158 : 160
     }
 
     private var cornerRadius: CGFloat {
         isPrimary ? 20 : 16
+    }
+
+    private var imageWidth: CGFloat {
+        cardWidth - (isPrimary ? 18 : 14)
+    }
+
+    private var detailWidth: CGFloat {
+        cardWidth - (isPrimary ? 26 : 20)
     }
 
     var body: some View {
@@ -3223,7 +3244,7 @@ struct BinderFeatureCard: View {
             ZStack(alignment: .top) {
                 BundleImage(name: observation.imageName)
                     .scaledToFill()
-                    .frame(height: imageHeight)
+                    .frame(width: imageWidth, height: imageHeight)
                     .clipShape(RoundedRectangle(cornerRadius: cornerRadius - 5, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: cornerRadius - 5, style: .continuous).stroke(.white.opacity(0.52), lineWidth: 1))
                     .overlay(HoloShine(cornerRadius: cornerRadius - 5).opacity(observation.stars >= 5 ? (isPrimary ? 0.28 : 0.2) : 0.12))
@@ -3242,8 +3263,10 @@ struct BinderFeatureCard: View {
                         .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).stroke(.white.opacity(0.62), lineWidth: 1))
                     }
 
-                    StarStrip(count: observation.stars)
-                        .font(isPrimary ? .caption : .caption2)
+                    StarStrip(
+                        count: observation.stars,
+                        font: isPrimary ? .caption : .caption2
+                    )
                         .padding(.top, isPrimary ? 10 : 4)
 
                     Spacer()
@@ -3256,6 +3279,7 @@ struct BinderFeatureCard: View {
                         .overlay(Circle().stroke(observation.accentColor, lineWidth: 1.6))
                 }
                 .padding(isPrimary ? 10 : 7)
+                .frame(width: imageWidth)
 
                 if isPrimary {
                     Label("Tilt to shimmer", systemImage: "hand.tap")
@@ -3326,7 +3350,10 @@ struct BinderFeatureCard: View {
             }
             .padding(.horizontal, isPrimary ? 13 : 10)
             .padding(.bottom, isPrimary ? 13 : 10)
+            .frame(width: detailWidth, alignment: .leading)
         }
+        .frame(width: cardWidth, height: cardHeight, alignment: .topLeading)
+        .clipped()
         .background(
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 .fill(observation.cardSurface)
@@ -3374,19 +3401,24 @@ struct BinderMetric: View {
 
 struct BinderSmallCard: View {
     var observation: WildObservation
+    var cardWidth: CGFloat
+    var cardHeight: CGFloat
+
+    private var contentWidth: CGFloat {
+        max(cardWidth - 12, 40)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             ZStack(alignment: .top) {
                 BundleImage(name: observation.imageName)
                     .scaledToFill()
-                    .frame(height: 66)
+                    .frame(width: cardWidth - 12, height: 90)
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(observation.accentColor.opacity(0.72), lineWidth: 1))
 
                 HStack(alignment: .top) {
-                    StarStrip(count: observation.stars)
-                        .font(.system(size: 6))
+                    StarStrip(count: observation.stars, font: .system(size: 6))
                     Spacer()
                     Image(systemName: observation.stars >= 4 ? "leaf.fill" : "star.fill")
                         .font(.system(size: 8, weight: .black))
@@ -3403,6 +3435,8 @@ struct BinderSmallCard: View {
                 .foregroundStyle(.white.opacity(0.92))
                 .lineLimit(2)
                 .minimumScaleFactor(0.72)
+                .multilineTextAlignment(.leading)
+                .frame(width: contentWidth, alignment: .leading)
 
             Text(observation.latinName)
                 .font(.system(size: 6, weight: .medium))
@@ -3410,6 +3444,7 @@ struct BinderSmallCard: View {
                 .foregroundStyle(.white.opacity(0.58))
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
+                .frame(width: contentWidth, alignment: .leading)
 
             Rectangle()
                 .fill(.white.opacity(0.12))
@@ -3438,6 +3473,7 @@ struct BinderSmallCard: View {
                 }
             }
             .foregroundStyle(.white.opacity(0.58))
+            .frame(width: contentWidth)
 
             HStack {
                 Text(observation.locality)
@@ -3448,8 +3484,11 @@ struct BinderSmallCard: View {
             .foregroundStyle(.white.opacity(0.52))
             .lineLimit(1)
             .minimumScaleFactor(0.55)
+            .frame(width: contentWidth)
         }
         .padding(6)
+        .frame(width: cardWidth, height: cardHeight, alignment: .topLeading)
+        .clipped()
         .background(
             RoundedRectangle(cornerRadius: 13, style: .continuous)
                 .fill(observation.cardSurface)
@@ -3513,7 +3552,8 @@ struct BinderRarityGuideStrip: View {
             }
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(.vertical, 7)
+        .frame(height: 82)
         .background(Color.black.opacity(0.14), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 12, style: .continuous)

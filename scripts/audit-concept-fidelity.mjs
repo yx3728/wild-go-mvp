@@ -17,10 +17,10 @@ const conceptSpecs = {
   binder: {
     actual: "qa-shots/swiftui-native-binder-grid-layout-final.png",
     concept: "docs/card-visuals/binder-rarity-grid.png",
-    minimumComposite: 0.75,
-    minimumThumbnail: 0.82,
-    minimumHistogram: 0.61,
-    minimumBand: 0.88,
+    minimumComposite: 0.8,
+    minimumThumbnail: 0.83,
+    minimumHistogram: 0.7,
+    minimumBand: 0.93,
   },
   friends: {
     actual: "qa-shots/swiftui-native-friends-profile-v16.png",
