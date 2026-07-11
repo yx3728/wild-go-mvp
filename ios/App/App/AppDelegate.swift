@@ -5670,7 +5670,7 @@ struct HeroCollectibleCard: View {
                         )
                     )
                 HoloShine(cornerRadius: 28)
-                    .opacity(0.4)
+                    .opacity(0.16)
             }
         )
         .overlay(
