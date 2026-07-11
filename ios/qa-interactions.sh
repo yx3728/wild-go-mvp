@@ -397,14 +397,21 @@ run_profile_suite() {
   tap_relative 0.73 0.55 "profile flip showcase"
   wait_for_event "toast:Showcase card flipped"
 
-  tap_relative 0.14 0.875 "profile send card"
+  tap_relative 0.14 0.83 "profile send card"
   wait_for_event "toast:Send Card opened"
 
-  tap_relative 0.34 0.875 "profile compare"
+  tap_relative 0.34 0.83 "profile compare"
   wait_for_event "toast:Compare mode opened"
 
-  tap_relative 0.88 0.875 "profile trade later"
+  tap_relative 0.68 0.83 "profile rail add to showcase"
+  wait_for_event "toast:Added to Showcase"
+
+  tap_relative 0.88 0.83 "profile trade later"
   wait_for_event "toast:Trade reminder saved"
+
+  tap_relative 0.50 0.83 "profile rail capture"
+  wait_for_event "toast:Opening Capture"
+  wait_for_event "tab:capture"
 }
 
 echo "==> Installing $BUNDLE_ID on $DEVICE_ID"

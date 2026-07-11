@@ -10,6 +10,7 @@
 - State: six-star Blue Jay unlock, front face, first page dot, idle recognition state.
 - Both images use the same normalized phone aspect and are compared by thumbnail pixels, color histogram, and vertical layout bands.
 - Binder source: `docs/card-visuals/binder-rarity-grid.png`; native implementation: `qa-shots/swiftui-native-binder-grid-layout-final.png`.
+- Friends/Profile source: `docs/card-visuals/friends-showcase-stack.png`; native implementation: `qa-shots/swiftui-native-friends-profile-v16.png`.
 
 **Required Fidelity Surfaces**
 - Fonts and typography: rarity stays on one line; six stars, species hierarchy, AI confidence, first-seen metadata, control labels, and CTA text remain readable without truncation.
@@ -24,6 +25,8 @@
 - Regression gates were raised to composite `0.760`, thumbnail `0.820`, histogram `0.610`, and bands `0.870`.
 - Binder before: composite `0.780`, thumbnail `0.840`, histogram `0.636`, bands `0.899`; the previous score masked visible card overlap.
 - Binder after: composite `0.813`, thumbnail `0.836`, histogram `0.712`, bands `0.938`. New gates are composite `0.800`, thumbnail `0.830`, histogram `0.700`, and bands `0.930`.
+- Custom-navigation Binder: composite `0.814`, thumbnail `0.841`, histogram `0.700`, bands `0.951`. The flat 62 pt dark bar improves the concept's vertical bands and keeps the raised Capture action.
+- Custom-navigation Friends/Profile: composite `0.769`, thumbnail `0.768`, histogram `0.700`, bands `0.892`. The screen now matches the source's four-item white bottom navigation and separate five-action rail; gates were raised to composite `0.765`, thumbnail `0.760`, histogram `0.690`, and bands `0.890`.
 
 **Implementation Checklist**
 - [x] Use generated landscape wildlife art instead of a screenshot crop.
@@ -34,11 +37,13 @@
 - [x] Constrain Binder feature and small-card artwork, text, foil, and backgrounds to measured slots.
 - [x] Match Binder photo heights and reduce the screen saturation to the reference material palette.
 - [x] Re-run all Binder controls with real Simulator-window coordinate taps.
+- [x] Replace the system tab bar with adaptive SwiftUI navigation: five dark-mode destinations on Explore/Map/Binder and four light-mode destinations on Profile, where the action rail's center camera is the Capture entry.
+- [x] Re-run full navigation plus every Profile action-rail button using real Simulator-window coordinate taps.
 
 **Follow-up Polish**
 - Physical-device review can judge the accelerometer-driven foil phase; static Simulator screenshots only capture one shader angle.
 - Simulator's macOS window does not forward the bottom-edge Share Card CGEvent consistently. Strict failure is the default; `STRICT_SHARE_COORDINATE_QA=0` is available only for diagnosing that host-window limitation. The final clean-state run logged `toast:Opening share sheet` and passed without the fallback.
-- The system tab bar remains slightly taller than the concept's custom bottom navigation, so the Binder Tips row requires a short scroll on iPhone 17 Pro. Its real-coordinate interaction passes; a custom shared tab bar is the next visual-alignment pass.
+- Binder Tips remains intentionally scrollable on iPhone 17 Pro; its real-coordinate interaction passes after the custom navigation height reduction.
 
 **Result**
 - `final result: passed`

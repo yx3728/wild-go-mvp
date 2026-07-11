@@ -1894,24 +1894,25 @@ struct WildGoRootView: View {
             ZStack(alignment: .top) {
                 TabView(selection: $viewModel.selectedTab) {
                     ExploreScreen()
-                        .tabItem { Label("Explore", systemImage: "safari") }
                         .tag(WildGoTab.explore)
 
                     SoftMapScreen()
-                        .tabItem { Label("Map", systemImage: "mappin.and.ellipse") }
                         .tag(WildGoTab.map)
 
                     CaptureScreen()
-                        .tabItem { Label("Capture", systemImage: "camera.viewfinder") }
                         .tag(WildGoTab.capture)
 
                     BinderScreen()
-                        .tabItem { Label("Cards", systemImage: "rectangle.stack") }
                         .tag(WildGoTab.binder)
 
                     ProfileScreen()
-                        .tabItem { Label("Profile", systemImage: "person.crop.circle") }
                         .tag(WildGoTab.profile)
+                }
+                .toolbar(.hidden, for: .tabBar)
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    if viewModel.selectedTab != .capture {
+                        WildGoBottomTabBar(selection: $viewModel.selectedTab)
+                    }
                 }
 
                 if let toast = viewModel.toast {
@@ -1930,6 +1931,109 @@ struct WildGoRootView: View {
         .environmentObject(viewModel)
         .environmentObject(auth)
         .tint(Color.wildInk)
+    }
+}
+
+struct WildGoBottomTabBar: View {
+    @Binding var selection: WildGoTab
+
+    private let tabs: [(WildGoTab, String, String)] = [
+        (.explore, "Explore", "safari.fill"),
+        (.map, "Map", "mappin.and.ellipse"),
+        (.capture, "Capture", "camera.fill"),
+        (.binder, "Cards", "rectangle.stack.fill"),
+        (.profile, "Profile", "person.crop.circle.fill")
+    ]
+
+    private var usesLightMaterial: Bool {
+        selection == .profile
+    }
+
+    private var visibleTabs: [(WildGoTab, String, String)] {
+        usesLightMaterial ? tabs.filter { $0.0 != .capture } : tabs
+    }
+
+    var body: some View {
+        HStack(alignment: .bottom, spacing: 0) {
+            ForEach(visibleTabs, id: \.0) { tab, title, systemName in
+                Button {
+                    selection = tab
+                } label: {
+                    if tab == .capture {
+                        captureItem(title: title, systemName: systemName)
+                    } else {
+                        standardItem(tab: tab, title: title, systemName: systemName)
+                    }
+                }
+                .buttonStyle(.plain)
+                .frame(maxWidth: .infinity, minHeight: usesLightMaterial ? 54 : 50)
+                .contentShape(Rectangle())
+                .accessibilityLabel(title)
+                .accessibilityIdentifier("tab.\(tab.qaName)")
+            }
+        }
+        .frame(height: usesLightMaterial ? 66 : 62)
+        .padding(.horizontal, usesLightMaterial ? 8 : 10)
+        .background {
+            if usesLightMaterial {
+                RoundedRectangle(cornerRadius: 30, style: .continuous)
+                    .fill(Color.white.opacity(0.97))
+                    .shadow(color: Color.black.opacity(0.12), radius: 8, x: 0, y: -2)
+            } else {
+                Color(red: 0.025, green: 0.105, blue: 0.075).opacity(0.98)
+            }
+        }
+        .overlay(alignment: .top) {
+            if !usesLightMaterial {
+                Rectangle()
+                    .fill(Color.white.opacity(0.08))
+                    .frame(height: 1)
+            }
+        }
+        .padding(.horizontal, usesLightMaterial ? 12 : 0)
+        .padding(.top, usesLightMaterial ? 4 : 0)
+        .padding(.bottom, usesLightMaterial ? 6 : 0)
+    }
+
+    private func standardItem(tab: WildGoTab, title: String, systemName: String) -> some View {
+        let isSelected = selection == tab
+        let selectedColor = usesLightMaterial ? Color(red: 0.12, green: 0.37, blue: 0.22) : Color.wildLime
+        let inactiveColor = usesLightMaterial ? Color.wildInk.opacity(0.62) : Color.white.opacity(0.52)
+
+        return VStack(spacing: 4) {
+            Image(systemName: systemName)
+                .font(.system(size: 22, weight: isSelected ? .bold : .medium))
+                .frame(height: 25)
+            Text(title)
+                .font(.caption2.weight(isSelected ? .bold : .medium))
+                .lineLimit(1)
+        }
+        .foregroundStyle(isSelected ? selectedColor : inactiveColor)
+        .frame(maxWidth: .infinity, minHeight: 52)
+    }
+
+    private func captureItem(title: String, systemName: String) -> some View {
+        let fill = usesLightMaterial
+            ? Color(red: 0.18, green: 0.49, blue: 0.3)
+            : Color.wildLime
+        let foreground = usesLightMaterial ? Color.white : Color.wildInk
+
+        return VStack(spacing: 1) {
+            Image(systemName: systemName)
+                .font(.system(size: 23, weight: .black))
+                .foregroundStyle(foreground)
+                .frame(width: 54, height: 54)
+                .background(fill, in: Circle())
+                .overlay(Circle().stroke(Color.white.opacity(usesLightMaterial ? 0.9 : 0.24), lineWidth: 3))
+                .shadow(color: Color.black.opacity(0.22), radius: 6, x: 0, y: 3)
+
+            Text(title)
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(usesLightMaterial ? Color.wildInk.opacity(0.78) : Color.white.opacity(0.78))
+                .lineLimit(1)
+        }
+        .offset(y: -10)
+        .frame(maxWidth: .infinity, minHeight: 66)
     }
 }
 
@@ -4359,7 +4463,7 @@ struct ProfileScreen: View {
             .safeAreaInset(edge: .bottom) {
                 FriendsActionRail(isShowcaseDropped: $isShowcaseDropped)
                     .padding(.horizontal, 12)
-                    .padding(.bottom, -2)
+                    .padding(.bottom, 20)
             }
             .toolbar(.hidden, for: .navigationBar)
             .statusBarHidden(true)

@@ -107,6 +107,8 @@ Implementation note: card physics and material should use existing MIT-licensed 
   - Capture
   - Cards
   - Profile
+  - custom 62 pt dark treatment with raised Capture on Explore, Map, and Cards
+  - reference-matched four-item white treatment on Profile; the separate action rail's center camera opens Capture
 - Wildlife/privacy copy:
   - approximate location
   - location softened
@@ -189,13 +191,14 @@ Browser checks covered:
 - 390 x 844 mobile viewport.
 - No horizontal overflow.
 - All creature images load.
-- Bottom navigation renders all five destinations.
+- Custom SwiftUI bottom navigation replaces the system tab bar. Explore, Map, and Cards expose all five destinations in the dark treatment; Profile uses the reference's four-item white bar while its action rail camera provides the Capture destination.
 - Flip interaction reveals card back content.
 - Capture Press & Hold changes card depth, and Capture Flip swaps the six-star card to a field-notes back.
 - Capture unlock layout now uses geometry-based card scaling so the six-star hero card occupies more of the iPhone 17 Pro viewport like the concept reference while keeping the interaction controls, Add to Binder, and Share Card fully visible.
 - Capture unlock now removes the non-reference "Cloud recognition ready" status line, restores the concept-reference "Approx location" chip on the hero card while leaving privacy softening active elsewhere, and increases the iPhone 17 Pro card scale so the hero card and CTAs fill the viewport more like `capture-holo-unlock.png`.
 - Capture's latest native pass replaces the portrait demo crop with generated 4:3 landscape art, uses a true 324 x 472 pt card body instead of stretching a narrower card, restores one-line rarity and six-star chrome, adds the reference AI-confidence caption, enlarges the photo window and interaction icons, and aligns the CTA stack with the concept. The normalized concept score improved from `0.739` to `0.767` (thumbnail `0.801` to `0.828`, histogram `0.593` to `0.624`, vertical bands `0.852` to `0.880`); the audit thresholds were raised to preserve the gain.
 - Binder now uses fixed internal card dimensions instead of transparent outer frames around intrinsic-width children: its two feature cards and four small cards no longer overlap, names and metadata fit their slots, photo heights match the reference, and the whole surface uses the concept's quieter material saturation. Binder concept fidelity improved from `0.780` to `0.813` (histogram `0.636` to `0.712`, vertical bands `0.899` to `0.938`), with raised regression gates and a passing real-coordinate Binder interaction suite.
+- The custom dark navigation raises Binder concept fidelity again to composite `0.814` (thumbnail `0.841`, histogram `0.700`, vertical bands `0.951`) while preserving all five destinations and the raised Capture button.
 - Capture Share Card opens the native share sheet; Flip and Press & Hold were re-verified after the responsive layout pass.
 - Capture foil art was reworked onto Sticker's GitHub Metal shader package with layered border/photo/surface passes and then reset to the package README's example shader parameters; `swiftui-native-capture-sticker-example-params-v1.png` is the current reference QA screenshot.
 - Real-coordinate automation verified Capture Tilt, Press & Hold, Flip, Add to Binder, and Share Card. Add to Binder now stays in-app and falls back to the demo image on Simulator instead of crashing when AVFoundation has no active video connection; Share Card opens the native share sheet and is now part of `ios/qa-interactions.sh`. Capture tap coordinates were updated and re-run after the larger concept-aligned unlock-card layout.
@@ -205,7 +208,8 @@ Browser checks covered:
 - `npm run concept:audit` compares the tracked native Capture, Binder, and Friends/Profile reference screenshots against the original concept images with normalized thumbnail, color-histogram, and vertical-band similarity metrics, so future visual changes can prove whether they move closer to or farther from the concept art.
 - Friends Flip swaps the showcase card to its back, and Drag/Add to Showcase changes the visible showcase slot state.
 - Friends/Profile `v16` tightens the reference-style action rail so long labels fit, restores a visible trade/friends icon with a supported SF Symbol, and reduces the back-card typography so the small cards read as a physical stack instead of cropped posters.
-- Real-coordinate automation verified Friends Drag to showcase, Flip, Trade Later, and Compare after the `v16` visual pass.
+- Friends/Profile now separates that five-action rail from a four-item white bottom navigation like the concept. Its tracked score is composite `0.769`, thumbnail `0.768`, histogram `0.700`, and vertical bands `0.892`, with raised regression gates.
+- Real-coordinate automation verified Friends Drag to showcase, Flip, Send Card, Compare, rail Add to Showcase, Trade Later, and the rail Capture destination after the custom-navigation pass.
 - Binder List view now switches to a real list board, and Grid view returns to the reference-style binder grid.
 - Binder sorting changes both the menu label and the visible card ordering; Rarity sorting was verified in Simulator.
 - Binder Tips opens the native alert, and toast feedback renders below the Dynamic Island safe area.
