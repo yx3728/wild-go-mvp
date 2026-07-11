@@ -4927,7 +4927,7 @@ struct FriendsHeroShowcaseCard: View {
         )
         .overlay(
             FoilCardFrame(cornerRadius: 24, lineWidth: 7)
-                .opacity(0.72)
+                .opacity(0.95)
         )
         .shadow(color: .black.opacity(0.2), radius: 18, x: 0, y: 12)
     }
