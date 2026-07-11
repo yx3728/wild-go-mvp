@@ -27,6 +27,7 @@
 - Binder after: composite `0.813`, thumbnail `0.836`, histogram `0.712`, bands `0.938`. New gates are composite `0.800`, thumbnail `0.830`, histogram `0.700`, and bands `0.930`.
 - Custom-navigation Binder: composite `0.814`, thumbnail `0.841`, histogram `0.700`, bands `0.951`. The flat 62 pt dark bar improves the concept's vertical bands and keeps the raised Capture action.
 - Custom-navigation Friends/Profile: composite `0.769`, thumbnail `0.768`, histogram `0.700`, bands `0.892`. The screen now matches the source's four-item white bottom navigation and separate five-action rail; gates were raised to composite `0.765`, thumbnail `0.760`, histogram `0.690`, and bands `0.890`.
+- Taller Friends/Profile showcase: composite `0.777`, thumbnail `0.776`, histogram `0.703`, bands `0.907`. The hero card is now `228 x 338` pt with a `208` pt photo window, matching the concept's taller physical-card proportion while the lighter Sticker example overlay keeps the cardinal clear. Gates are now composite `0.773`, thumbnail `0.772`, histogram `0.700`, and bands `0.900`.
 
 **Implementation Checklist**
 - [x] Use generated landscape wildlife art instead of a screenshot crop.
@@ -39,6 +40,7 @@
 - [x] Re-run all Binder controls with real Simulator-window coordinate taps.
 - [x] Replace the system tab bar with adaptive SwiftUI navigation: five dark-mode destinations on Explore/Map/Binder and four light-mode destinations on Profile, where the action rail's center camera is the Capture entry.
 - [x] Re-run full navigation plus every Profile action-rail button using real Simulator-window coordinate taps.
+- [x] Increase the Friends/Profile hero and supporting-card heights to the measured concept proportions, reject the heavy foil-bloom trial, and re-run Drag/Flip at their new real coordinates.
 
 **Follow-up Polish**
 - Physical-device review can judge the accelerometer-driven foil phase; static Simulator screenshots only capture one shader angle.

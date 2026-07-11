@@ -4766,7 +4766,7 @@ struct FriendsShowcaseDeck: View {
                 .scaleEffect(isShowcaseDropped ? 0.96 : 1)
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 292)
+        .frame(height: 326)
         .animation(.spring(response: 0.42, dampingFraction: 0.8), value: isFlipped)
         .animation(.spring(response: 0.46, dampingFraction: 0.78), value: isShowcaseDropped)
     }
@@ -4806,7 +4806,7 @@ struct FriendsSmallDeckCard: View {
                 .font(.caption)
         }
         .padding(12)
-        .frame(width: 112, height: 218)
+        .frame(width: 118, height: 242)
         .background {
             ZStack {
                 BundleImage(name: imageName)
@@ -4846,9 +4846,9 @@ struct FriendsHeroShowcaseCard: View {
             ZStack(alignment: .bottomLeading) {
                 BundleImage(name: "binder-cardinal-gen.png")
                     .scaledToFill()
-                    .frame(height: 174)
+                    .frame(height: 208)
                     .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                    .overlay(HoloShine(cornerRadius: 18).opacity(0.42))
+                    .overlay(HoloShine(cornerRadius: 18).opacity(0.3))
 
                 VStack(alignment: .leading, spacing: 5) {
                     HStack {
@@ -4916,7 +4916,7 @@ struct FriendsHeroShowcaseCard: View {
                 .padding(.horizontal, 10)
                 .padding(.bottom, 8)
         }
-        .frame(width: 228, height: 304)
+        .frame(width: 228, height: 338)
         .background(
             ZStack {
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
@@ -4977,7 +4977,7 @@ struct FriendsShowcaseBack: View {
                 .background(Color.wildGreen, in: Capsule())
         }
         .padding(16)
-        .frame(width: 228, height: 304)
+        .frame(width: 228, height: 338)
         .background(
             ZStack {
                 RoundedRectangle(cornerRadius: 24, style: .continuous)

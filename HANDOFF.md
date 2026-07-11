@@ -209,6 +209,7 @@ Browser checks covered:
 - Friends Flip swaps the showcase card to its back, and Drag/Add to Showcase changes the visible showcase slot state.
 - Friends/Profile `v16` tightens the reference-style action rail so long labels fit, restores a visible trade/friends icon with a supported SF Symbol, and reduces the back-card typography so the small cards read as a physical stack instead of cropped posters.
 - Friends/Profile now separates that five-action rail from a four-item white bottom navigation like the concept. Its tracked score is composite `0.769`, thumbnail `0.768`, histogram `0.700`, and vertical bands `0.892`, with raised regression gates.
+- Friends/Profile's showcase deck now uses a `228 x 338` pt hero card, a `208` pt image window, and taller supporting cards. The normalized score improves to composite `0.777`, thumbnail `0.776`, histogram `0.703`, and vertical bands `0.907`; a heavier full-image foil bloom was visually rejected in favor of the clearer Sticker example overlay.
 - Real-coordinate automation verified Friends Drag to showcase, Flip, Send Card, Compare, rail Add to Showcase, Trade Later, and the rail Capture destination after the custom-navigation pass.
 - Binder List view now switches to a real list board, and Grid view returns to the reference-style binder grid.
 - Binder sorting changes both the menu label and the visible card ordering; Rarity sorting was verified in Simulator.

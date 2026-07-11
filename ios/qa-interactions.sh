@@ -391,10 +391,10 @@ run_profile_suite() {
   wait_for_event "launch:profile"
   refresh_display_metrics
 
-  tap_relative 0.34 0.55 "profile add to showcase"
+  tap_relative 0.34 0.59 "profile add to showcase"
   wait_for_event "toast:Added to Showcase"
 
-  tap_relative 0.73 0.55 "profile flip showcase"
+  tap_relative 0.73 0.59 "profile flip showcase"
   wait_for_event "toast:Showcase card flipped"
 
   tap_relative 0.14 0.83 "profile send card"

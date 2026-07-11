@@ -25,10 +25,10 @@ const conceptSpecs = {
   friends: {
     actual: "qa-shots/swiftui-native-friends-profile-v16.png",
     concept: "docs/card-visuals/friends-showcase-stack.png",
-    minimumComposite: 0.765,
-    minimumThumbnail: 0.76,
-    minimumHistogram: 0.69,
-    minimumBand: 0.89,
+    minimumComposite: 0.773,
+    minimumThumbnail: 0.772,
+    minimumHistogram: 0.7,
+    minimumBand: 0.9,
   },
 };
 
