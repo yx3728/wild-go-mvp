@@ -87,6 +87,13 @@ checkFile("Cloud identification Edge Function", "supabase/functions/identify-spe
   "verifiedUserIdFromAuthHeader",
 ]);
 
+checkFile("Edge Function rollback tests", "supabase/functions/identify-species/index.test.ts", [
+  "persists a successful identification without deleting its image",
+  "deletes a new image when OpenAI identification fails",
+  "deletes a new image when Postgres persistence fails",
+  "preserves an existing signed-in image and keeps Postgres behind RLS",
+]);
+
 checkFile("Edge Function request contract tests", "supabase/functions/identify-species/request-utils.test.ts", [
   "decodes raw and data URL base64 observation images",
   "builds private Storage paths for signed-in and device observations",
