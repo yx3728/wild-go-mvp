@@ -14,7 +14,7 @@ Open `http://127.0.0.1:5173`.
 ## iOS MVP
 
 The iOS app has been moved to a native SwiftUI shell with SwiftData, AVFoundation camera preview and still capture, MapKit, PhotosUI, and CoreLocation.
-Six-star foil rendering in the native target uses the MIT-licensed [`Sticker`](https://github.com/bpisano/Sticker) Swift Package for Metal-based Pokemon-style foil shaders instead of hand-written gradient art. The capture card now layers Sticker-driven foil border, surface, and constrained spectral photo passes using the package README's example shader parameters, with iOS 18+ shader precompilation on launch.
+Every rarity tier now uses the MIT-licensed [`ShaderKit`](https://github.com/jamesrochabrun/ShaderKit) Swift Package for Metal-based card materials. The package is pinned to `1.2.4`, and the shared rarity system maps 1-star through 6-star cards to matte steel, colored alloy, crosshatched silver, iridescent pearl, inverted foil, and rainbow holo treatments. Capture drag tilt is passed directly into ShaderKit while flip and four-card pagination remain independent interactions.
 
 ```bash
 npm run ios:build

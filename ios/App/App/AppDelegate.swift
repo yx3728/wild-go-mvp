@@ -5,7 +5,7 @@ import Foundation
 import ImageIO
 import MapKit
 import PhotosUI
-import Sticker
+import ShaderKit
 import SwiftData
 import SwiftUI
 import UIKit
@@ -16,11 +16,6 @@ struct WildGoApp: App {
     var body: some Scene {
         WindowGroup {
             WildGoRootView()
-                .task {
-                    if #available(iOS 18.0, *) {
-                        try? await ShaderLibrary.compileStickerShaders()
-                    }
-                }
         }
         .modelContainer(for: WildObservation.self)
     }
@@ -2176,7 +2171,7 @@ struct CaptureScreen: View {
                                 viewModel.selectedTab = .explore
                                 viewModel.showToast("Back to Explore")
                             }
-                                .padding(.top, compactHeight ? -2 : 4)
+                                .padding(.top, compactHeight ? -16 : -10)
 
                             UnlockTitle()
                                 .padding(.top, compactHeight ? 0 : 2)
@@ -2239,6 +2234,7 @@ struct CaptureScreen: View {
                 }
                 .frame(width: proxy.size.width)
             }
+            .background(Color.black.ignoresSafeArea())
             .toolbar(.hidden, for: .navigationBar)
             .toolbar(.hidden, for: .tabBar)
             .statusBarHidden(true)
@@ -2502,12 +2498,20 @@ struct CaptureCardStage: View {
         return SpeciesFieldGuide.entry(for: observation).alternativeMatches
     }
 
+    private var shaderTilt: CGPoint {
+        CGPoint(
+            x: min(max(dragTranslation.width / 120, -1), 1),
+            y: min(max(dragTranslation.height / 120, -1), 1)
+        )
+    }
+
     var body: some View {
         ZStack {
             HeroCollectibleCard(
                 observation: observation,
                 localityLabel: "Approx location",
-                cardWidth: cardWidth
+                cardWidth: cardWidth,
+                foilTilt: shaderTilt
             )
                 .opacity(isFlipped ? 0 : 1)
                 .rotation3DEffect(.degrees(isFlipped ? -180 : 0), axis: (x: 0, y: 1, z: 0), perspective: 0.62)
@@ -2515,7 +2519,8 @@ struct CaptureCardStage: View {
             CaptureCardBack(
                 observation: observation,
                 alternativeMatches: alternativeMatches,
-                cardWidth: cardWidth
+                cardWidth: cardWidth,
+                foilTilt: shaderTilt
             )
                 .opacity(isFlipped ? 1 : 0)
                 .rotation3DEffect(.degrees(isFlipped ? 0 : 180), axis: (x: 0, y: 1, z: 0), perspective: 0.62)
@@ -2569,6 +2574,7 @@ struct CaptureCardBack: View {
     var observation: WildObservation
     var alternativeMatches: [String] = []
     var cardWidth: CGFloat = 306
+    var foilTilt: CGPoint = .zero
 
     private var guide: SpeciesFieldGuideEntry {
         SpeciesFieldGuide.entry(for: observation)
@@ -2601,7 +2607,14 @@ struct CaptureCardBack: View {
                     .frame(width: 82, height: 82)
                     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.wildGold.opacity(0.72), lineWidth: 1.4))
-                    .overlay(HoloShine(cornerRadius: 16).opacity(observation.stars >= 5 ? 0.34 : 0.12))
+                    .overlay(
+                        HoloShine(
+                            cornerRadius: 16,
+                            starCount: observation.stars,
+                            tilt: foilTilt
+                        )
+                        .opacity(observation.stars >= 5 ? 0.34 : 0.12)
+                    )
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(observation.commonName)
@@ -2669,11 +2682,23 @@ struct CaptureCardBack: View {
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
-                HoloShine(cornerRadius: 28)
+                HoloShine(
+                    cornerRadius: 28,
+                    starCount: observation.stars,
+                    tilt: foilTilt
+                )
                     .opacity(0.38)
             }
         )
-        .overlay(FoilCardFrame(cornerRadius: 28, lineWidth: 10).opacity(0.84))
+        .overlay(
+            RarityMetalBorder(
+                starCount: observation.stars,
+                cornerRadius: 28,
+                lineWidth: 10,
+                tilt: foilTilt
+            )
+            .opacity(0.9)
+        )
         .overlay(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .stroke(Color.wildGold.opacity(0.6), lineWidth: 1.1)
@@ -3362,8 +3387,13 @@ struct BinderListRow: View {
                 .scaledToFill()
                 .frame(width: 58, height: 58)
                 .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).stroke(observation.accentColor.opacity(0.75), lineWidth: 1.2))
-                .overlay(HoloShine(cornerRadius: 11).opacity(observation.stars >= 5 ? 0.24 : 0.08))
+                .overlay(
+                    HoloShine(cornerRadius: 11, starCount: observation.stars)
+                        .opacity(observation.stars >= 5 ? 0.24 : 0.1)
+                )
+                .overlay(
+                    RarityMetalBorder(starCount: observation.stars, cornerRadius: 11, lineWidth: 2.2)
+                )
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .firstTextBaseline, spacing: 7) {
@@ -3468,7 +3498,10 @@ struct BinderFeatureCard: View {
                     .frame(width: imageWidth, height: imageHeight)
                     .clipShape(RoundedRectangle(cornerRadius: cornerRadius - 5, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: cornerRadius - 5, style: .continuous).stroke(.white.opacity(0.52), lineWidth: 1))
-                    .overlay(HoloShine(cornerRadius: cornerRadius - 5).opacity(observation.stars >= 5 ? (isPrimary ? 0.28 : 0.2) : 0.12))
+                    .overlay(
+                        HoloShine(cornerRadius: cornerRadius - 5, starCount: observation.stars)
+                            .opacity(observation.stars >= 5 ? (isPrimary ? 0.28 : 0.2) : 0.12)
+                    )
 
                 HStack(alignment: .top) {
                     if isPrimary {
@@ -3579,15 +3612,14 @@ struct BinderFeatureCard: View {
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 .fill(observation.cardSurface)
         )
-        .overlay {
-            if observation.stars >= 5 {
-                FoilCardFrame(cornerRadius: cornerRadius, lineWidth: isPrimary ? 5 : 4)
-                    .opacity(isPrimary ? 0.86 : 0.72)
-            } else {
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .strokeBorder(observation.cardBorder, lineWidth: isPrimary ? 3 : 2)
-            }
-        }
+        .overlay(
+            RarityMetalBorder(
+                starCount: observation.stars,
+                cornerRadius: cornerRadius,
+                lineWidth: isPrimary ? 5 : 4
+            )
+            .opacity(isPrimary ? 0.9 : 0.78)
+        )
         .overlay(
             RoundedRectangle(cornerRadius: cornerRadius - 5, style: .continuous)
                 .stroke(.white.opacity(0.18), lineWidth: 1)
@@ -3714,15 +3746,10 @@ struct BinderSmallCard: View {
             RoundedRectangle(cornerRadius: 13, style: .continuous)
                 .fill(observation.cardSurface)
         )
-        .overlay {
-            if observation.stars >= 5 {
-                FoilCardFrame(cornerRadius: 13, lineWidth: 2.6)
-                    .opacity(0.72)
-            } else {
-                RoundedRectangle(cornerRadius: 13, style: .continuous)
-                    .strokeBorder(observation.cardBorder, lineWidth: 1.8)
-            }
-        }
+        .overlay(
+            RarityMetalBorder(starCount: observation.stars, cornerRadius: 13, lineWidth: 2.6)
+                .opacity(0.78)
+        )
         .shadow(color: observation.accentColor.opacity(0.18), radius: 8, x: 0, y: 5)
     }
 }
@@ -4149,7 +4176,7 @@ struct DashboardHeroCard: View {
                     .scaledToFill()
                     .frame(height: 282)
                     .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-                    .overlay(HoloShine(cornerRadius: 22).opacity(0.58))
+                    .overlay(HoloShine(cornerRadius: 22, starCount: observation.stars).opacity(0.58))
 
                 VStack(spacing: 0) {
                     Spacer()
@@ -4251,11 +4278,14 @@ struct DashboardHeroCard: View {
             ZStack {
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
                     .fill(Color.black.opacity(0.76))
-                HoloShine(cornerRadius: 28)
+                HoloShine(cornerRadius: 28, starCount: observation.stars)
                     .opacity(0.5)
             }
         )
-        .overlay(FoilCardFrame(cornerRadius: 28, lineWidth: 7).opacity(0.82))
+        .overlay(
+            RarityMetalBorder(starCount: observation.stars, cornerRadius: 28, lineWidth: 7)
+                .opacity(0.88)
+        )
         .shadow(color: .black.opacity(0.42), radius: 24, x: 0, y: 16)
     }
 }
@@ -4965,7 +4995,7 @@ struct FriendsHeroShowcaseCard: View {
                     .scaledToFill()
                     .frame(height: 208)
                     .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                    .overlay(HoloShine(cornerRadius: 18).opacity(0.3))
+                    .overlay(HoloShine(cornerRadius: 18, starCount: 6).opacity(0.3))
 
                 VStack(alignment: .leading, spacing: 5) {
                     HStack {
@@ -5038,12 +5068,12 @@ struct FriendsHeroShowcaseCard: View {
             ZStack {
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
                     .fill(.white.opacity(0.86))
-                HoloShine(cornerRadius: 24)
+                HoloShine(cornerRadius: 24, starCount: 6)
                     .opacity(0.5)
             }
         )
         .overlay(
-            FoilCardFrame(cornerRadius: 24, lineWidth: 7)
+            RarityMetalBorder(starCount: 6, cornerRadius: 24, lineWidth: 7)
                 .opacity(0.95)
         )
         .shadow(color: .black.opacity(0.2), radius: 18, x: 0, y: 12)
@@ -5099,12 +5129,12 @@ struct FriendsShowcaseBack: View {
             ZStack {
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
                     .fill(Color.white.opacity(0.9))
-                HoloShine(cornerRadius: 24)
+                HoloShine(cornerRadius: 24, starCount: 6)
                     .opacity(0.36)
             }
         )
         .overlay(
-            FoilCardFrame(cornerRadius: 24, lineWidth: 7)
+            RarityMetalBorder(starCount: 6, cornerRadius: 24, lineWidth: 7)
                 .opacity(0.64)
         )
         .shadow(color: .black.opacity(0.18), radius: 18, x: 0, y: 12)
@@ -5658,6 +5688,7 @@ struct HeroCollectibleCard: View {
     var observation: WildObservation
     var localityLabel: String? = nil
     var cardWidth: CGFloat = 306
+    var foilTilt: CGPoint = .zero
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -5686,7 +5717,14 @@ struct HeroCollectibleCard: View {
                     .frame(height: 224)
                     .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.wildGold.opacity(0.92), lineWidth: 1.5))
-                    .overlay(CardFoilBloom(cornerRadius: 18).opacity(0.62))
+                    .overlay(
+                        RarityMetalSurface(
+                            starCount: observation.stars,
+                            cornerRadius: 18,
+                            tilt: foilTilt
+                        )
+                        .opacity(observation.stars >= 5 ? 0.56 : 0.18)
+                    )
 
                 Label(localityLabel ?? PrivacyLocationPolicy.displayLocality(for: observation), systemImage: "location")
                     .font(.caption.weight(.semibold))
@@ -5786,12 +5824,21 @@ struct HeroCollectibleCard: View {
                             endPoint: .bottomTrailing
                         )
                     )
-                HoloShine(cornerRadius: 28)
+                HoloShine(
+                    cornerRadius: 28,
+                    starCount: observation.stars,
+                    tilt: foilTilt
+                )
                     .opacity(0.16)
             }
         )
         .overlay(
-            FoilCardFrame(cornerRadius: 28, lineWidth: 10)
+            RarityMetalBorder(
+                starCount: observation.stars,
+                cornerRadius: 28,
+                lineWidth: 10,
+                tilt: foilTilt
+            )
         )
         .overlay(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
@@ -5802,142 +5849,156 @@ struct HeroCollectibleCard: View {
     }
 }
 
-struct FoilCardFrame: View {
+private enum RarityMetalTier: Int {
+    case matteSteel = 1
+    case coloredAlloy = 2
+    case crosshatchedSilver = 3
+    case iridescentPearl = 4
+    case invertedFoil = 5
+    case rainbowHolo = 6
+
+    init(starCount: Int) {
+        self = RarityMetalTier(rawValue: min(max(starCount, 1), 6)) ?? .matteSteel
+    }
+
+    var colors: [Color] {
+        switch self {
+        case .matteSteel:
+            return [Color(white: 0.24), Color(white: 0.88), Color(white: 0.38), Color(white: 0.72)]
+        case .coloredAlloy:
+            return [Color(red: 0.08, green: 0.38, blue: 0.3), Color(red: 0.62, green: 0.86, blue: 0.7), Color(red: 0.82, green: 0.66, blue: 0.24)]
+        case .crosshatchedSilver:
+            return [Color(red: 0.28, green: 0.43, blue: 0.6), Color(white: 0.96), Color(red: 0.36, green: 0.68, blue: 0.74), Color(white: 0.52)]
+        case .iridescentPearl:
+            return [Color(red: 0.68, green: 0.42, blue: 0.86), Color(red: 0.38, green: 0.84, blue: 0.9), Color(red: 0.96, green: 0.58, blue: 0.72), Color(red: 0.72, green: 0.64, blue: 0.96)]
+        case .invertedFoil:
+            return [Color(red: 0.34, green: 0.12, blue: 0.04), Color(red: 0.98, green: 0.78, blue: 0.3), Color(red: 0.78, green: 0.3, blue: 0.08), Color(red: 1, green: 0.92, blue: 0.62)]
+        case .rainbowHolo:
+            return [Color.red, Color.orange, Color.yellow, Color.green, Color.cyan, Color.blue, Color.purple, Color.pink, Color.red]
+        }
+    }
+
+    var glowColor: Color {
+        switch self {
+        case .matteSteel: return .white
+        case .coloredAlloy: return Color(red: 0.42, green: 0.86, blue: 0.64)
+        case .crosshatchedSilver: return Color.wildCyan
+        case .iridescentPearl: return Color(red: 0.8, green: 0.5, blue: 0.94)
+        case .invertedFoil: return Color.orange
+        case .rainbowHolo: return Color.wildGold
+        }
+    }
+}
+
+private struct RarityMetalShader: ViewModifier {
+    var tier: RarityMetalTier
+    var tilt: CGPoint
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        switch tier {
+        case .matteSteel:
+            content
+                .shaderContext(tilt: tilt, time: 0)
+                .shader(.polishedAluminum(intensity: 0.3))
+        case .coloredAlloy:
+            content
+                .shaderContext(tilt: tilt, time: 0)
+                .shader(.polishedAluminum(intensity: 0.46))
+                .shader(.edgeShine)
+        case .crosshatchedSilver:
+            content
+                .shaderContext(tilt: tilt, time: 0)
+                .shader(.metallicCrosshatch(intensity: 0.58))
+                .shader(.lightSweep)
+        case .iridescentPearl:
+            content
+                .shaderContext(tilt: tilt, time: 0)
+                .shader(.diagonalHolo(intensity: 0.64))
+                .shader(.rainbowGlitter(intensity: 0.22))
+        case .invertedFoil:
+            content
+                .shaderContext(tilt: tilt, time: 0)
+                .shader(.invertedFoil(intensity: 0.76))
+                .shader(.shimmer(intensity: 0.34))
+                .shader(.lightSweep)
+        case .rainbowHolo:
+            content
+                .shaderContext(tilt: tilt, time: 0)
+                .shader(.foil(intensity: 0.94))
+                .shader(.rainbowGlitter(intensity: 0.62))
+                .shader(.shimmer(intensity: 0.52))
+                .shader(.edgeShine)
+        }
+    }
+}
+
+struct RarityMetalBorder: View {
+    var starCount: Int
     var cornerRadius: CGFloat
     var lineWidth: CGFloat
+    var tilt: CGPoint = .zero
+
+    private var tier: RarityMetalTier {
+        RarityMetalTier(starCount: starCount)
+    }
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
 
         ZStack {
             shape
-                .strokeBorder(.white.opacity(0.94), lineWidth: lineWidth)
-                .stickerExampleEffect()
-                .wildStickerMotion(intensity: 0.5)
+                .strokeBorder(
+                    LinearGradient(colors: tier.colors, startPoint: .topLeading, endPoint: .bottomTrailing),
+                    lineWidth: lineWidth
+                )
+                .modifier(RarityMetalShader(tier: tier, tilt: tilt))
 
             shape
-                .strokeBorder(Color.wildGold.opacity(0.68), lineWidth: max(lineWidth * 0.12, 1.1))
-                .padding(lineWidth * 0.58)
+                .strokeBorder(.white.opacity(starCount >= 4 ? 0.66 : 0.42), lineWidth: max(lineWidth * 0.12, 0.8))
+                .padding(lineWidth * 0.18)
 
             shape
-                .strokeBorder(.white.opacity(0.48), lineWidth: 1.15)
-                .padding(lineWidth * 0.16)
+                .strokeBorder(.black.opacity(0.42), lineWidth: max(lineWidth * 0.11, 0.7))
+                .padding(lineWidth * 0.72)
         }
-        .shadow(color: .white.opacity(0.18), radius: max(lineWidth * 0.72, 3), x: 0, y: 0)
-        .shadow(color: Color.wildGold.opacity(0.26), radius: max(lineWidth * 1.2, 5), x: 0, y: 0)
+        .shadow(color: tier.glowColor.opacity(starCount >= 5 ? 0.34 : 0.18), radius: max(lineWidth * 1.05, 3))
         .allowsHitTesting(false)
+    }
+}
+
+struct RarityMetalSurface: View {
+    var starCount: Int
+    var cornerRadius: CGFloat
+    var tilt: CGPoint = .zero
+
+    private var tier: RarityMetalTier {
+        RarityMetalTier(starCount: starCount)
+    }
+
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+
+        shape
+            .fill(LinearGradient(colors: tier.colors, startPoint: .topLeading, endPoint: .bottomTrailing))
+            .modifier(RarityMetalShader(tier: tier, tilt: tilt))
+            .mask(shape)
+            .allowsHitTesting(false)
     }
 }
 
 struct HoloShine: View {
     var cornerRadius: CGFloat
+    var starCount: Int = 6
+    var tilt: CGPoint = .zero
     var layerOpacity: Double = 0.58
     var blendMode: BlendMode = .softLight
 
     var body: some View {
-        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-            .fill(.white)
-            .stickerExampleEffect()
-            .wildStickerMotion(intensity: 0.5)
+        RarityMetalSurface(starCount: starCount, cornerRadius: cornerRadius, tilt: tilt)
             .opacity(layerOpacity)
             .blendMode(blendMode)
             .allowsHitTesting(false)
-    }
-}
-
-struct FoilSpectralBand: View {
-    var cornerRadius: CGFloat
-    var width: CGFloat = 74
-    var height: CGFloat = 640
-    var angle: Double = 17
-    var xOffset: CGFloat = 0
-    var yOffset: CGFloat = 0
-    var opacity: Double = 0.34
-
-    var body: some View {
-        Rectangle()
-            .fill(.white)
-            .frame(width: width, height: height)
-            .rotationEffect(.degrees(angle))
-            .offset(x: xOffset, y: yOffset)
-            .stickerExampleEffect()
-            .wildStickerMotion(intensity: 0.5)
-            .opacity(opacity)
-            .blendMode(.screen)
-            .allowsHitTesting(false)
-    }
-}
-
-struct CardFoilBloom: View {
-    var cornerRadius: CGFloat
-
-    var body: some View {
-        GeometryReader { proxy in
-            let bandHeight = max(proxy.size.width, proxy.size.height) * 2.8
-
-            ZStack {
-                HoloShine(
-                    cornerRadius: cornerRadius,
-                    layerOpacity: 0.18,
-                    blendMode: .screen
-                )
-
-                HoloShine(
-                    cornerRadius: cornerRadius,
-                    layerOpacity: 0.12,
-                    blendMode: .overlay
-                )
-
-                FoilSpectralBand(
-                    cornerRadius: cornerRadius,
-                    width: proxy.size.width * 0.28,
-                    height: bandHeight,
-                    angle: 31,
-                    xOffset: -proxy.size.width * 0.25,
-                    yOffset: proxy.size.height * 0.04,
-                    opacity: 0.22
-                )
-                FoilSpectralBand(
-                    cornerRadius: cornerRadius,
-                    width: proxy.size.width * 0.18,
-                    height: bandHeight,
-                    angle: 31,
-                    xOffset: proxy.size.width * 0.34,
-                    yOffset: -proxy.size.height * 0.1,
-                    opacity: 0.18
-                )
-                FoilSpectralBand(
-                    cornerRadius: cornerRadius,
-                    width: proxy.size.width * 0.1,
-                    height: bandHeight,
-                    angle: 31,
-                    xOffset: proxy.size.width * 0.08,
-                    yOffset: proxy.size.height * 0.18,
-                    opacity: 0.12
-                )
-            }
-            .frame(width: proxy.size.width, height: proxy.size.height)
-        }
-        .mask(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-        .allowsHitTesting(false)
-    }
-}
-
-private extension View {
-    func stickerExampleEffect() -> some View {
-        stickerEffect()
-            .stickerColorIntensity(0.5)
-            .stickerNoiseScale(200)
-            .stickerLightIntensity(0.5)
-    }
-
-    @ViewBuilder
-    func wildStickerMotion(intensity: Double) -> some View {
-#if targetEnvironment(simulator)
-        stickerMotionEffect(.dragGesture(intensity: intensity))
-#else
-        stickerMotionEffect(.accelerometer(intensity: intensity, maxRotation: .degrees(42), updateInterval: 0.025))
-#endif
     }
 }
 
