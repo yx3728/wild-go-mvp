@@ -1948,6 +1948,7 @@ struct WildGoRootView: View {
                 .safeAreaInset(edge: .bottom, spacing: 0) {
                     if viewModel.selectedTab != .capture {
                         WildGoBottomTabBar(selection: $viewModel.selectedTab)
+                            .padding(.bottom, viewModel.selectedTab == .profile ? -24 : 0)
                     }
                 }
 
@@ -4617,11 +4618,12 @@ struct ProfileScreen: View {
             .safeAreaInset(edge: .bottom) {
                 FriendsActionRail(isShowcaseDropped: $isShowcaseDropped)
                     .padding(.horizontal, 12)
-                    .padding(.bottom, 16)
+                    .padding(.bottom, 0)
             }
             .toolbar(.hidden, for: .navigationBar)
             .statusBarHidden(true)
         }
+        .background(Color.white.ignoresSafeArea())
         .sheet(isPresented: $isShowingAuthSheet) {
             AuthSheet()
                 .environmentObject(auth)
