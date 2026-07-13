@@ -184,6 +184,7 @@ checkAsset("Profile native reference", "qa-shots/swiftui-native-friends-profile-
 checkAsset("Map native reference", "qa-shots/tuned-map.png");
 checkAsset("ShaderKit capture material reference", "qa-shots/swiftui-native-capture-shaderkit-v1.png");
 checkAsset("ShaderKit six-tier binder reference", "qa-shots/swiftui-native-binder-shaderkit-rarity-v1.png");
+checkAsset("Bundled offline classifier", "ios/App/App/GeneratedAssets/WildGoSpeciesClassifier.mlmodelc/model1/coremldata.bin");
 
 const failures = checks.filter((check) => !check.ok);
 for (const check of checks) {
