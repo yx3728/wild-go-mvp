@@ -6245,10 +6245,27 @@ struct WildButtonStyle: ButtonStyle {
             .font(.headline.weight(.heavy))
             .padding(.vertical, 13)
             .padding(.horizontal, 14)
-            .background(kind == .primary ? Color.wildLime.opacity(0.86) : Color.black.opacity(0.18), in: Capsule())
+            .background {
+                if kind == .primary {
+                    Capsule()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color(red: 0.43, green: 0.52, blue: 0.15),
+                                    Color(red: 0.27, green: 0.34, blue: 0.08)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                } else {
+                    Capsule()
+                        .fill(Color.black.opacity(0.18))
+                }
+            }
             .foregroundStyle(.white)
-            .overlay(Capsule().stroke(kind == .primary ? Color.wildLime : Color.wildLime.opacity(0.82), lineWidth: 1.6))
-            .shadow(color: kind == .primary ? Color.wildLime.opacity(0.24) : .clear, radius: 18, x: 0, y: 10)
+            .overlay(Capsule().stroke(Color.wildLime.opacity(kind == .primary ? 0.86 : 0.82), lineWidth: 1.6))
+            .shadow(color: kind == .primary ? Color.black.opacity(0.28) : .clear, radius: 12, x: 0, y: 8)
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
     }
 }
