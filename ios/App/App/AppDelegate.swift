@@ -4914,11 +4914,11 @@ struct FriendsShowcaseDeck: View {
                 tint: Color(red: 0.54, green: 0.42, blue: 0.22)
             )
             .rotationEffect(.degrees(-6))
-            .offset(x: -76, y: -4)
+            .offset(x: -62, y: -4)
 
             FriendsHeroShowcaseCard(isFlipped: isFlipped)
                 .rotationEffect(.degrees(isShowcaseDropped ? 0.6 : 3.2))
-                .offset(x: isShowcaseDropped ? 18 : 28, y: isShowcaseDropped ? -15 : -5)
+                .offset(x: isShowcaseDropped ? 18 : 60, y: isShowcaseDropped ? -15 : -5)
                 .scaleEffect(isShowcaseDropped ? 0.96 : 1)
         }
         .frame(maxWidth: .infinity)
