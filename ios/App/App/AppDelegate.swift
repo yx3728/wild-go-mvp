@@ -3297,13 +3297,13 @@ struct BinderBoard: View {
                 BinderRings()
                     .offset(x: -14)
 
-                VStack(spacing: 11) {
+                VStack(spacing: 8) {
                     HStack(alignment: .bottom, spacing: topSpacing) {
                         BinderFeatureCard(
                             observation: primary,
                             role: .primary,
                             cardWidth: primaryWidth,
-                            cardHeight: 302
+                            cardHeight: 276
                         )
                             .zIndex(1)
 
@@ -3311,7 +3311,7 @@ struct BinderBoard: View {
                             observation: secondary,
                             role: .secondary,
                             cardWidth: secondaryWidth,
-                            cardHeight: 286
+                            cardHeight: 268
                         )
                     }
                     .frame(width: contentWidth, alignment: .center)
@@ -3321,20 +3321,20 @@ struct BinderBoard: View {
                             BinderSmallCard(
                                 observation: observation,
                                 cardWidth: smallWidth,
-                                cardHeight: 190
+                                cardHeight: 164
                             )
                         }
                     }
                     .frame(width: contentWidth, alignment: .center)
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 13)
+                .padding(.vertical, 10)
                 .padding(.leading, 20)
                 .padding(.trailing, 14)
             }
             .clipped()
         }
-        .frame(height: 529)
+        .frame(height: 468)
     }
 }
 
@@ -3475,7 +3475,7 @@ struct BinderFeatureCard: View {
     }
 
     private var imageHeight: CGFloat {
-        isPrimary ? 158 : 160
+        isPrimary ? 144 : 146
     }
 
     private var cornerRadius: CGFloat {
@@ -3551,9 +3551,9 @@ struct BinderFeatureCard: View {
             .padding(isPrimary ? 9 : 7)
             .padding(.bottom, 0)
 
-            VStack(alignment: .leading, spacing: isPrimary ? 8 : 6) {
+            VStack(alignment: .leading, spacing: isPrimary ? 6 : 4) {
                 Text(observation.commonName)
-                    .font(.system(size: isPrimary ? 18 : 14, weight: .black, design: .rounded))
+                    .font(.system(size: isPrimary ? 17 : 13, weight: .black, design: .rounded))
                     .foregroundStyle(.white.opacity(0.94))
                     .lineLimit(isPrimary ? 1 : 2)
                     .minimumScaleFactor(0.72)
@@ -3602,8 +3602,8 @@ struct BinderFeatureCard: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
             }
-            .padding(.horizontal, isPrimary ? 13 : 10)
-            .padding(.bottom, isPrimary ? 13 : 10)
+            .padding(.horizontal, isPrimary ? 11 : 9)
+            .padding(.bottom, isPrimary ? 9 : 8)
             .frame(width: detailWidth, alignment: .leading)
         }
         .frame(width: cardWidth, height: cardHeight, alignment: .topLeading)
@@ -3662,11 +3662,11 @@ struct BinderSmallCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 4) {
             ZStack(alignment: .top) {
                 BundleImage(name: observation.imageName)
                     .scaledToFill()
-                    .frame(width: cardWidth - 12, height: 90)
+                    .frame(width: cardWidth - 10, height: 74)
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(observation.accentColor.opacity(0.72), lineWidth: 1))
 
@@ -3739,7 +3739,7 @@ struct BinderSmallCard: View {
             .minimumScaleFactor(0.55)
             .frame(width: contentWidth)
         }
-        .padding(6)
+        .padding(5)
         .frame(width: cardWidth, height: cardHeight, alignment: .topLeading)
         .clipped()
         .background(

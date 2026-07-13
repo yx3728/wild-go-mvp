@@ -1,5 +1,16 @@
 # Wild Go MVP Handoff
 
+## Latest Handoff — July 13, 2026
+
+- Working branch: `codex/native-mvp-stack-sync`
+- GitHub PR: <https://github.com/yx3728/wild-go-mvp/pull/1>
+- Native stack is SwiftUI + SwiftData + AVFoundation + MapKit + PhotosUI + CoreLocation. Supabase/Postgres/Storage/Edge Functions remain the cloud backend, with cloud species recognition first and Vision/Core ML fallback wired for a later trained model.
+- Card materials now use the MIT-licensed ShaderKit package pinned exactly to `1.2.4`. One shared implementation covers all six levels: matte steel, colored alloy, crosshatched silver, iridescent pearl, inverted foil, and rainbow holo.
+- Capture retains drag-responsive shader tilt, press-and-hold depth, independent front/back flip, and four-card swipe pagination. All five real-coordinate interaction suites passed after the ShaderKit migration.
+- Binder's current grid was compacted to match the concept's vertical rhythm: the board is `468` pt tall instead of `529`, feature cards are `276`/`268` pt, and the four supporting cards are `164` pt. The full six-level rarity guide is now visible above the bottom navigation without dropping card names, rarity, confidence, locality, or dates.
+- Current material QA references are `qa-shots/swiftui-native-capture-shaderkit-v1.png` and `qa-shots/swiftui-native-binder-shaderkit-rarity-v1.png`.
+- Resume from here by configuring a live Supabase project, verifying AVFoundation on physical hardware, training the local Core ML model with a labeled dataset, and continuing the UI-only geometry audit for Capture and Friends/Profile. Source-image similarity is intentionally not the current optimization target.
+
 ## Project Summary
 
 Wild Go is a mobile-first prototype for a real-world urban nature collection app. Users photograph nearby plants and animals, receive AI-assisted identification, and collect each discovery as an original rarity card built from their own photos.
