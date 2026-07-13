@@ -21,6 +21,7 @@
 - Copy and content: `New card unlocked`, `Approx location`, `Likely match`, `AI confidence`, `First seen`, `Add to Binder`, and `Share Card` match the source state.
 
 **Iteration Evidence**
+- Capture secondary CTA material: darkening only the Share Card fill and replacing its bright lime outline with a muted olive border preserves the exact button geometry while moving the lower action stack toward the concept. Two independent candidate renders both score composite `0.819`, thumbnail `0.843`, histogram `0.624`, and bands `0.922`; previous tracked values were composite `0.818`, thumbnail `0.843`, histogram `0.620`, and bands `0.922`. Gates are now composite `0.818`, thumbnail `0.840`, histogram `0.623`, and bands `0.920`.
 - Before: composite `0.739`, thumbnail `0.801`, histogram `0.593`, bands `0.852`.
 - After: composite `0.767`, thumbnail `0.828`, histogram `0.624`, bands `0.880`.
 - Regression gates were raised to composite `0.760`, thumbnail `0.820`, histogram `0.610`, and bands `0.870`.
@@ -36,6 +37,7 @@
 **Implementation Checklist**
 - [x] Use generated landscape wildlife art instead of a screenshot crop.
 - [x] Match card aspect, photo proportion, rarity chrome, confidence block, interaction rail, dots, and CTA rhythm.
+- [x] Match the Share Card fill and border material to the concept without changing its icon, label, frame, or hit target.
 - [x] Preserve Sticker's official example shader parameters and native motion path.
 - [x] Re-run real-coordinate Capture interactions after the layout change. CGEvent taps verify Back, Tilt, Press & Hold, Flip, Add to Binder, and Share Card; horizontal CGEvent drags verify pages 2, 3, and 4 plus a backward swipe, with internal carousel events for every asserted page.
 - [x] Move the Capture card stage upward by the smallest measured amount that improves the normalized concept score, then re-run Back, Tilt, Depth, Flip, Add, and Share using real coordinates.

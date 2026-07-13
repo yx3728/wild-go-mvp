@@ -6260,11 +6260,18 @@ struct WildButtonStyle: ButtonStyle {
                         )
                 } else {
                     Capsule()
-                        .fill(Color.black.opacity(0.18))
+                        .fill(Color.black.opacity(0.34))
                 }
             }
             .foregroundStyle(.white)
-            .overlay(Capsule().stroke(Color.wildLime.opacity(kind == .primary ? 0.86 : 0.82), lineWidth: 1.6))
+            .overlay(
+                Capsule().stroke(
+                    kind == .primary
+                        ? Color.wildLime.opacity(0.86)
+                        : Color(red: 0.43, green: 0.55, blue: 0.13).opacity(0.9),
+                    lineWidth: 1.6
+                )
+            )
             .shadow(color: kind == .primary ? Color.black.opacity(0.28) : .clear, radius: 12, x: 0, y: 8)
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
     }
