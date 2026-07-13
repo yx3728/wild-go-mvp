@@ -5251,7 +5251,7 @@ struct FriendsShowcaseControls: View {
                 Label("Flip", systemImage: "rectangle.2.swap")
                     .font(.subheadline.weight(.bold))
                     .foregroundStyle(.white)
-                    .padding(.horizontal, 18)
+                    .padding(.horizontal, 4)
                     .padding(.vertical, 9)
                     .background(Color.black.opacity(0.78), in: Capsule())
             }
