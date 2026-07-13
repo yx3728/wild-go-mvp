@@ -4758,7 +4758,7 @@ struct FriendsHeader: View {
     var body: some View {
         HStack(alignment: .center) {
             Text("Wild Go")
-                .font(.system(size: 30, weight: .black, design: .rounded))
+                .font(.system(size: 22, weight: .black))
                 .foregroundStyle(Color.wildInk)
                 .overlay(alignment: .topTrailing) {
                     Image(systemName: "leaf.fill")
@@ -4770,7 +4770,7 @@ struct FriendsHeader: View {
             Spacer()
 
             Text("Friends' Finds")
-                .font(.system(size: 23, weight: .black, design: .rounded))
+                .font(.system(size: 20, weight: .bold))
                 .foregroundStyle(.black)
                 .lineLimit(1)
                 .minimumScaleFactor(0.78)
