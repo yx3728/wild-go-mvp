@@ -3559,10 +3559,10 @@ struct BinderFeatureCard: View {
 
             VStack(alignment: .leading, spacing: isPrimary ? 6 : 4) {
                 Text(observation.commonName)
-                    .font(.system(size: isPrimary ? 17 : 13, weight: .black, design: .rounded))
+                    .font(.system(size: isPrimary ? 17 : 12, weight: .bold, design: .serif))
                     .foregroundStyle(.white.opacity(0.94))
-                    .lineLimit(isPrimary ? 1 : 2)
-                    .minimumScaleFactor(0.72)
+                    .lineLimit(1)
+                    .minimumScaleFactor(isPrimary ? 0.72 : 0.58)
 
                 Text(observation.latinName)
                 .font(.system(size: isPrimary ? 10 : 9, weight: .medium))
@@ -3690,10 +3690,10 @@ struct BinderSmallCard: View {
             }
 
             Text(observation.commonName)
-                .font(.system(size: 8, weight: .black, design: .rounded))
+                .font(.system(size: 7.5, weight: .bold, design: .serif))
                 .foregroundStyle(.white.opacity(0.92))
-                .lineLimit(2)
-                .minimumScaleFactor(0.72)
+                .lineLimit(1)
+                .minimumScaleFactor(0.48)
                 .multilineTextAlignment(.leading)
                 .frame(width: contentWidth, alignment: .leading)
 

@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { inflateSync } from "node:zlib";
 
@@ -7,7 +7,8 @@ const repoRoot = fileURLToPath(new URL("..", import.meta.url));
 
 const conceptSpecs = {
   capture: {
-    actual: "qa-shots/swiftui-native-capture-layout-final.png",
+    actual: process.env.WILDGO_CAPTURE_ACTUAL ??
+      "qa-shots/swiftui-native-capture-layout-final.png",
     concept: "docs/card-visuals/capture-holo-unlock.png",
     minimumComposite: 0.811,
     minimumThumbnail: 0.828,
@@ -15,7 +16,8 @@ const conceptSpecs = {
     minimumBand: 0.92,
   },
   binder: {
-    actual: "qa-shots/swiftui-native-binder-grid-layout-final.png",
+    actual: process.env.WILDGO_BINDER_ACTUAL ??
+      "qa-shots/swiftui-native-binder-grid-layout-final.png",
     concept: "docs/card-visuals/binder-rarity-grid.png",
     minimumComposite: 0.85,
     minimumThumbnail: 0.85,
@@ -23,7 +25,8 @@ const conceptSpecs = {
     minimumBand: 0.95,
   },
   friends: {
-    actual: "qa-shots/swiftui-native-friends-profile-v17.png",
+    actual: process.env.WILDGO_FRIENDS_ACTUAL ??
+      "qa-shots/swiftui-native-friends-profile-v17.png",
     concept: "docs/card-visuals/friends-showcase-stack.png",
     minimumComposite: 0.81,
     minimumThumbnail: 0.783,
@@ -39,8 +42,8 @@ for (const [name, spec] of Object.entries(conceptSpecs)) {
     assertReadablePng(spec.actual);
     assertReadablePng(spec.concept);
 
-    const actual = parsePng(readFileSync(join(repoRoot, spec.actual)));
-    const concept = parsePng(readFileSync(join(repoRoot, spec.concept)));
+    const actual = parsePng(readFileSync(inputPath(spec.actual)));
+    const concept = parsePng(readFileSync(inputPath(spec.concept)));
     const metrics = conceptFidelity(actual, concept);
     const issues = [];
 
@@ -94,7 +97,7 @@ console.log(
 );
 
 function assertReadablePng(relativePath) {
-  const fullPath = join(repoRoot, relativePath);
+  const fullPath = inputPath(relativePath);
   if (!existsSync(fullPath)) {
     throw new Error(`missing ${relativePath}`);
   }
@@ -103,6 +106,10 @@ function assertReadablePng(relativePath) {
   if (size < 10000) {
     throw new Error(`${relativePath} is too small at ${size} bytes`);
   }
+}
+
+function inputPath(path) {
+  return isAbsolute(path) ? path : join(repoRoot, path);
 }
 
 function conceptFidelity(actual, concept) {

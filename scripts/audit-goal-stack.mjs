@@ -170,6 +170,7 @@ checkFile("Concept fidelity QA", "scripts/audit-concept-fidelity.mjs", [
   "thumbnailSimilarity",
   "histogramSimilarity",
   "bandSimilarity",
+  "WILDGO_BINDER_ACTUAL",
 ]);
 
 checkAsset("Capture concept reference", "docs/card-visuals/capture-holo-unlock.png");
