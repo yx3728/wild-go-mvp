@@ -4805,54 +4805,56 @@ struct FriendsProfileStats: View {
     var onAccountTap: () -> Void = {}
 
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
+        HStack(alignment: .center, spacing: 9) {
             Button(action: onAccountTap) {
                 ZStack(alignment: .bottomTrailing) {
                     BundleImage(name: "friends-leo-gen.png")
                         .scaledToFill()
-                        .frame(width: 64, height: 64)
+                        .frame(width: 52, height: 52)
                         .clipShape(Circle())
-                        .overlay(Circle().stroke(Color.wildGreen, lineWidth: 2.5))
+                        .overlay(Circle().stroke(Color.wildGreen, lineWidth: 2))
 
                     Text("24")
-                        .font(.caption.weight(.black))
+                        .font(.system(size: 11, weight: .black))
                         .foregroundStyle(.white)
-                        .frame(width: 26, height: 26)
+                        .frame(width: 22, height: 22)
                         .background(Color.wildGreen, in: Circle())
                         .overlay(Circle().stroke(.white, lineWidth: 2))
                 }
+                .frame(width: 54, height: 54)
+                .contentShape(Circle())
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("profile.account")
 
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text("Level 24  •  City Explorer")
-                    .font(.subheadline.weight(.bold))
+                    .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(.black)
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
 
                 ProgressView(value: 0.78)
                     .tint(Color.wildGreen)
-                    .frame(width: 128)
+                    .frame(width: 112)
 
                 HStack(spacing: 4) {
                     Text("2,340")
-                        .font(.subheadline.weight(.bold))
+                        .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(Color.wildGreen)
                     Text("/ 3,000 XP")
-                        .font(.subheadline)
+                        .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                 }
             }
 
             Spacer()
 
-            HStack(spacing: 12) {
+            HStack(spacing: 9) {
                 FriendsStat(icon: "rectangle.stack", value: "248", label: "Cards")
                 Rectangle()
                     .fill(Color(.separator))
-                    .frame(width: 1, height: 52)
+                    .frame(width: 1, height: 44)
                 FriendsStat(icon: "mappin.circle", value: "34", label: "Places")
             }
         }
@@ -4865,15 +4867,15 @@ struct FriendsStat: View {
     var label: String
 
     var body: some View {
-        VStack(spacing: 5) {
+        VStack(spacing: 3) {
             Image(systemName: icon)
-                .font(.title3.weight(.medium))
+                .font(.system(size: 16, weight: .medium))
                 .foregroundStyle(Color.wildGreen)
             Text(value)
-                .font(.title3.weight(.semibold))
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(.black)
             Text(label)
-                .font(.caption)
+                .font(.system(size: 10))
                 .foregroundStyle(.secondary)
         }
     }
