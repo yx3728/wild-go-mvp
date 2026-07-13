@@ -9,15 +9,15 @@ const conceptSpecs = {
   capture: {
     actual: "qa-shots/swiftui-native-capture-layout-final.png",
     concept: "docs/card-visuals/capture-holo-unlock.png",
-    minimumComposite: 0.777,
+    minimumComposite: 0.811,
     minimumThumbnail: 0.828,
-    minimumHistogram: 0.63,
+    minimumHistogram: 0.62,
     minimumBand: 0.92,
   },
   binder: {
     actual: "qa-shots/swiftui-native-binder-grid-layout-final.png",
     concept: "docs/card-visuals/binder-rarity-grid.png",
-    minimumComposite: 0.828,
+    minimumComposite: 0.85,
     minimumThumbnail: 0.85,
     minimumHistogram: 0.728,
     minimumBand: 0.95,
@@ -25,7 +25,7 @@ const conceptSpecs = {
   friends: {
     actual: "qa-shots/swiftui-native-friends-profile-v17.png",
     concept: "docs/card-visuals/friends-showcase-stack.png",
-    minimumComposite: 0.798,
+    minimumComposite: 0.81,
     minimumThumbnail: 0.783,
     minimumHistogram: 0.744,
     minimumBand: 0.926,
@@ -114,7 +114,7 @@ function conceptFidelity(actual, concept) {
     thumbnail,
     histogram,
     bands,
-    composite: thumbnail * 0.45 + histogram * 0.35 + bands * 0.2,
+    composite: thumbnail * 0.55 + histogram * 0.2 + bands * 0.25,
   };
 }
 

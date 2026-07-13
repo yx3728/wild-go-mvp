@@ -2530,7 +2530,7 @@ struct CaptureCardStage: View {
                 .rotation3DEffect(.degrees(isFlipped ? 0 : 180), axis: (x: 0, y: 1, z: 0), perspective: 0.62)
         }
         .frame(width: cardWidth, height: 472)
-        .rotationEffect(.degrees(isFlipped ? 1.4 : -2.5))
+        .rotationEffect(.degrees(1.4))
         .rotation3DEffect(
             .degrees((isDepthPreviewing ? 13 : 6) + Double(dragTranslation.width / 22)),
             axis: (
