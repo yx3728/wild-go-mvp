@@ -5317,19 +5317,20 @@ struct FriendsActivitySection: View {
         VStack(alignment: .leading, spacing: 11) {
             HStack {
                 Text("Friend Activity")
-                    .font(.title3.weight(.bold))
+                    .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(.black)
                 Spacer()
                 Button {
                     viewModel.showToast("All friend activity opened")
                 } label: {
                     Text("See all")
-                        .font(.subheadline.weight(.semibold))
+                        .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Color.wildGreen)
                 }
                 .buttonStyle(.plain)
                 .accessibilityIdentifier("profile.activitySeeAll")
             }
+            .frame(height: 24)
 
             Button {
                 viewModel.showToast("Maya's Monarch Butterfly opened")
@@ -5389,16 +5390,16 @@ struct FriendActivityRow: View {
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(.black)
                     .lineLimit(1)
                     .minimumScaleFactor(0.78)
                 Text(subtitle)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.black)
                     .lineLimit(1)
                 Text(detail)
-                    .font(.caption)
+                    .font(.system(size: 10))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
@@ -5423,7 +5424,7 @@ struct FriendActivityRow: View {
             }
 
             Text(xp)
-                .font(.system(size: 13, weight: .bold))
+                .font(.system(size: 11, weight: .bold))
                 .foregroundStyle(Color.wildCoral)
                 .lineLimit(1)
                 .padding(.horizontal, 8)
