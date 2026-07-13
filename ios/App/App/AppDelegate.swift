@@ -4607,7 +4607,7 @@ struct ProfileScreen: View {
                         ))
                         .padding(.top, -10)
                     FriendsActivitySection()
-                        .padding(.top, -12)
+                        .padding(.top, 16)
                 }
                 .padding(.horizontal, 18)
                 .padding(.top, -16)
