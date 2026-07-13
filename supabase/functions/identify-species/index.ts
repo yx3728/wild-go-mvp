@@ -1,26 +1,36 @@
-import { speciesResultFromOutputText, type SpeciesResult } from "./species-result.ts"
 import {
+  type SpeciesResult,
+  speciesResultFromOutputText,
+} from "./species-result.ts";
+import {
+  databaseAuthHeaders,
   decodeBase64Image,
   storagePathForObservation,
   stripDataURLPrefix,
+  validObservationId,
   verifiedUserIdFromAuthHeader,
-} from "./request-utils.ts"
+} from "./request-utils.ts";
 
 type IdentifyRequest = {
-  imageBase64?: string
-  imageMimeType?: string
-  clientId?: string
-  latitude?: number
-  longitude?: number
-  capturedAt?: string
-}
+  imageBase64?: string;
+  imageMimeType?: string;
+  clientId?: string;
+  observationId?: string;
+  latitude?: number;
+  longitude?: number;
+  capturedAt?: string;
+};
 
-const OPENAI_MODEL = Deno.env.get("OPENAI_VISION_MODEL") ?? "gpt-4.1-mini"
-const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY")
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
-const SUPABASE_AUTH_API_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? SUPABASE_SERVICE_ROLE_KEY
-const ALLOW_DEMO_IDENTIFICATION = flagEnabled(Deno.env.get("ALLOW_DEMO_IDENTIFICATION"))
+const OPENAI_MODEL = Deno.env.get("OPENAI_VISION_MODEL") ?? "gpt-4.1-mini";
+const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
+const SUPABASE_AUTH_API_KEY = SUPABASE_ANON_KEY ??
+  SUPABASE_SERVICE_ROLE_KEY;
+const ALLOW_DEMO_IDENTIFICATION = flagEnabled(
+  Deno.env.get("ALLOW_DEMO_IDENTIFICATION"),
+);
 
 const fallback: SpeciesResult = {
   commonName: "Blue Jay",
@@ -30,40 +40,73 @@ const fallback: SpeciesResult = {
   stars: 6,
   confidence: 0.92,
   note: "Bold, noisy, and usually spotted near mature street trees.",
-}
+};
 
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") {
-    return json({}, 200)
+    return json({}, 200);
   }
 
   if (request.method !== "POST") {
-    return json({ error: "Method not allowed" }, 405)
+    return json({ error: "Method not allowed" }, 405);
   }
 
-  const body = await request.json().catch(() => null) as IdentifyRequest | null
+  const body = await request.json().catch(() => null) as IdentifyRequest | null;
   if (!body?.imageBase64) {
-    return json({ error: "imageBase64 is required" }, 400)
+    return json({ error: "imageBase64 is required" }, 400);
   }
 
   if (!OPENAI_API_KEY && !ALLOW_DEMO_IDENTIFICATION) {
     return json({
       error: "OPENAI_API_KEY is required for cloud species recognition",
       code: "missing_openai_api_key",
-    }, 500)
+    }, 500);
   }
 
-  const storagePath = await uploadObservationImage(body, request)
+  const userId = await verifiedUserIdFromAuthHeader(request, {
+    supabaseUrl: SUPABASE_URL,
+    authApiKey: SUPABASE_AUTH_API_KEY,
+    serviceRoleKey: SUPABASE_SERVICE_ROLE_KEY,
+  });
+  const observationId = userId
+    ? validObservationId(body.observationId)
+    : undefined;
+  const authorizationHeader = userId
+    ? request.headers.get("Authorization")
+    : undefined;
+  const storagePath = await uploadObservationImage(body, userId, observationId);
+  if (!storagePath) {
+    return json({
+      error: "Observation image upload failed",
+      code: "storage_upload_failed",
+    }, 502);
+  }
 
   if (!OPENAI_API_KEY) {
-    const result = { ...fallback, storagePath }
-    await persistObservation(result, body, request, "fallback")
-    return json(result, 200)
+    const result = { ...fallback, storagePath };
+    const persisted = await persistObservation(
+      result,
+      body,
+      userId,
+      observationId,
+      authorizationHeader,
+      "fallback",
+    );
+    if (!persisted) {
+      return json({
+        error: "Observation persistence failed",
+        code: "observation_persist_failed",
+      }, 502);
+    }
+    return json(result, 200);
   }
 
-  const locationHint = typeof body.latitude === "number" && typeof body.longitude === "number"
-    ? `Approximate observation coordinate: ${body.latitude.toFixed(3)}, ${body.longitude.toFixed(3)}.`
-    : "No coordinate was provided."
+  const locationHint =
+    typeof body.latitude === "number" && typeof body.longitude === "number"
+      ? `Approximate observation coordinate: ${body.latitude.toFixed(3)}, ${
+        body.longitude.toFixed(3)
+      }.`
+      : "No coordinate was provided.";
 
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
@@ -86,7 +129,9 @@ Deno.serve(async (request) => {
           },
           {
             type: "input_image",
-            image_url: `data:${body.imageMimeType ?? "image/jpeg"};base64,${stripDataURLPrefix(body.imageBase64)}`,
+            image_url: `data:${body.imageMimeType ?? "image/jpeg"};base64,${
+              stripDataURLPrefix(body.imageBase64)
+            }`,
           },
         ],
       }],
@@ -94,20 +139,44 @@ Deno.serve(async (request) => {
         format: {
           type: "json_schema",
           name: "species_identification",
+          strict: true,
           schema: {
             type: "object",
             additionalProperties: false,
-            required: ["commonName", "latinName", "rarity", "finish", "stars", "confidence", "note"],
+            required: [
+              "commonName",
+              "latinName",
+              "rarity",
+              "finish",
+              "stars",
+              "confidence",
+              "note",
+              "alternativeMatches",
+            ],
             properties: {
               commonName: { type: "string" },
               latinName: { type: "string" },
               rarity: {
                 type: "string",
-                enum: ["Common", "Uncommon", "Rare", "Seasonal", "Local Special", "City Legend"],
+                enum: [
+                  "Common",
+                  "Uncommon",
+                  "Rare",
+                  "Seasonal",
+                  "Local Special",
+                  "City Legend",
+                ],
               },
               finish: {
                 type: "string",
-                enum: ["Matte", "Colored Edge", "Metallic", "Iridescent", "Foil", "Holo Foil"],
+                enum: [
+                  "Matte",
+                  "Colored Edge",
+                  "Metallic",
+                  "Iridescent",
+                  "Foil",
+                  "Holo Foil",
+                ],
               },
               stars: { type: "integer", minimum: 1, maximum: 6 },
               confidence: { type: "number", minimum: 0, maximum: 1 },
@@ -122,44 +191,59 @@ Deno.serve(async (request) => {
         },
       },
     }),
-  })
+  });
 
   if (!response.ok) {
-    const detail = await response.text()
-    return json({ error: "OpenAI identification failed", detail }, 502)
+    const detail = await response.text();
+    return json({ error: "OpenAI identification failed", detail }, 502);
   }
 
-  const payload = await response.json()
-  const outputText = extractOutputText(payload)
+  const payload = await response.json();
+  const outputText = extractOutputText(payload);
   if (!outputText) {
-    return json({ error: "OpenAI returned no structured text" }, 502)
+    return json({ error: "OpenAI returned no structured text" }, 502);
   }
 
-  const result = speciesResultFromOutputText(outputText, storagePath)
+  const result = speciesResultFromOutputText(outputText, storagePath);
   if (!result) {
-    return json({ error: "OpenAI returned an invalid species result" }, 502)
+    return json({ error: "OpenAI returned an invalid species result" }, 502);
   }
 
-  await persistObservation(result, body, request, "cloud_api")
-  return json(result, 200)
-})
+  const persisted = await persistObservation(
+    result,
+    body,
+    userId,
+    observationId,
+    authorizationHeader,
+    "cloud_api",
+  );
+  if (!persisted) {
+    return json({
+      error: "Observation persistence failed",
+      code: "observation_persist_failed",
+    }, 502);
+  }
+  return json(result, 200);
+});
 
 function extractOutputText(payload: unknown): string | undefined {
-  if (!payload || typeof payload !== "object") return undefined
+  if (!payload || typeof payload !== "object") return undefined;
 
   const maybe = payload as {
-    output_text?: string
-    output?: Array<{ content?: Array<{ type?: string; text?: string }> }>
-  }
+    output_text?: string;
+    output?: Array<{ content?: Array<{ type?: string; text?: string }> }>;
+  };
 
   if (typeof maybe.output_text === "string") {
-    return maybe.output_text
+    return maybe.output_text;
   }
 
   return maybe.output
     ?.flatMap((item) => item.content ?? [])
-    .find((content) => content.type === "output_text" && typeof content.text === "string")
-    ?.text
+    .find((content) =>
+      content.type === "output_text" && typeof content.text === "string"
+    )
+    ?.text;
 }
 
 function json(body: unknown, status: number) {
@@ -168,44 +252,48 @@ function json(body: unknown, status: number) {
     headers: {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+      "Access-Control-Allow-Headers":
+        "authorization, x-client-info, apikey, content-type",
       "Access-Control-Allow-Methods": "POST, OPTIONS",
     },
-  })
+  });
 }
 
-async function uploadObservationImage(request: IdentifyRequest, httpRequest: Request): Promise<string | undefined> {
+async function uploadObservationImage(
+  request: IdentifyRequest,
+  userId: string | null,
+  observationId?: string,
+): Promise<string | undefined> {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-    return undefined
+    return undefined;
   }
 
-  const mimeType = request.imageMimeType ?? "image/jpeg"
-  if (!["image/jpeg", "image/png", "image/heic", "image/heif"].includes(mimeType)) {
-    return undefined
+  const mimeType = request.imageMimeType ?? "image/jpeg";
+  if (
+    !["image/jpeg", "image/png", "image/heic", "image/heif"].includes(mimeType)
+  ) {
+    return undefined;
   }
 
-  const userId = await verifiedUserIdFromAuthHeader(httpRequest, {
-    supabaseUrl: SUPABASE_URL,
-    authApiKey: SUPABASE_AUTH_API_KEY,
-    serviceRoleKey: SUPABASE_SERVICE_ROLE_KEY,
-  })
   const storagePath = storagePathForObservation({
     userId,
     clientId: request.clientId,
     mimeType,
-  })
-  const uploadURL = `${SUPABASE_URL}/storage/v1/object/observations/${storagePath}`
-  let imageBytes: Uint8Array
+    objectId: observationId,
+  });
+  const uploadURL =
+    `${SUPABASE_URL}/storage/v1/object/observations/${storagePath}`;
+  let imageBytes: Uint8Array;
 
   try {
-    imageBytes = decodeBase64Image(request.imageBase64)
+    imageBytes = decodeBase64Image(request.imageBase64);
   } catch {
-    return undefined
+    return undefined;
   }
   const imageBody = imageBytes.buffer.slice(
     imageBytes.byteOffset,
     imageBytes.byteOffset + imageBytes.byteLength,
-  ) as ArrayBuffer
+  ) as ArrayBuffer;
 
   const response = await fetch(uploadURL, {
     method: "POST",
@@ -213,43 +301,54 @@ async function uploadObservationImage(request: IdentifyRequest, httpRequest: Req
       "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
       "apikey": SUPABASE_SERVICE_ROLE_KEY,
       "Content-Type": mimeType,
-      "x-upsert": "false",
+      "x-upsert": observationId ? "true" : "false",
     },
     body: imageBody,
-  }).catch(() => undefined)
+  }).catch(() => undefined);
 
   if (!response?.ok) {
-    return undefined
+    return undefined;
   }
 
-  return storagePath
+  return storagePath;
 }
 
 async function persistObservation(
   result: SpeciesResult,
   request: IdentifyRequest,
-  httpRequest: Request,
+  userId: string | null,
+  observationId: string | undefined,
+  authorizationHeader: string | null | undefined,
   source: "cloud_api" | "fallback",
-) {
+): Promise<boolean> {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-    return
+    return false;
   }
 
-  const userId = await verifiedUserIdFromAuthHeader(httpRequest, {
-    supabaseUrl: SUPABASE_URL,
-    authApiKey: SUPABASE_AUTH_API_KEY,
+  const authHeaders = databaseAuthHeaders({
+    verifiedUserId: userId,
+    authorizationHeader,
+    anonKey: SUPABASE_ANON_KEY,
     serviceRoleKey: SUPABASE_SERVICE_ROLE_KEY,
-  })
+  });
+  if (!authHeaders) return false;
 
-  await fetch(`${SUPABASE_URL}/rest/v1/observations`, {
+  const observationsURL = new URL(`${SUPABASE_URL}/rest/v1/observations`);
+  if (observationId) {
+    observationsURL.searchParams.set("on_conflict", "id");
+  }
+
+  const response = await fetch(observationsURL, {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-      "apikey": SUPABASE_SERVICE_ROLE_KEY,
+      ...authHeaders,
       "Content-Type": "application/json",
-      "Prefer": "return=minimal",
+      "Prefer": observationId
+        ? "resolution=merge-duplicates,return=minimal"
+        : "return=minimal",
     },
     body: JSON.stringify({
+      ...(observationId ? { id: observationId } : {}),
       user_id: userId,
       client_id: request.clientId ?? "anonymous",
       common_name: result.commonName,
@@ -266,9 +365,11 @@ async function persistObservation(
       source,
       captured_at: request.capturedAt ?? new Date().toISOString(),
     }),
-  }).catch(() => undefined)
+  }).catch(() => undefined);
+
+  return response?.ok ?? false;
 }
 
 function flagEnabled(value: string | undefined): boolean {
-  return ["1", "true", "yes"].includes((value ?? "").trim().toLowerCase())
+  return ["1", "true", "yes"].includes((value ?? "").trim().toLowerCase());
 }

@@ -23,6 +23,9 @@ checkFile("iOS app source", "ios/App/App/AppDelegate.swift", [
   "CLLocationManager",
   "SpeciesRecognitionPipeline",
   "CloudSpeciesRecognizer",
+  "observationId: observationID.uuidString.lowercased()",
+  "id: observationID",
+  "needsAuthenticatedUpload",
   "LocalSpeciesRecognizer",
   "VNCoreMLRequest",
   "MLModel(contentsOf:",
@@ -76,7 +79,11 @@ checkFile("Cloud identification Edge Function", "supabase/functions/identify-spe
   "species_identification",
   "storage/v1/object/observations",
   "rest/v1/observations",
-  "persistObservation(result, body, request, \"cloud_api\")",
+  "const persisted = await persistObservation(",
+  "validObservationId",
+  "databaseAuthHeaders",
+  "observation_persist_failed",
+  "storage_upload_failed",
   "verifiedUserIdFromAuthHeader",
 ]);
 
@@ -85,6 +92,7 @@ checkFile("Edge Function request contract tests", "supabase/functions/identify-s
   "builds private Storage paths for signed-in and device observations",
   "service-role authorization",
   "Auth sub claim",
+  "keeps signed-in Postgres writes behind RLS",
 ]);
 
 checkFile("Species result normalization tests", "supabase/functions/identify-species/species-result.test.ts", [

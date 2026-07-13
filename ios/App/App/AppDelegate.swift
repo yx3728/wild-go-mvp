@@ -223,6 +223,7 @@ final class WildGoViewModel: ObservableObject {
         recognitionState = .loading
 
         do {
+            let observationID = UUID()
             let normalizedImageData = Self.normalizedJPEGData(from: imageData)
             let savedImageName = (try? ObservationPhotoStore.saveJPEGData(normalizedImageData)) ?? "capture-blue-jay-landscape-gen-v2.png"
             selectedImageName = savedImageName
@@ -230,7 +231,8 @@ final class WildGoViewModel: ObservableObject {
             let result = try await recognizer.identify(
                 imageData: normalizedImageData,
                 coordinate: coordinate,
-                accessToken: accessToken
+                accessToken: accessToken,
+                observationID: observationID
             )
             let guide = SpeciesFieldGuide.entry(
                 forCommonName: result.commonName,
@@ -238,6 +240,7 @@ final class WildGoViewModel: ObservableObject {
                 stars: result.stars
             )
             let observation = WildObservation(
+                id: observationID,
                 commonName: result.commonName,
                 latinName: result.latinName,
                 imageName: savedImageName,
@@ -603,18 +606,38 @@ struct SupabaseConfiguration {
 }
 
 protocol SpeciesRecognizing {
-    func identify(imageData: Data, coordinate: CLLocationCoordinate2D?, accessToken: String?) async throws -> SpeciesIdentificationResult
+    func identify(
+        imageData: Data,
+        coordinate: CLLocationCoordinate2D?,
+        accessToken: String?,
+        observationID: UUID
+    ) async throws -> SpeciesIdentificationResult
 }
 
 struct SpeciesRecognitionPipeline: SpeciesRecognizing {
     private let cloud = CloudSpeciesRecognizer()
     private let local = LocalSpeciesRecognizer()
 
-    func identify(imageData: Data, coordinate: CLLocationCoordinate2D?, accessToken: String? = nil) async throws -> SpeciesIdentificationResult {
+    func identify(
+        imageData: Data,
+        coordinate: CLLocationCoordinate2D?,
+        accessToken: String? = nil,
+        observationID: UUID = UUID()
+    ) async throws -> SpeciesIdentificationResult {
         do {
-            return try await cloud.identify(imageData: imageData, coordinate: coordinate, accessToken: accessToken)
+            return try await cloud.identify(
+                imageData: imageData,
+                coordinate: coordinate,
+                accessToken: accessToken,
+                observationID: observationID
+            )
         } catch {
-            if let localResult = try? await local.identify(imageData: imageData, coordinate: coordinate, accessToken: accessToken) {
+            if let localResult = try? await local.identify(
+                imageData: imageData,
+                coordinate: coordinate,
+                accessToken: accessToken,
+                observationID: observationID
+            ) {
                 return localResult
             }
 
@@ -628,7 +651,12 @@ struct SpeciesRecognitionPipeline: SpeciesRecognizing {
 }
 
 struct CloudSpeciesRecognizer {
-    func identify(imageData: Data, coordinate: CLLocationCoordinate2D?, accessToken: String? = nil) async throws -> SpeciesIdentificationResult {
+    func identify(
+        imageData: Data,
+        coordinate: CLLocationCoordinate2D?,
+        accessToken: String? = nil,
+        observationID: UUID = UUID()
+    ) async throws -> SpeciesIdentificationResult {
         guard let functionURL = SupabaseConfiguration.edgeFunctionURL("identify-species"),
               let anonKey = SupabaseConfiguration.anonKey else {
             throw WildGoError.missingSupabaseConfiguration
@@ -647,6 +675,7 @@ struct CloudSpeciesRecognizer {
             imageBase64: imageData.base64EncodedString(),
             imageMimeType: "image/jpeg",
             clientId: DeviceIdentity.clientId,
+            observationId: observationID.uuidString.lowercased(),
             latitude: coordinate?.latitude,
             longitude: coordinate?.longitude,
             capturedAt: ISO8601DateFormatter().string(from: Date())
@@ -662,7 +691,12 @@ struct CloudSpeciesRecognizer {
 }
 
 struct LocalSpeciesRecognizer: SpeciesRecognizing {
-    func identify(imageData: Data, coordinate: CLLocationCoordinate2D?, accessToken: String? = nil) async throws -> SpeciesIdentificationResult {
+    func identify(
+        imageData: Data,
+        coordinate: CLLocationCoordinate2D?,
+        accessToken: String? = nil,
+        observationID: UUID = UUID()
+    ) async throws -> SpeciesIdentificationResult {
         guard let image = UIImage(data: imageData),
               let cgImage = image.cgImage else {
             throw WildGoError.localRecognitionUnavailable
@@ -839,6 +873,7 @@ struct IdentifySpeciesRequest: Encodable {
     var imageBase64: String
     var imageMimeType: String
     var clientId: String
+    var observationId: String
     var latitude: Double?
     var longitude: Double?
     var capturedAt: String
@@ -1296,7 +1331,7 @@ enum CollectionSyncService {
         }
 
         var syncedCount = 0
-        for observation in observations where observation.uploadedPath == nil {
+        for observation in observations where needsAuthenticatedUpload(observation) {
             let pendingStoragePath = await uploadLocalObservationImage(observation, session: session)
 
             var components = URLComponents(url: projectURL.appending(path: "rest/v1/observations"), resolvingAgainstBaseURL: false)
@@ -1426,8 +1461,7 @@ enum CollectionSyncService {
     }
 
     private static func uploadLocalObservationImage(_ observation: WildObservation, session: SupabaseSession) async -> String? {
-        guard observation.uploadedPath == nil,
-              let imageData = ObservationPhotoStore.data(named: observation.imageName),
+        guard let imageData = ObservationPhotoStore.data(named: observation.imageName),
               let uploadURL = storageObjectURL(path: storagePath(for: observation, session: session)),
               let anonKey = SupabaseConfiguration.anonKey else {
             return nil
@@ -1448,6 +1482,11 @@ enum CollectionSyncService {
         }
 
         return storagePath
+    }
+
+    private static func needsAuthenticatedUpload(_ observation: WildObservation) -> Bool {
+        guard let uploadedPath = observation.uploadedPath else { return true }
+        return uploadedPath.hasPrefix("devices/")
     }
 
     @MainActor
@@ -2047,6 +2086,7 @@ struct CaptureScreen: View {
     @State private var isShowingShareSheet = false
     @State private var isCardFlipped = false
     @State private var isDepthPreviewing = false
+    @State private var activeCardIndex = 0
     private var demoObservation: WildObservation {
         WildObservation(
             commonName: "Blue Jay",
@@ -2083,6 +2123,19 @@ struct CaptureScreen: View {
         )
     }
 
+    private var carouselObservations: [WildObservation] {
+        let primary = displayObservation
+        let supporting = WildObservation.samples
+            .filter { $0.commonName != primary.commonName }
+            .prefix(3)
+        return [primary] + supporting
+    }
+
+    private var activeObservation: WildObservation {
+        let observations = carouselObservations
+        return observations[min(max(activeCardIndex, 0), observations.count - 1)]
+    }
+
     private var demoDate: Date {
         var components = DateComponents()
         components.year = 2026
@@ -2094,11 +2147,11 @@ struct CaptureScreen: View {
     }
 
     private var shareCardText: String {
-        "Wild Go card: \(displayObservation.commonName) (\(displayObservation.latinName)), \(displayObservation.stars)-star \(displayObservation.rarity), \(Int(displayObservation.confidence * 100))% AI confidence."
+        "Wild Go card: \(activeObservation.commonName) (\(activeObservation.latinName)), \(activeObservation.stars)-star \(activeObservation.rarity), \(Int(activeObservation.confidence * 100))% AI confidence."
     }
 
     private var shareCardItems: [Any] {
-        WildCardShareExporter.shareItems(for: displayObservation)
+        WildCardShareExporter.shareItems(for: activeObservation)
     }
 
     var body: some View {
@@ -2129,10 +2182,13 @@ struct CaptureScreen: View {
                                 .padding(.top, compactHeight ? 0 : 2)
 
                             CaptureCardStage(
-                                observation: displayObservation,
+                                observation: activeObservation,
                                 isFlipped: $isCardFlipped,
                                 isDepthPreviewing: isDepthPreviewing,
-                                cardWidth: cardWidth
+                                cardWidth: cardWidth,
+                                canSwipeBackward: activeCardIndex > 0,
+                                canSwipeForward: activeCardIndex < carouselObservations.count - 1,
+                                onPageChange: changeCardPage
                             )
                             .scaleEffect(cardScale)
                             .frame(width: stageWidth, height: stageHeight)
@@ -2145,7 +2201,7 @@ struct CaptureScreen: View {
                             )
                                 .padding(.top, compactHeight ? -6 : 0)
 
-                            PageDots(activeIndex: isCardFlipped ? 1 : 0)
+                            PageDots(activeIndex: activeCardIndex)
                                 .padding(.top, compactHeight ? 7 : 8)
 
                             VStack(spacing: compactHeight ? 9 : 14) {
@@ -2216,6 +2272,38 @@ struct CaptureScreen: View {
                     viewModel.showToast("Photo import was cancelled")
                 }
             }
+        }
+        .onChange(of: displayObservation.commonName) { _, _ in
+            activeCardIndex = 0
+            isCardFlipped = false
+        }
+    }
+
+    private func changeCardPage(_ delta: Int) {
+        let nextIndex = min(max(activeCardIndex + delta, 0), carouselObservations.count - 1)
+        guard nextIndex != activeCardIndex else { return }
+
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.82)) {
+            activeCardIndex = nextIndex
+            isCardFlipped = false
+            isDepthPreviewing = false
+        }
+        recordCapturePage(nextIndex)
+        viewModel.showToast("Card \(nextIndex + 1) of \(carouselObservations.count)")
+    }
+
+    private func recordCapturePage(_ index: Int) {
+        switch index {
+        case 0:
+            QAInteractionProbe.record("carousel:capture:1")
+        case 1:
+            QAInteractionProbe.record("carousel:capture:2")
+        case 2:
+            QAInteractionProbe.record("carousel:capture:3")
+        case 3:
+            QAInteractionProbe.record("carousel:capture:4")
+        default:
+            break
         }
     }
 
@@ -2402,6 +2490,10 @@ struct CaptureCardStage: View {
     @Binding var isFlipped: Bool
     var isDepthPreviewing: Bool
     var cardWidth: CGFloat = 324
+    var canSwipeBackward = false
+    var canSwipeForward = false
+    var onPageChange: (Int) -> Void = { _ in }
+    @GestureState private var dragTranslation: CGSize = .zero
 
     private var alternativeMatches: [String] {
         if case .success(let result) = viewModel.recognitionState, !result.resolvedAlternatives.isEmpty {
@@ -2431,11 +2523,16 @@ struct CaptureCardStage: View {
         .frame(width: cardWidth, height: 472)
         .rotationEffect(.degrees(isFlipped ? 1.4 : -2.5))
         .rotation3DEffect(
-            .degrees(isDepthPreviewing ? 13 : 6),
-            axis: (x: isDepthPreviewing ? 0.18 : 0.0, y: 1.0, z: 0.0),
+            .degrees((isDepthPreviewing ? 13 : 6) + Double(dragTranslation.width / 22)),
+            axis: (
+                x: isDepthPreviewing ? 0.18 : Double(-dragTranslation.height / 150),
+                y: 1.0,
+                z: 0.0
+            ),
             perspective: 0.62
         )
-        .scaleEffect(isDepthPreviewing ? 1.035 : 1)
+        .scaleEffect(isDepthPreviewing ? 1.035 : (dragTranslation == .zero ? 1 : 1.012))
+        .offset(x: dragTranslation.width * 0.08, y: dragTranslation.height * 0.025)
         .shadow(color: .black.opacity(isDepthPreviewing ? 0.56 : 0.28), radius: isDepthPreviewing ? 30 : 10, x: 0, y: isDepthPreviewing ? 20 : 4)
         .contentShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
         .onTapGesture {
@@ -2445,6 +2542,23 @@ struct CaptureCardStage: View {
             }
             viewModel.showToast(willShowBack ? "Card details side shown" : "Card front shown")
         }
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 12, coordinateSpace: .local)
+                .updating($dragTranslation) { value, state, _ in
+                    state = value.translation
+                }
+                .onEnded { value in
+                    let horizontal = value.predictedEndTranslation.width
+                    let vertical = value.predictedEndTranslation.height
+                    guard abs(horizontal) > 72, abs(horizontal) > abs(vertical) * 1.25 else { return }
+
+                    if horizontal < 0, canSwipeForward {
+                        onPageChange(1)
+                    } else if horizontal > 0, canSwipeBackward {
+                        onPageChange(-1)
+                    }
+                }
+        )
         .accessibilityIdentifier("capture.heroCard")
         .animation(.spring(response: 0.46, dampingFraction: 0.82), value: isFlipped)
         .animation(.spring(response: 0.28, dampingFraction: 0.74), value: isDepthPreviewing)
@@ -2718,8 +2832,11 @@ struct PageDots: View {
                 Circle()
                     .fill(index == activeIndex ? Color.wildLime : .white.opacity(0.34))
                     .frame(width: 8, height: 8)
+                    .animation(.easeOut(duration: 0.18), value: activeIndex)
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Card \(activeIndex + 1) of 4")
     }
 }
 
@@ -5545,7 +5662,7 @@ struct HeroCollectibleCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .center, spacing: 12) {
-                Text("CITY LEGEND")
+                Text(observation.rarity.uppercased())
                     .font(.caption.weight(.heavy))
                     .tracking(1.4)
                     .lineLimit(1)

@@ -1,9 +1,11 @@
 import {
+  databaseAuthHeaders,
   decodeBase64Image,
   imageExtension,
   sanitizePathSegment,
   storagePathForObservation,
   stripDataURLPrefix,
+  validObservationId,
   verifiedUserIdFromAuthHeader,
 } from "./request-utils.ts";
 
@@ -88,6 +90,60 @@ Deno.test("sanitizes path segments to Storage-policy-safe folder names", () => {
     "segments are capped to a bounded length",
   );
   assertEquals(imageExtension("image/heif"), "heif", "HEIF keeps its suffix");
+});
+
+Deno.test("accepts canonical observation UUIDs and rejects unsafe record ids", () => {
+  assertEquals(
+    validObservationId(" 0190A5F0-7B3A-7CC3-8A6B-2D90F7D88315 "),
+    "0190a5f0-7b3a-7cc3-8a6b-2d90f7d88315",
+    "canonical UUIDs are normalized for Postgres and Storage",
+  );
+  assertEquals(
+    validObservationId("../../another-record"),
+    undefined,
+    "non-UUID ids are rejected",
+  );
+});
+
+Deno.test("keeps signed-in Postgres writes behind RLS", () => {
+  const signedIn = databaseAuthHeaders({
+    verifiedUserId: "user-123",
+    authorizationHeader: "Bearer user-token",
+    anonKey: "anon-key",
+    serviceRoleKey: "service-role",
+  });
+  assertEquals(
+    signedIn?.Authorization,
+    "Bearer user-token",
+    "verified users keep their JWT so Postgres RLS owns the write",
+  );
+  assertEquals(
+    signedIn?.apikey,
+    "anon-key",
+    "signed-in writes use the anon key",
+  );
+
+  const anonymous = databaseAuthHeaders({
+    verifiedUserId: null,
+    authorizationHeader: "Bearer anon-key",
+    anonKey: "anon-key",
+    serviceRoleKey: "service-role",
+  });
+  assertEquals(
+    anonymous?.Authorization,
+    "Bearer service-role",
+    "anonymous Edge writes use the server credential",
+  );
+
+  assertEquals(
+    databaseAuthHeaders({
+      verifiedUserId: "user-123",
+      authorizationHeader: "Bearer user-token",
+      serviceRoleKey: "service-role",
+    }),
+    undefined,
+    "signed-in writes fail closed when the anon key is unavailable",
+  );
 });
 
 Deno.test("verifies signed-in Supabase user tokens before trusting user ids", async () => {

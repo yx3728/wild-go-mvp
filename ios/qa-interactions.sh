@@ -141,6 +141,10 @@ on run argv
   delay 0.2
   tell application "System Events"
     tell process "Simulator"
+      try
+        click menu item "Fit Screen" of menu 1 of menu bar item "Window" of menu bar 1
+        delay 0.4
+      end try
       repeat with simulatorWindow in windows
         if (name of simulatorWindow as text) contains wantedName then
           set displayGroup to group 1 of simulatorWindow
@@ -273,6 +277,18 @@ run_capture_suite() {
   tap_relative 0.73 0.725 "capture flip"
   wait_for_event "toast:Card details side shown"
 
+  drag_relative 0.78 0.46 0.22 0.46 "capture swipe to card 2"
+  wait_for_event "carousel:capture:2"
+
+  drag_relative 0.78 0.46 0.22 0.46 "capture swipe to card 3"
+  wait_for_event "carousel:capture:3"
+
+  drag_relative 0.78 0.46 0.22 0.46 "capture swipe to card 4"
+  wait_for_event "carousel:capture:4"
+
+  drag_relative 0.22 0.46 0.78 0.46 "capture swipe back to card 3"
+  wait_for_event "carousel:capture:3"
+
   launch_tab "capture"
   sleep 2
   wait_for_event "launch:capture"
@@ -287,7 +303,7 @@ run_capture_suite() {
   wait_for_event "launch:capture"
   refresh_display_metrics
 
-  tap_relative 0.50 0.945 "capture share card"
+  tap_relative 0.50 0.92 "capture share card"
   if ! wait_for_event "toast:Opening share sheet"; then
     if [[ "$STRICT_SHARE_COORDINATE_QA" == "1" ]]; then
       return 1

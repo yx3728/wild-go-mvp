@@ -12,6 +12,13 @@ export type ObservationStoragePathOptions = {
   objectId?: string;
 };
 
+export type DatabaseAuthOptions = {
+  verifiedUserId?: string | null;
+  authorizationHeader?: string | null;
+  anonKey?: string;
+  serviceRoleKey?: string;
+};
+
 export function decodeBase64Image(imageBase64 = ""): Uint8Array {
   const normalized = stripDataURLPrefix(imageBase64);
   const binary = atob(normalized);
@@ -47,6 +54,42 @@ export function imageExtension(mimeType: string): string {
     default:
       return "jpg";
   }
+}
+
+export function validObservationId(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const normalized = value.trim().toLowerCase();
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+      .test(normalized)
+    ? normalized
+    : undefined;
+}
+
+export function databaseAuthHeaders({
+  verifiedUserId,
+  authorizationHeader,
+  anonKey,
+  serviceRoleKey,
+}: DatabaseAuthOptions): Record<string, string> | undefined {
+  if (
+    verifiedUserId &&
+    authorizationHeader?.startsWith("Bearer ") &&
+    anonKey
+  ) {
+    return {
+      "Authorization": authorizationHeader,
+      "apikey": anonKey,
+    };
+  }
+
+  if (!verifiedUserId && serviceRoleKey) {
+    return {
+      "Authorization": `Bearer ${serviceRoleKey}`,
+      "apikey": serviceRoleKey,
+    };
+  }
+
+  return undefined;
 }
 
 export function storagePathForObservation({

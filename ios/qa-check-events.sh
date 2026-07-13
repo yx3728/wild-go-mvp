@@ -41,13 +41,19 @@ while IFS= read -r event; do
         missing=$((missing + 1))
       fi
       ;;
+    carousel)
+      if ! grep -Fq "QAInteractionProbe.record(\"$event\")" "$SOURCE"; then
+        echo "MISSING carousel event in AppDelegate.swift: \"$event\"" >&2
+        missing=$((missing + 1))
+      fi
+      ;;
     *)
       echo "Unknown event kind in assertion: $event" >&2
       missing=$((missing + 1))
       ;;
   esac
 done < <(
-  grep -oE 'wait_for_event "(toast|launch|tab):[^"]*"' "$INTERACTIONS" \
+  grep -oE 'wait_for_event "(toast|launch|tab|carousel):[^"]*"' "$INTERACTIONS" \
     | sed -E 's/^wait_for_event "([^"]*)"$/\1/' \
     | sort -u
 )

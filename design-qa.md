@@ -8,6 +8,7 @@
 - Source visual truth: `docs/card-visuals/capture-holo-unlock.png` (`853 x 1844`).
 - Native implementation: `qa-shots/swiftui-native-capture-layout-final.png` (`1206 x 2622`).
 - State: six-star Blue Jay unlock, front face, first page dot, idle recognition state.
+- The four dots are now semantic pagination for four complete cards. Horizontal drag moves through all four pages; flipping only changes the current card face and leaves `activeCardIndex` unchanged.
 - Both images use the same normalized phone aspect and are compared by thumbnail pixels, color histogram, and vertical layout bands.
 - Binder source: `docs/card-visuals/binder-rarity-grid.png`; native implementation: `qa-shots/swiftui-native-binder-grid-layout-final.png`.
 - Friends/Profile source: `docs/card-visuals/friends-showcase-stack.png`; native implementation: `qa-shots/swiftui-native-friends-profile-v16.png`.
@@ -36,7 +37,7 @@
 - [x] Use generated landscape wildlife art instead of a screenshot crop.
 - [x] Match card aspect, photo proportion, rarity chrome, confidence block, interaction rail, dots, and CTA rhythm.
 - [x] Preserve Sticker's official example shader parameters and native motion path.
-- [x] Re-run real-coordinate Capture interactions after the layout change. CGEvent taps verified Back, Tilt, Press & Hold, Flip, and Add to Binder; a Computer Use coordinate tap at `198,790` verified Share Card and logged `toast:Opening share sheet` while opening the native share sheet.
+- [x] Re-run real-coordinate Capture interactions after the layout change. CGEvent taps verify Back, Tilt, Press & Hold, Flip, Add to Binder, and Share Card; horizontal CGEvent drags verify pages 2, 3, and 4 plus a backward swipe, with internal carousel events for every asserted page.
 - [x] Move the Capture card stage upward by the smallest measured amount that improves the normalized concept score, then re-run Back, Tilt, Depth, Flip, Add, and Share using real coordinates.
 - [x] Measure `0.40`, `0.28`, and `0.16` Sticker-surface presentation variants together, retain the darkest improving pass, and preserve the package's example shader parameters.
 - [x] Pass native build, visual, concept, backend, and Web gates.
