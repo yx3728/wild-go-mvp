@@ -4906,7 +4906,7 @@ struct FriendsShowcaseDeck: View {
                 tint: Color(red: 0.18, green: 0.35, blue: 0.24)
             )
             .rotationEffect(.degrees(-11))
-            .offset(x: -116, y: 22)
+            .offset(x: -116, y: 6)
 
             FriendsSmallDeckCard(
                 imageName: "binder-squirrel-gen.png",
@@ -4916,15 +4916,15 @@ struct FriendsShowcaseDeck: View {
                 tint: Color(red: 0.54, green: 0.42, blue: 0.22)
             )
             .rotationEffect(.degrees(-6))
-            .offset(x: -62, y: -4)
+            .offset(x: -62, y: -20)
 
             FriendsHeroShowcaseCard(isFlipped: isFlipped)
                 .rotationEffect(.degrees(isShowcaseDropped ? 0.6 : 3.2))
-                .offset(x: isShowcaseDropped ? 18 : 60, y: isShowcaseDropped ? -15 : -5)
+                .offset(x: isShowcaseDropped ? 18 : 60, y: isShowcaseDropped ? -15 : -14)
                 .scaleEffect(isShowcaseDropped ? 0.96 : 1)
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 326)
+        .frame(height: 358)
         .animation(.spring(response: 0.42, dampingFraction: 0.8), value: isFlipped)
         .animation(.spring(response: 0.46, dampingFraction: 0.78), value: isShowcaseDropped)
     }
@@ -4964,7 +4964,7 @@ struct FriendsSmallDeckCard: View {
                 .font(.caption)
         }
         .padding(12)
-        .frame(width: 118, height: 242)
+        .frame(width: 118, height: 274)
         .background {
             ZStack {
                 BundleImage(name: imageName)
@@ -5004,7 +5004,7 @@ struct FriendsHeroShowcaseCard: View {
             ZStack(alignment: .bottomLeading) {
                 BundleImage(name: "binder-cardinal-gen.png")
                     .scaledToFill()
-                    .frame(height: 208)
+                    .frame(height: 250)
                     .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                     .overlay(HoloShine(cornerRadius: 18, starCount: 6).opacity(0.3))
 
@@ -5092,7 +5092,7 @@ struct FriendsHeroShowcaseCard: View {
                 .padding(.horizontal, 10)
                 .padding(.bottom, 8)
         }
-        .frame(width: 228, height: 338)
+        .frame(width: 228, height: 380)
         .background(
             ZStack {
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
@@ -5153,7 +5153,7 @@ struct FriendsShowcaseBack: View {
                 .background(Color.wildGreen, in: Capsule())
         }
         .padding(16)
-        .frame(width: 228, height: 338)
+        .frame(width: 228, height: 380)
         .background(
             ZStack {
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
