@@ -5047,15 +5047,33 @@ struct FriendsHeroShowcaseCard: View {
             }
 
             HStack(spacing: 0) {
-                FriendsCardMetric(icon: "sparkles", label: "Rarity (App)", value: "Six Star", detail: "Extremely rare find")
+                FriendsCardMetric(
+                    icon: "sparkles",
+                    label: "Rarity (App)",
+                    value: "Six Star",
+                    detail: "Extremely rare find",
+                    accent: Color(red: 0.31, green: 0.24, blue: 0.72)
+                )
                 Rectangle()
                     .fill(Color.white.opacity(0.42))
                     .frame(width: 1, height: 62)
-                FriendsCardMetric(icon: "brain.head.profile", label: "AI Confidence", value: "92%", detail: "")
+                FriendsCardMetric(
+                    icon: "brain.head.profile",
+                    label: "AI Confidence",
+                    value: "92%",
+                    detail: "",
+                    accent: Color(red: 0.10, green: 0.48, blue: 0.29)
+                )
                 Rectangle()
                     .fill(Color.white.opacity(0.42))
                     .frame(width: 1, height: 62)
-                FriendsCardMetric(icon: "calendar", label: "Captured", value: "Today", detail: "7:42 AM")
+                FriendsCardMetric(
+                    icon: "calendar",
+                    label: "Captured",
+                    value: "Today",
+                    detail: "7:42 AM",
+                    accent: Color(red: 0.22, green: 0.31, blue: 0.75)
+                )
             }
             .padding(.vertical, 8)
             .padding(.horizontal, 10)
@@ -5265,22 +5283,23 @@ struct FriendsCardMetric: View {
     var label: String
     var value: String
     var detail: String
+    var accent: Color
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             Label(label, systemImage: icon)
                 .font(.system(size: 7, weight: .bold))
-                .foregroundStyle(Color.blue)
+                .foregroundStyle(accent)
                 .lineLimit(1)
                 .minimumScaleFactor(0.45)
             Text(value)
-                .font(.system(size: 13, weight: .black))
+                .font(.system(size: 12, weight: .bold))
                 .foregroundStyle(Color(red: 0.08, green: 0.08, blue: 0.36))
                 .lineLimit(1)
                 .minimumScaleFactor(0.62)
             if !detail.isEmpty {
                 Text(detail)
-                    .font(.system(size: 7, weight: .semibold))
+                    .font(.system(size: 6.5, weight: .semibold))
                     .foregroundStyle(Color(red: 0.08, green: 0.08, blue: 0.36).opacity(0.82))
                     .lineLimit(1)
                     .minimumScaleFactor(0.52)
