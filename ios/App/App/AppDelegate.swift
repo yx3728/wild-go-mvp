@@ -5026,16 +5026,16 @@ struct FriendsHeroShowcaseCard: View {
                     Spacer()
 
                     Text("Northern Cardinal")
-                        .font(.system(size: 23, weight: .bold, design: .serif))
+                        .font(.system(size: 19, weight: .bold, design: .serif))
                         .foregroundStyle(.white)
                         .lineLimit(1)
                         .minimumScaleFactor(0.78)
                     Text("Cardinalis cardinalis")
-                        .font(.subheadline)
+                        .font(.system(size: 12, weight: .medium, design: .serif))
                         .italic()
                         .foregroundStyle(.white.opacity(0.92))
                     StarStrip(count: 6)
-                        .font(.headline)
+                        .font(.subheadline)
                 }
                 .padding(12)
 

@@ -21,6 +21,7 @@
 - Copy and content: `New card unlocked`, `Approx location`, `Likely match`, `AI confidence`, `First seen`, `Add to Binder`, and `Share Card` match the source state.
 
 **Iteration Evidence**
+- Profile hero-card text hierarchy: reducing only the over-photo common name, Latin name, and star row matches the concept's quieter image caption without changing the `228 x 338` pt card or any gesture area. Six-decimal comparison improves composite from `0.815941` to `0.815983`, thumbnail from `0.788237` to `0.788328`, and bands from `0.931069` to `0.931299`; histogram moves only from `0.748217` to `0.747889`. A follow-up metadata-glass trial was rejected because histogram fidelity fell to `0.740` and composite to `0.814`. Gates are now composite `0.815`, thumbnail `0.788`, histogram `0.747`, and bands `0.931`.
 - Friends/Profile top-bar typography: replacing the oversized rounded display faces with restrained system sans at `22` pt and `20` pt keeps the notification-owned row height and every control frame unchanged. Two independent renders both improve composite fidelity from `0.814` to `0.816`, thumbnail similarity from `0.786` to `0.788`, and vertical bands from `0.930` to `0.931`, with histogram stable at `0.748`. Gates are now composite `0.814`, thumbnail `0.787`, histogram `0.746`, and bands `0.930`.
 - Capture secondary CTA material: darkening only the Share Card fill and replacing its bright lime outline with a muted olive border preserves the exact button geometry while moving the lower action stack toward the concept. Two independent candidate renders both score composite `0.819`, thumbnail `0.843`, histogram `0.624`, and bands `0.922`; previous tracked values were composite `0.818`, thumbnail `0.843`, histogram `0.620`, and bands `0.922`. Gates are now composite `0.818`, thumbnail `0.840`, histogram `0.623`, and bands `0.920`.
 - Before: composite `0.739`, thumbnail `0.801`, histogram `0.593`, bands `0.852`.
@@ -40,6 +41,7 @@
 - [x] Match card aspect, photo proportion, rarity chrome, confidence block, interaction rail, dots, and CTA rhythm.
 - [x] Match the Share Card fill and border material to the concept without changing its icon, label, frame, or hit target.
 - [x] Match Friends/Profile's top-bar type hierarchy without changing the notification or downstream interaction geometry.
+- [x] Match the Profile hero card's over-photo species hierarchy while preserving card size, material, and gestures.
 - [x] Preserve Sticker's official example shader parameters and native motion path.
 - [x] Re-run real-coordinate Capture interactions after the layout change. CGEvent taps verify Back, Tilt, Press & Hold, Flip, Add to Binder, and Share Card; horizontal CGEvent drags verify pages 2, 3, and 4 plus a backward swipe, with internal carousel events for every asserted page.
 - [x] Move the Capture card stage upward by the smallest measured amount that improves the normalized concept score, then re-run Back, Tilt, Depth, Flip, Add, and Share using real coordinates.
