@@ -5316,7 +5316,7 @@ struct FriendsActivitySection: View {
     @EnvironmentObject private var viewModel: WildGoViewModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 11) {
+        VStack(alignment: .leading, spacing: 9) {
             HStack {
                 Text("Friend Activity")
                     .font(.system(size: 16, weight: .bold))
@@ -5386,9 +5386,9 @@ struct FriendActivityRow: View {
         HStack(spacing: 9) {
             BundleImage(name: avatar)
                 .scaledToFill()
-                .frame(width: 54, height: 54)
+                .frame(width: 44, height: 44)
                 .clipShape(Circle())
-                .overlay(Circle().stroke(Color.wildCoral.opacity(0.8), lineWidth: 2.5))
+                .overlay(Circle().stroke(Color.wildCoral.opacity(0.8), lineWidth: 2))
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
@@ -5405,14 +5405,14 @@ struct FriendActivityRow: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
-            .frame(width: 160, alignment: .leading)
+            .frame(width: 132, alignment: .leading)
 
             Spacer(minLength: 2)
 
             ZStack(alignment: .topTrailing) {
                 BundleImage(name: cardImage)
                     .scaledToFill()
-                    .frame(width: 50, height: 38)
+                    .frame(width: 58, height: 48)
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.wildCoral, lineWidth: 2))
 
@@ -5424,13 +5424,14 @@ struct FriendActivityRow: View {
                     .background(.black.opacity(0.76), in: Capsule())
                     .offset(x: 6, y: -7)
             }
+            .padding(.trailing, 28)
 
             Text(xp)
                 .font(.system(size: 11, weight: .bold))
                 .foregroundStyle(Color.wildCoral)
                 .lineLimit(1)
                 .padding(.horizontal, 8)
-                .padding(.vertical, 7)
+                .padding(.vertical, 5)
                 .background(Color.wildCoral.opacity(0.14), in: Capsule())
         }
     }
