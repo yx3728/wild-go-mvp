@@ -1327,7 +1327,9 @@ enum CollectionSyncService {
 
         var syncedCount = 0
         for observation in observations where needsAuthenticatedUpload(observation) {
-            let pendingStoragePath = await uploadLocalObservationImage(observation, session: session)
+            guard let pendingStoragePath = await uploadLocalObservationImage(observation, session: session) else {
+                continue
+            }
 
             var components = URLComponents(url: projectURL.appending(path: "rest/v1/observations"), resolvingAgainstBaseURL: false)
             components?.queryItems = [URLQueryItem(name: "on_conflict", value: "id")]

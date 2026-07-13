@@ -16,10 +16,12 @@ Set these in Supabase before deploying the function. `OPENAI_API_KEY` is require
 ```bash
 supabase secrets set OPENAI_API_KEY=sk-...
 supabase secrets set OPENAI_VISION_MODEL=gpt-4.1-mini
-supabase secrets set SUPABASE_SERVICE_ROLE_KEY=...
-# Usually available automatically in hosted Supabase Edge Functions.
-supabase secrets set SUPABASE_ANON_KEY=...
 ```
+
+Do not manually create secrets whose names start with `SUPABASE_`. Supabase
+reserves that prefix and automatically injects `SUPABASE_URL`,
+`SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` into hosted Edge Functions.
+See the official [Edge Function environment variable documentation](https://supabase.com/docs/guides/functions/secrets).
 
 For local demos only, you can opt into the fixed sample card fallback:
 
@@ -35,14 +37,16 @@ The Edge Function uses `SUPABASE_SERVICE_ROLE_KEY` for controlled Storage and an
 
 ## Deploy
 
+The repo pins Supabase CLI `2.109.1` as a development dependency. Install once
+with `npm install`; all commands below then use the project-local CLI rather
+than depending on a machine-global version.
+
 For the usual project setup, export the required values and run the helper:
 
 ```bash
 SUPABASE_PROJECT_REF=abcd1234 \
 OPENAI_API_KEY=sk-... \
-SUPABASE_SERVICE_ROLE_KEY=... \
-SUPABASE_ANON_KEY=... \
-supabase/deploy.sh
+npm run supabase:deploy
 ```
 
 The script links the project, applies migrations, sets Edge Function secrets, and deploys `identify-species`.
@@ -50,8 +54,8 @@ The script links the project, applies migrations, sets Edge Function secrets, an
 Manual deploy:
 
 ```bash
-supabase db push
-supabase functions deploy identify-species
+npm exec -- supabase db push
+npm exec -- supabase functions deploy identify-species
 ```
 
 For local function serving, copy `functions/identify-species/.env.example` to an ignored `.env.local` and fill in local values.
@@ -61,7 +65,22 @@ For local function serving, copy `functions/identify-species/.env.example` to an
 Run the function-level contract tests without live Supabase or OpenAI secrets:
 
 ```bash
-npm run supabase:test
+npm run supabase:verify
 ```
 
-The test suite covers model-output normalization, request utilities, and the complete request handler with injected network responses. Handler tests prove the successful upload/OpenAI/Postgres sequence, Storage cleanup after OpenAI or Postgres failure, and preservation of an existing signed-in image with RLS-authenticated preflight reads.
+This runs the Deno contract suite, type-checks the deployed function entrypoint,
+checks the pinned CLI, and validates the deploy script. The tests cover
+model-output normalization, request utilities, explicit demo-mode disclosure,
+fail-closed cloud configuration, and the complete request handler with injected
+network responses. Handler tests prove the successful upload/OpenAI/Postgres
+sequence, Storage cleanup after OpenAI or Postgres failure, and preservation of
+an existing signed-in image with RLS-authenticated preflight reads.
+
+With Docker running, use the pinned CLI to start and reset the complete local
+Supabase stack:
+
+```bash
+npm run supabase:start
+npm run supabase:reset
+npm run supabase:stop
+```

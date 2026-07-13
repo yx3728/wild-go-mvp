@@ -26,6 +26,7 @@ checkFile("iOS app source", "ios/App/App/AppDelegate.swift", [
   "observationId: observationID.uuidString.lowercased()",
   "id: observationID",
   "needsAuthenticatedUpload",
+  "guard let pendingStoragePath = await uploadLocalObservationImage",
   "LocalSpeciesRecognizer",
   "VNCoreMLRequest",
   "MLModel(contentsOf:",
@@ -95,6 +96,9 @@ checkFile("Cloud identification Edge Function", "supabase/functions/identify-spe
 ]);
 
 checkFile("Edge Function rollback tests", "supabase/functions/identify-species/index.test.ts", [
+  "rejects requests without image data before calling dependencies",
+  "requires an OpenAI key unless demo identification is explicit",
+  "persists the demo identification only when explicitly enabled",
   "persists a successful identification without deleting its image",
   "deletes a new image when OpenAI identification fails",
   "deletes a new image when Postgres persistence fails",
@@ -113,6 +117,13 @@ checkFile("Species result normalization tests", "supabase/functions/identify-spe
   "normalizes generous OpenAI species output",
   "derives rarity and finish from star count",
   "rejects invalid or incomplete species output",
+]);
+
+checkFile("Supabase deploy contract", "scripts/verify-supabase-deploy.mjs", [
+  "project-local CLI",
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "SUPABASE_ANON_KEY",
+  "2.109.1",
 ]);
 
 checkFile("Core ML training tool", "ios/ml/build-model.sh", [
@@ -134,6 +145,10 @@ checkFile("Package scripts", "package.json", [
   "\"ios:verify-events\"",
   "\"ios:interactions\"",
   "\"supabase:test\"",
+  "\"supabase:verify\"",
+  "\"supabase:start\"",
+  "\"supabase:deploy\"",
+  "\"supabase\": \"2.109.1\"",
   "\"goal:audit\"",
   "\"concept:audit\"",
 ]);

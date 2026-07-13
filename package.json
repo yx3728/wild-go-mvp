@@ -9,14 +9,19 @@
     "preview": "vite preview --host 127.0.0.1",
     "goal:audit": "node scripts/audit-goal-stack.mjs",
     "concept:audit": "node scripts/audit-concept-fidelity.mjs",
-    "verify": "npm run goal:audit && npm run ios:verify-events && npm run concept:audit && npm run supabase:test && npm run build",
+    "verify": "npm run goal:audit && npm run ios:verify-events && npm run concept:audit && npm run supabase:verify && npm run build",
     "ios:build": "xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug -sdk iphonesimulator -derivedDataPath ios/App/build-native CODE_SIGNING_ALLOWED=NO build",
     "ios:smoke": "npm run ios:build && ios/qa-smoke.sh",
     "ios:visual-check": "node scripts/verify-native-smoke-images.mjs",
     "ios:verify-events": "ios/qa-check-events.sh",
     "ios:interactions": "ios/qa-check-events.sh && npm run ios:build && ios/qa-interactions.sh",
     "ios:open": "open ios/App/App.xcodeproj",
-    "supabase:test": "deno test supabase/functions/identify-species"
+    "supabase:test": "deno test supabase/functions/identify-species",
+    "supabase:verify": "npm run supabase:test && deno check supabase/functions/identify-species/index.ts && supabase --version && bash -n supabase/deploy.sh && node scripts/verify-supabase-deploy.mjs",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "supabase:reset": "supabase db reset",
+    "supabase:deploy": "supabase/deploy.sh"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.9",
@@ -35,5 +40,8 @@
     "tailwindcss": "^4.3.2",
     "tw-animate-css": "^1.4.0",
     "vite": "^8.1.4"
+  },
+  "devDependencies": {
+    "supabase": "2.109.1"
   }
 }

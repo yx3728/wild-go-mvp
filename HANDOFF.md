@@ -5,6 +5,8 @@
 - Working branch: `codex/native-mvp-stack-sync`
 - GitHub PR: <https://github.com/yx3728/wild-go-mvp/pull/1>
 - Native stack is SwiftUI + SwiftData + AVFoundation + MapKit + PhotosUI + CoreLocation. Supabase/Postgres/Storage/Edge Functions remain the cloud backend, with cloud species recognition first and Vision/Core ML fallback wired for a later trained model.
+- Supabase CLI is now a project-local, exact `2.109.1` development dependency. `npm run supabase:verify` runs 18 Deno handler/contract tests, type-checks the deployed entrypoint, verifies the CLI, validates shell syntax, and enforces the hosted-secret deployment contract. The deploy helper no longer tries to set reserved `SUPABASE_*` secret names; hosted Supabase supplies those runtime values automatically, while the helper publishes only the OpenAI key and model.
+- Signed-in collection sync now treats Storage upload and Postgres metadata as one ordered operation. If the local JPEG cannot upload, the card remains pending instead of being counted as synced, losing its existing device path, and retrying a metadata-only write every time Profile opens.
 - Card materials now use the MIT-licensed ShaderKit package pinned exactly to `1.2.4`. One shared implementation covers all six levels: matte steel, colored alloy, crosshatched silver, iridescent pearl, inverted foil, and rainbow holo.
 - Capture retains drag-responsive shader tilt, press-and-hold depth, independent front/back flip, and four-card swipe pagination. Its resting pose now uses the concept's slight clockwise `1.4` degree angle instead of the previous counter-clockwise angle, improving thumbnail geometry from `0.831` to `0.837` without changing gesture behavior.
 - Binder's current grid was compacted to match the concept's vertical rhythm: the board is `468` pt tall instead of `529`, feature cards are `276`/`268` pt, and the four supporting cards are `164` pt. The six-level rarity guide is `74` pt tall, and the reference-style single-line Tilt/Binder Tips row now renders completely above the bottom navigation without dropping card names, rarity, confidence, locality, or dates.
@@ -137,12 +139,12 @@ Commands run:
 ```bash
 npm install
 npm outdated
-npm run verify   # aggregate, Simulator-free gate: goal:audit + ios:verify-events + concept:audit + supabase:test + build
+npm run verify   # aggregate, Simulator-free gate: goal:audit + ios:verify-events + concept:audit + supabase:verify + build
 npm run build
 npm run goal:audit
 npm run concept:audit
 deno check supabase/functions/identify-species/index.ts
-npm run supabase:test
+npm run supabase:verify
 plutil -lint ios/App/App/Info.plist
 npm run ios:build
 npm run ios:verify-events
@@ -221,7 +223,7 @@ Browser checks covered:
 - Capture now uses ShaderKit's foil, rainbow glitter, shimmer, and edge-shine effects for the six-star card; `swiftui-native-capture-shaderkit-v1.png` is the current material QA screenshot.
 - Real-coordinate automation verified Capture Tilt, Press & Hold, Flip, Add to Binder, and Share Card. It also swipes through cards 2, 3, and 4, verifies each page event, then swipes backward while flip remains independent from the page dots. Add to Binder stays in-app and falls back to the demo image on Simulator instead of crashing when AVFoundation has no active video connection. The QA harness now fits the Simulator window onscreen before every coordinate pass so bottom actions cannot be obscured by desktop overlays.
 - `npm run ios:interactions` now repeats the native button checks with real Simulator-window coordinate taps and validates the SwiftUI actions through the app's QA-only event log. It covers the full bottom navigation, Map Near me/Capture/Cards controls, Capture Back/Tilt/Press & Hold/Flip/Add/Share, Cards collection/notifications/mode tabs/layout/Tips controls, and Profile/Friends controls. It is gated by `npm run ios:verify-events`, a Simulator-free check that fails fast if any `wait_for_event` assertion no longer maps to a `showToast` string (or tab `qaName`) in `AppDelegate.swift`.
-- `npm run supabase:test` covers the cloud-recognition backend contract without live secrets, including OpenAI output normalization for confidence percentages, out-of-range stars, tier/finish synonyms, missing notes, invalid JSON, base64/data URL decoding, private Storage path construction, path-segment sanitization, observation UUID validation, Supabase Auth bearer-token verification, and complete injected-fetch handler flows for success and downstream rollback.
+- `npm run supabase:verify` covers the cloud-recognition backend contract without live secrets, including OpenAI output normalization for confidence percentages, out-of-range stars, tier/finish synonyms, missing notes, invalid JSON, base64/data URL decoding, private Storage path construction, path-segment sanitization, observation UUID validation, Supabase Auth bearer-token verification, fail-closed missing-key behavior, explicitly disclosed demo fallback, complete injected-fetch handler flows for success and downstream rollback, Deno type checking, pinned CLI availability, and hosted-secret deployment rules.
 - Signed-in recognition now uses one observation UUID across SwiftData, private Storage, and Postgres, so pulling the account does not duplicate a newly captured card. Edge writes are idempotent and return an error when Storage or Postgres persistence fails; newly uploaded images are removed through the Storage API after OpenAI/output/Postgres failure, while a pre-existing signed-in card image is preserved on failed retry. Anonymous device-path cards are migrated to the signed-in user's private path on first sync.
 - `npm run goal:audit` performs a simulator-free static audit that the repo still contains the requested native iOS frameworks, SwiftData model container, AVFoundation capture path, MapKit/PhotosUI/CoreLocation usage, Supabase Postgres/Storage/RLS migration, OpenAI-backed Edge Function, Vision/Core ML fallback path, model-training tooling, concept references, native visual QA references, and the pinned ShaderKit package with all six rarity materials and current material QA references.
 - `npm run concept:audit` compares the tracked native Capture, Binder, and Friends/Profile reference screenshots against the original concept images. Its composite is intentionally layout-weighted (`55%` spatial thumbnail, `25%` vertical bands, `20%` color histogram), matching the current priority on UI hierarchy and geometry while retaining a lower color-drift guardrail for catastrophic palette regressions.

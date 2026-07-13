@@ -77,6 +77,102 @@ function recordCall(
   return call;
 }
 
+Deno.test("rejects requests without image data before calling dependencies", async () => {
+  let fetchCalled = false;
+  const fetcher: typeof fetch = () => {
+    fetchCalled = true;
+    return Promise.resolve(new Response(null, { status: 500 }));
+  };
+  const request = new Request("https://edge.test/identify-species", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ clientId: "test-device" }),
+  });
+
+  const response = await createIdentifySpeciesHandler(config(fetcher))(
+    request,
+  );
+
+  assertEquals(response.status, 400, "missing image data is rejected");
+  assertEquals(fetchCalled, false, "invalid requests do not call dependencies");
+});
+
+Deno.test("requires an OpenAI key unless demo identification is explicit", async () => {
+  let fetchCalled = false;
+  const fetcher: typeof fetch = () => {
+    fetchCalled = true;
+    return Promise.resolve(new Response(null, { status: 500 }));
+  };
+  const missingKeyConfig = {
+    ...config(fetcher),
+    openAIAPIKey: undefined,
+  };
+
+  const response = await createIdentifySpeciesHandler(missingKeyConfig)(
+    identifyRequest(),
+  );
+  const payload = await response.json();
+
+  assertEquals(
+    response.status,
+    500,
+    "missing OpenAI configuration fails closed",
+  );
+  assertEquals(
+    payload.code,
+    "missing_openai_api_key",
+    "the configuration error is machine readable",
+  );
+  assertEquals(
+    fetchCalled,
+    false,
+    "configuration failure does not upload data",
+  );
+});
+
+Deno.test("persists the demo identification only when explicitly enabled", async () => {
+  const calls: FetchCall[] = [];
+  const fetcher: typeof fetch = async (input, init) => {
+    const call = recordCall(calls, input, init);
+    if (call.url.includes("/rest/v1/observations")) {
+      return new Response(null, { status: 201 });
+    }
+    return new Response(null, { status: 200 });
+  };
+  const demoConfig = {
+    ...config(fetcher),
+    openAIAPIKey: undefined,
+    allowDemoIdentification: true,
+  };
+
+  const response = await createIdentifySpeciesHandler(demoConfig)(
+    identifyRequest(),
+  );
+  const payload = await response.json();
+  const databaseCall = calls.find((call) =>
+    call.url.includes("/rest/v1/observations")
+  );
+
+  assertEquals(response.status, 200, "explicit demo mode returns a card");
+  assertEquals(
+    payload.commonName,
+    "Blue Jay",
+    "demo mode uses the sample card",
+  );
+  assertEquals(
+    calls.some((call) => call.url === "https://api.openai.com/v1/responses"),
+    false,
+    "demo mode does not impersonate a cloud model call",
+  );
+  assert(databaseCall !== undefined, "demo mode persists its result");
+  const databaseBody = JSON.parse(String(databaseCall.body));
+  assertEquals(
+    databaseBody.source,
+    "fallback",
+    "demo rows disclose their source",
+  );
+});
+
 Deno.test("persists a successful identification without deleting its image", async () => {
   const calls: FetchCall[] = [];
   const fetcher: typeof fetch = async (input, init) => {
