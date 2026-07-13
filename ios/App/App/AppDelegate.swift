@@ -3805,7 +3805,7 @@ struct BinderRarityGuideStrip: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 7)
-        .frame(height: 82)
+        .frame(height: 74)
         .background(Color.black.opacity(0.14), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -3821,23 +3821,24 @@ struct BinderTipRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "iphone.gen2.radiowaves.left.and.right")
-                .font(.title3.weight(.semibold))
+                .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(Color.wildLime)
                 .rotationEffect(.degrees(-12))
 
             Text("Tilt your phone slowly to see the holo cards shimmer.")
-                .font(.subheadline.weight(.medium))
+                .font(.system(size: 9, weight: .medium))
                 .foregroundStyle(.white.opacity(0.52))
-                .lineLimit(2)
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
 
             Spacer()
 
             Button(action: onTips) {
                 Label("Binder Tips", systemImage: "info.circle")
-                    .font(.caption.weight(.bold))
+                    .font(.system(size: 9, weight: .bold))
                     .foregroundStyle(.white.opacity(0.54))
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 9)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
                     .background(Color.wildLime.opacity(0.1), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).stroke(Color.wildLime.opacity(0.2), lineWidth: 1))
             }
