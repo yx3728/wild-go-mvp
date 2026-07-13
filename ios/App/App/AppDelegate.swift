@@ -1984,7 +1984,11 @@ struct WildGoBottomTabBar: View {
     }
 
     private var visibleTabs: [(WildGoTab, String, String)] {
-        usesLightMaterial ? tabs.filter { $0.0 != .capture } : tabs
+        guard usesLightMaterial else { return tabs }
+        // The concept's white Profile bar labels the binder destination "Collection".
+        return tabs.filter { $0.0 != .capture }.map { tab, title, icon in
+            tab == .binder ? (tab, "Collection", icon) : (tab, title, icon)
+        }
     }
 
     var body: some View {
@@ -4580,7 +4584,7 @@ struct ProfileScreen: View {
     var body: some View {
         NavigationStack {
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 10) {
+                VStack(spacing: 8) {
                     FriendsHeader()
                     FriendsProfileStats(onAccountTap: {
                         isShowingAuthSheet = true
@@ -4598,9 +4602,9 @@ struct ProfileScreen: View {
                             isFlipped: $isShowcaseFlipped,
                             isDropped: $isShowcaseDropped
                         ))
-                        .padding(.top, -20)
+                        .padding(.top, -10)
                     FriendsActivitySection()
-                        .padding(.top, -6)
+                        .padding(.top, -12)
                 }
                 .padding(.horizontal, 18)
                 .padding(.top, -16)
@@ -4610,7 +4614,7 @@ struct ProfileScreen: View {
             .safeAreaInset(edge: .bottom) {
                 FriendsActionRail(isShowcaseDropped: $isShowcaseDropped)
                     .padding(.horizontal, 12)
-                    .padding(.bottom, 20)
+                    .padding(.bottom, 16)
             }
             .toolbar(.hidden, for: .navigationBar)
             .statusBarHidden(true)
@@ -5288,7 +5292,7 @@ struct FriendsActivitySection: View {
     @EnvironmentObject private var viewModel: WildGoViewModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 11) {
             HStack {
                 Text("Friend Activity")
                     .font(.title3.weight(.bold))

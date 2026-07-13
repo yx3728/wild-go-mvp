@@ -32,7 +32,7 @@ const referenceSpecs = {
     minimumScore: 0.9,
   },
   profile: {
-    path: "qa-shots/swiftui-native-friends-profile-v16.png",
+    path: "qa-shots/swiftui-native-friends-profile-v17.png",
     minimumScore: 0.9,
   },
   map: {
