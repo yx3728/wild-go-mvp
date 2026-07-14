@@ -66,8 +66,8 @@ checkFile("ShaderKit six-tier metal implementation", "ios/App/App/AppDelegate.sw
   ".shader(.metallicCrosshatch(intensity: 0.58))",
   ".shader(.diagonalHolo(intensity: 0.64))",
   ".shader(.invertedFoil(intensity: 0.76))",
-  ".shader(.foil(intensity: 0.94))",
-  ".shader(.rainbowGlitter(intensity: 0.62))",
+  ".shader(.foil(intensity: 0.78))",
+  ".shader(.rainbowGlitter(intensity: 0.58))",
   "tilt: foilTilt",
 ]);
 

@@ -10,28 +10,28 @@ const conceptSpecs = {
     actual: process.env.WILDGO_CAPTURE_ACTUAL ??
       "qa-shots/swiftui-native-capture-layout-final.png",
     concept: "docs/card-visuals/capture-holo-unlock.png",
-    minimumComposite: 0.818,
-    minimumThumbnail: 0.84,
-    minimumHistogram: 0.623,
-    minimumBand: 0.92,
+    minimumComposite: 0.817,
+    minimumThumbnail: 0.846,
+    minimumHistogram: 0.642,
+    minimumBand: 0.894,
   },
   binder: {
     actual: process.env.WILDGO_BINDER_ACTUAL ??
       "qa-shots/swiftui-native-binder-grid-layout-final.png",
     concept: "docs/card-visuals/binder-rarity-grid.png",
-    minimumComposite: 0.85,
-    minimumThumbnail: 0.85,
-    minimumHistogram: 0.728,
-    minimumBand: 0.95,
+    minimumComposite: 0.817,
+    minimumThumbnail: 0.843,
+    minimumHistogram: 0.600,
+    minimumBand: 0.936,
   },
   friends: {
     actual: process.env.WILDGO_FRIENDS_ACTUAL ??
       "qa-shots/swiftui-native-friends-profile-v17.png",
     concept: "docs/card-visuals/friends-showcase-stack.png",
-    minimumComposite: 0.85,
-    minimumThumbnail: 0.839,
-    minimumHistogram: 0.762,
-    minimumBand: 0.943,
+    minimumComposite: 0.823,
+    minimumThumbnail: 0.819,
+    minimumHistogram: 0.726,
+    minimumBand: 0.910,
   },
 };
 

@@ -2213,7 +2213,7 @@ struct CaptureScreen: View {
                                         await captureCameraImage()
                                     }
                                 } label: {
-                                    Label(isCapturing ? "Capturing" : "Add to Binder", systemImage: "rectangle.stack.badge.plus")
+                                    Label(isCapturing ? "Capturing" : "Add to Binder", systemImage: "book.closed")
                                         .frame(maxWidth: .infinity)
                                 }
                                 .buttonStyle(.wildPrimary)
@@ -2367,12 +2367,12 @@ struct CaptureTopBar: View {
 
     var body: some View {
         ZStack {
-            HStack(spacing: 10) {
+            HStack(spacing: 8) {
                 Image(systemName: "leaf")
-                    .font(.title3.weight(.heavy))
+                    .font(.body.weight(.semibold))
                     .foregroundStyle(Color.wildLime)
                 Text("Wild Go")
-                    .font(.title3.weight(.heavy))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(.white)
             }
                 .foregroundStyle(.white)
@@ -2387,7 +2387,7 @@ struct CaptureTopBar: View {
 
                 Spacer()
                 PhotosPicker(selection: $selectedPhoto, matching: .images) {
-                    CircleIconButton(systemName: "rectangle.stack")
+                    CircleIconButton(systemName: "book.closed")
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Choose photo")
@@ -2403,11 +2403,11 @@ struct CircleIconButton: View {
 
     var body: some View {
         Image(systemName: systemName)
-            .font(.headline.weight(.bold))
+            .font(.system(size: 15, weight: .semibold))
             .foregroundStyle(.white)
-            .frame(width: 42, height: 42)
+            .frame(width: 40, height: 40)
             .background(.black.opacity(0.32), in: Circle())
-            .overlay(Circle().stroke(.white.opacity(0.22), lineWidth: 1.5))
+            .overlay(Circle().stroke(.white.opacity(0.22), lineWidth: 1))
     }
 }
 
@@ -2417,7 +2417,7 @@ struct UnlockTitle: View {
             HStack(spacing: 12) {
                 LeafRule(flipped: false)
                 Text("New card unlocked")
-                    .font(.system(size: 28, weight: .black, design: .rounded))
+                    .font(.system(size: 25, weight: .semibold))
                     .foregroundStyle(.white)
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
@@ -2426,7 +2426,7 @@ struct UnlockTitle: View {
 
             Text("Move phone to catch the foil")
                 .font(.subheadline.weight(.medium))
-                .foregroundStyle(.white.opacity(0.82))
+                .foregroundStyle(.white.opacity(0.62))
         }
     }
 }
@@ -2435,13 +2435,13 @@ struct LeafRule: View {
     var flipped: Bool
 
     var body: some View {
-        HStack(spacing: 3) {
+        HStack(spacing: 5) {
             Rectangle()
-                .frame(width: 22, height: 1)
+                .frame(width: 46, height: 0.5)
             Image(systemName: "leaf")
-                .font(.caption2.weight(.bold))
+                .font(.system(size: 9, weight: .medium))
         }
-        .foregroundStyle(Color.wildLime)
+        .foregroundStyle(Color.wildLime.opacity(0.88))
         .scaleEffect(x: flipped ? -1 : 1, y: 1)
     }
 }
@@ -2454,8 +2454,9 @@ struct CameraHeroBackground: View {
             BundleImage(name: "capture-blue-jay-landscape-gen-v2.png")
                 .scaledToFill()
                 .scaleEffect(1.2)
-                .blur(radius: 12)
-                .saturation(1.18)
+                .blur(radius: 14)
+                .saturation(0.92)
+                .brightness(-0.04)
                 .ignoresSafeArea()
 
             if camera.isAuthorized {
@@ -2467,9 +2468,9 @@ struct CameraHeroBackground: View {
 
             LinearGradient(
                 colors: [
-                    .black.opacity(0.66),
-                    Color.wildInk.opacity(0.38),
-                    .black.opacity(0.7)
+                    .black.opacity(0.58),
+                    Color.wildInk.opacity(0.34),
+                    .black.opacity(0.66)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -2477,7 +2478,7 @@ struct CameraHeroBackground: View {
             .ignoresSafeArea()
 
             RadialGradient(
-                colors: [.clear, .black.opacity(0.56)],
+                colors: [.clear, .black.opacity(0.42)],
                 center: .center,
                 startRadius: 80,
                 endRadius: 430
@@ -2533,7 +2534,7 @@ struct CaptureCardStage: View {
                 .rotation3DEffect(.degrees(isFlipped ? 0 : 180), axis: (x: 0, y: 1, z: 0), perspective: 0.62)
         }
         .frame(width: cardWidth, height: 472)
-        .rotationEffect(.degrees(1.4))
+        .rotationEffect(.degrees(3.8))
         .rotation3DEffect(
             .degrees((isDepthPreviewing ? 13 : 6) + Double(dragTranslation.width / 22)),
             axis: (
@@ -2765,7 +2766,7 @@ struct InteractionStrip: View {
                 .accessibilityIdentifier("capture.tilt")
 
                 Divider()
-                    .frame(height: 68)
+                    .frame(height: 46)
                     .overlay(.white.opacity(0.26))
                 Button {
                     let willPreview = !isDepthPreviewing
@@ -2792,7 +2793,7 @@ struct InteractionStrip: View {
                 )
 
                 Divider()
-                    .frame(height: 68)
+                    .frame(height: 46)
                     .overlay(.white.opacity(0.26))
                 Button {
                     let willShowBack = !isCardFlipped
@@ -2838,20 +2839,20 @@ struct ControlTile: View {
     var body: some View {
         VStack(spacing: 4) {
             Image(systemName: icon)
-                .font(.title2.weight(.semibold))
-                .frame(height: 30)
+                .font(.system(size: 21, weight: .light))
+                .frame(height: 28)
             Text(title)
-                .font(.caption.weight(.heavy))
+                .font(.system(size: 11, weight: .bold))
                 .textCase(.uppercase)
                 .lineLimit(1)
                 .minimumScaleFactor(0.68)
             Text(subtitle)
                 .font(.caption2)
-                .foregroundStyle(.white.opacity(0.72))
+                .foregroundStyle(.white.opacity(0.68))
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
         }
-        .frame(width: 90, height: 84)
+        .frame(width: 90, height: 80)
     }
 }
 
@@ -3020,7 +3021,7 @@ struct BinderScreen: View {
                 Text("Tilt cards to shimmer, switch sort order from Recent, and use the layout toggle to compare grid/list views.")
             }
         }
-        .saturation(0.8)
+        .saturation(0.96)
     }
 
     private func referenceCard(named name: String) -> WildObservation {
@@ -3073,26 +3074,26 @@ struct BinderTopBar: View {
     @EnvironmentObject private var viewModel: WildGoViewModel
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .center, spacing: 10) {
             Text("Wild Go")
-                .font(.system(size: 28, weight: .black, design: .rounded))
-                .foregroundStyle(.white.opacity(0.94))
+                .font(.system(size: 26, weight: .black, design: .serif))
+                .foregroundStyle(.white.opacity(0.96))
                 .lineLimit(1)
                 .minimumScaleFactor(0.78)
-                .frame(width: 108, alignment: .leading)
+                .frame(width: 92, alignment: .leading)
 
-            VStack(alignment: .leading, spacing: 5) {
+            VStack(alignment: .leading, spacing: 4) {
                 Button {
                     viewModel.showToast("Collection selector opened")
                 } label: {
-                    HStack(spacing: 5) {
+                    HStack(spacing: 4) {
                         Text("NYC Collection")
-                            .font(.subheadline.weight(.bold))
+                            .font(.system(size: 13, weight: .bold))
                             .lineLimit(1)
                             .minimumScaleFactor(0.76)
                             .layoutPriority(2)
                         Image(systemName: "chevron.down")
-                            .font(.caption2.weight(.heavy))
+                            .font(.system(size: 8, weight: .heavy))
                     }
                 }
                 .buttonStyle(.plain)
@@ -3100,40 +3101,38 @@ struct BinderTopBar: View {
 
                 ProgressView(value: 0.49)
                     .tint(Color.wildLime)
-                    .frame(width: 112)
+                    .frame(width: 124)
+                    .scaleEffect(y: 1.35)
 
                 Text("243 / 500 species")
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(.white.opacity(0.72))
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.74))
                     .lineLimit(1)
             }
             .foregroundStyle(.white.opacity(0.82))
-            .frame(width: 124, alignment: .leading)
-            .padding(.top, 4)
+            .frame(width: 110, alignment: .leading)
 
             Spacer(minLength: 0)
 
             LevelBadge()
-                .padding(.top, 0)
 
             Button {
                 viewModel.showToast("Notifications opened")
             } label: {
                 ZStack(alignment: .topTrailing) {
                     Image(systemName: "bell")
-                        .font(.title3.weight(.bold))
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.92))
-                        .frame(width: 34, height: 34)
+                        .frame(width: 28, height: 28)
                     Circle()
                         .fill(Color.wildCoral)
-                        .frame(width: 8, height: 8)
+                        .frame(width: 7, height: 7)
                         .offset(x: 1, y: 1)
                 }
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Notifications")
             .accessibilityIdentifier("binder.notifications")
-            .padding(.top, 6)
         }
     }
 }
@@ -3170,7 +3169,7 @@ struct BinderModeTabs: View {
                             Image(systemName: item.1)
                                 .font(.caption.weight(.semibold))
                             Text(item.0)
-                                .font(.caption.weight(.bold))
+                                .font(.caption.weight(.heavy))
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.72)
                         }
@@ -3179,7 +3178,7 @@ struct BinderModeTabs: View {
 
                         Rectangle()
                             .fill(selectedMode == item.0 ? Color.wildLime : .clear)
-                            .frame(height: 3)
+                            .frame(height: 2)
                     }
                 }
                 .buttonStyle(.plain)
@@ -3230,8 +3229,8 @@ struct BinderFilterBar: View {
             Spacer()
 
             Text("134 Cards")
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(.white.opacity(0.58))
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(.white.opacity(0.88))
                 .lineLimit(1)
 
             Spacer()
@@ -3268,6 +3267,51 @@ struct BinderFilterBar: View {
     }
 }
 
+struct BinderLeatherSurface: View {
+    var cornerRadius: CGFloat = 20
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            .fill(
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.11, green: 0.10, blue: 0.09),
+                        Color(red: 0.05, green: 0.05, blue: 0.04),
+                        Color(red: 0.15, green: 0.13, blue: 0.11)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .overlay {
+                Canvas { context, size in
+                    for index in 0..<900 {
+                        let x = CGFloat((index * 73) % max(Int(size.width), 1))
+                        let y = CGFloat((index * 131) % max(Int(size.height), 1))
+                        let diameter = CGFloat((index % 6) + 2) * 0.42
+                        let opacity = Double(index % 7) * 0.012 + 0.012
+                        let rect = CGRect(x: x, y: y, width: diameter, height: diameter)
+                        context.fill(Path(ellipseIn: rect), with: .color(.white.opacity(opacity)))
+                    }
+                }
+                .blendMode(.overlay)
+            }
+            .overlay(alignment: .top) {
+                LinearGradient(
+                    colors: [Color.wildLime.opacity(0.14), .clear],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: 28)
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .stroke(.white.opacity(0.10), lineWidth: 1)
+            }
+            .shadow(color: .black.opacity(0.52), radius: 18, x: 0, y: 14)
+    }
+}
+
 struct BinderBoard: View {
     var primary: WildObservation
     var secondary: WildObservation
@@ -3283,23 +3327,7 @@ struct BinderBoard: View {
             let smallWidth = (contentWidth - smallSpacing * 3) / 4
 
             ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 0.09, green: 0.09, blue: 0.08),
-                                Color.black.opacity(0.9),
-                                Color(red: 0.16, green: 0.15, blue: 0.13)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .stroke(.white.opacity(0.08), lineWidth: 1)
-                    )
-                    .shadow(color: .black.opacity(0.52), radius: 18, x: 0, y: 14)
+                BinderLeatherSurface()
 
                 BinderRings()
                     .offset(x: -14)
@@ -3350,23 +3378,7 @@ struct BinderListBoard: View {
 
     var body: some View {
         ZStack(alignment: .leading) {
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color(red: 0.08, green: 0.09, blue: 0.08),
-                            Color.black.opacity(0.9),
-                            Color(red: 0.14, green: 0.16, blue: 0.1)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(.white.opacity(0.08), lineWidth: 1)
-                )
-                .shadow(color: .black.opacity(0.52), radius: 18, x: 0, y: 14)
+            BinderLeatherSurface()
 
             BinderRings()
                 .offset(x: -14)
@@ -3448,19 +3460,39 @@ struct BinderListRow: View {
 
 struct BinderRings: View {
     var body: some View {
-        VStack(spacing: 112) {
-            ForEach(0..<3, id: \.self) { _ in
-                Capsule()
-                    .stroke(
-                        LinearGradient(
-                            colors: [.white.opacity(0.95), .gray.opacity(0.52), .white.opacity(0.72)],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        ),
-                        lineWidth: 5
-                    )
-                    .frame(width: 34, height: 15)
-                    .shadow(color: .black.opacity(0.38), radius: 3, x: 1, y: 2)
+        VStack(spacing: 118) {
+            ForEach(0..<2, id: \.self) { _ in
+                ZStack {
+                    Circle()
+                        .fill(Color.black.opacity(0.9))
+                        .frame(width: 12, height: 12)
+
+                    Circle()
+                        .stroke(
+                            LinearGradient(
+                                colors: [.white.opacity(0.96), .gray.opacity(0.55), .white.opacity(0.78)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 2.8
+                        )
+                        .frame(width: 20, height: 20)
+
+                    Circle()
+                        .trim(from: 0.14, to: 0.86)
+                        .stroke(
+                            LinearGradient(
+                                colors: [.white.opacity(0.98), Color(white: 0.72), .white.opacity(0.92)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            style: StrokeStyle(lineWidth: 4.2, lineCap: .round)
+                        )
+                        .frame(width: 30, height: 30)
+                        .rotationEffect(.degrees(-90))
+                        .offset(x: -8)
+                }
+                .shadow(color: .black.opacity(0.42), radius: 2, x: 1, y: 2)
             }
         }
     }
@@ -3809,11 +3841,10 @@ struct BinderRarityGuideStrip: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 7)
         .frame(height: 74)
-        .background(Color.black.opacity(0.14), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .background(Color.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
-                .foregroundStyle(Color.wildGold.opacity(0.42))
+                .stroke(.white.opacity(0.10), lineWidth: 1)
         )
     }
 }
@@ -4139,15 +4170,15 @@ struct LevelBadge: View {
     var body: some View {
         VStack(spacing: 0) {
             Text("Lv.")
-                .font(.caption2.weight(.bold))
+                .font(.system(size: 10, weight: .bold))
             Text("23")
-                .font(.title3.weight(.black))
+                .font(.system(size: 18, weight: .black))
         }
         .foregroundStyle(.white)
-        .frame(width: 52, height: 52)
+        .frame(width: 46, height: 46)
         .background(
             Hexagon()
-                .stroke(Color.wildLime, lineWidth: 2)
+                .stroke(Color.wildLime, lineWidth: 3.5)
                 .background(Hexagon().fill(Color.wildInk.opacity(0.82)))
         )
     }
@@ -4760,14 +4791,8 @@ struct FriendsHeader: View {
     var body: some View {
         HStack(alignment: .center) {
             Text("Wild Go")
-                .font(.system(size: 22, weight: .black))
-                .foregroundStyle(Color.wildInk)
-                .overlay(alignment: .topTrailing) {
-                    Image(systemName: "leaf.fill")
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(Color.wildGreen)
-                        .offset(x: 10, y: -2)
-                }
+                .font(.system(size: 24, weight: .black, design: .serif))
+                .foregroundStyle(Color(red: 0.12, green: 0.37, blue: 0.22))
 
             Spacer()
 
@@ -4814,7 +4839,7 @@ struct FriendsProfileStats: View {
                         .scaledToFill()
                         .frame(width: 52, height: 52)
                         .clipShape(Circle())
-                        .overlay(Circle().stroke(Color.wildGreen, lineWidth: 2))
+                        .overlay(Circle().stroke(Color.wildGreen, lineWidth: 1.2))
 
                     Text("24")
                         .font(.system(size: 11, weight: .black))
@@ -4831,7 +4856,7 @@ struct FriendsProfileStats: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("Level 24  •  City Explorer")
-                    .font(.system(size: 12, weight: .bold))
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.black)
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
@@ -4839,6 +4864,7 @@ struct FriendsProfileStats: View {
                 ProgressView(value: 0.78)
                     .tint(Color.wildGreen)
                     .frame(width: 112)
+                    .scaleEffect(y: 0.55)
 
                 HStack(spacing: 4) {
                     Text("2,340")
@@ -4852,12 +4878,12 @@ struct FriendsProfileStats: View {
 
             Spacer()
 
-            HStack(spacing: 9) {
-                FriendsStat(icon: "rectangle.stack", value: "248", label: "Cards")
+                HStack(spacing: 9) {
+                FriendsStat(icon: "square.on.square", value: "248", label: "Cards")
                 Rectangle()
                     .fill(Color(.separator))
                     .frame(width: 1, height: 44)
-                FriendsStat(icon: "mappin.circle", value: "34", label: "Places")
+                FriendsStat(icon: "mappin", value: "34", label: "Places")
             }
         }
     }
@@ -4906,7 +4932,7 @@ struct FriendsShowcaseDeck: View {
                 tint: Color(red: 0.18, green: 0.35, blue: 0.24)
             )
             .rotationEffect(.degrees(-11))
-            .offset(x: -116, y: 6)
+            .offset(x: -108, y: 5)
 
             FriendsSmallDeckCard(
                 imageName: "binder-squirrel-gen.png",
@@ -4916,15 +4942,16 @@ struct FriendsShowcaseDeck: View {
                 tint: Color(red: 0.54, green: 0.42, blue: 0.22)
             )
             .rotationEffect(.degrees(-6))
-            .offset(x: -62, y: -20)
+            .offset(x: -58, y: -18)
 
             FriendsHeroShowcaseCard(isFlipped: isFlipped)
                 .rotationEffect(.degrees(isShowcaseDropped ? 0.6 : 3.2))
-                .offset(x: isShowcaseDropped ? 18 : 60, y: isShowcaseDropped ? -15 : -14)
+                .offset(x: isShowcaseDropped ? 16 : 54, y: isShowcaseDropped ? -14 : -12)
                 .scaleEffect(isShowcaseDropped ? 0.96 : 1)
         }
+        .scaleEffect(0.94)
         .frame(maxWidth: .infinity)
-        .frame(height: 358)
+        .frame(height: 350)
         .animation(.spring(response: 0.42, dampingFraction: 0.8), value: isFlipped)
         .animation(.spring(response: 0.46, dampingFraction: 0.78), value: isShowcaseDropped)
     }
@@ -4964,7 +4991,7 @@ struct FriendsSmallDeckCard: View {
                 .font(.caption)
         }
         .padding(12)
-        .frame(width: 118, height: 274)
+        .frame(width: 108, height: 252)
         .background {
             ZStack {
                 BundleImage(name: imageName)
@@ -5004,33 +5031,33 @@ struct FriendsHeroShowcaseCard: View {
             ZStack(alignment: .bottomLeading) {
                 BundleImage(name: "binder-cardinal-gen.png")
                     .scaledToFill()
-                    .frame(height: 250)
+                    .frame(height: 244)
                     .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                     .overlay(HoloShine(cornerRadius: 18, starCount: 6).opacity(0.3))
 
                 VStack(alignment: .leading, spacing: 5) {
                     HStack {
                         Text("6★")
-                            .font(.title2.weight(.black))
+                            .font(.title3.weight(.black))
                             .foregroundStyle(.white)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
                             .background(.black.opacity(0.62), in: UnevenRoundedRectangle(topLeadingRadius: 18, bottomTrailingRadius: 14))
 
                         Spacer()
 
                         Text("URBAN LEGEND")
-                            .font(.caption.weight(.heavy))
+                            .font(.system(size: 10, weight: .heavy))
                             .foregroundStyle(.white)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
                             .background(.black.opacity(0.76), in: Capsule())
                     }
 
                     Spacer()
 
                     Text("Northern Cardinal")
-                        .font(.system(size: 19, weight: .bold, design: .serif))
+                        .font(.system(size: 17, weight: .bold, design: .serif))
                         .foregroundStyle(.white)
                         .lineLimit(1)
                         .minimumScaleFactor(0.78)
@@ -5092,7 +5119,7 @@ struct FriendsHeroShowcaseCard: View {
                 .padding(.horizontal, 10)
                 .padding(.bottom, 8)
         }
-        .frame(width: 228, height: 380)
+        .frame(width: 210, height: 344)
         .background(
             ZStack {
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
@@ -5153,7 +5180,7 @@ struct FriendsShowcaseBack: View {
                 .background(Color.wildGreen, in: Capsule())
         }
         .padding(16)
-        .frame(width: 228, height: 380)
+        .frame(width: 210, height: 344)
         .background(
             ZStack {
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
@@ -5755,11 +5782,18 @@ struct HeroCollectibleCard: View {
                             cornerRadius: 18,
                             tilt: foilTilt
                         )
-                        .opacity(observation.stars >= 5 ? 0.56 : 0.18)
+                        .opacity(observation.stars >= 5 ? 0.2 : 0.1)
                     )
 
-                Label(localityLabel ?? PrivacyLocationPolicy.displayLocality(for: observation), systemImage: "location")
-                    .font(.caption.weight(.semibold))
+                HStack(spacing: 5) {
+                    Image(systemName: "mappin.circle")
+                        .font(.caption.weight(.semibold))
+                    Text(localityLabel ?? PrivacyLocationPolicy.displayLocality(for: observation))
+                        .font(.caption.weight(.semibold))
+                    Image(systemName: "info.circle")
+                        .font(.caption2.weight(.medium))
+                        .foregroundStyle(.white.opacity(0.7))
+                }
                     .foregroundStyle(.white)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 7)
@@ -5778,7 +5812,7 @@ struct HeroCollectibleCard: View {
                         Text(observation.latinName)
                             .font(.subheadline)
                             .italic()
-                            .foregroundStyle(Color.wildLime)
+                            .foregroundStyle(Color(red: 0.55, green: 0.72, blue: 0.38))
                     }
 
                     Spacer(minLength: 2)
@@ -5840,7 +5874,26 @@ struct HeroCollectibleCard: View {
                         .overlay(Capsule().stroke(Color.wildGold.opacity(0.68), lineWidth: 1))
                 }
             }
-            .padding(.horizontal, 12)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 0.16, green: 0.12, blue: 0.05).opacity(0.92),
+                                Color(red: 0.1, green: 0.08, blue: 0.03).opacity(0.94)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(Color.wildGold.opacity(0.4), lineWidth: 1)
+                    )
+            )
+            .padding(.horizontal, 2)
         }
         .padding(14)
         .frame(width: cardWidth, height: 472, alignment: .top)
@@ -5851,7 +5904,7 @@ struct HeroCollectibleCard: View {
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
                     .fill(
                         LinearGradient(
-                            colors: [.black.opacity(0.18), Color.wildInk.opacity(0.62), .black.opacity(0.34)],
+                            colors: [.black.opacity(0.24), Color(red: 0.1, green: 0.11, blue: 0.07).opacity(0.7), .black.opacity(0.4)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -5861,7 +5914,7 @@ struct HeroCollectibleCard: View {
                     starCount: observation.stars,
                     tilt: foilTilt
                 )
-                    .opacity(0.16)
+                    .opacity(observation.stars >= 5 ? 0.18 : 0.1)
             }
         )
         .overlay(
@@ -5906,7 +5959,18 @@ private enum RarityMetalTier: Int {
         case .invertedFoil:
             return [Color(red: 0.34, green: 0.12, blue: 0.04), Color(red: 0.98, green: 0.78, blue: 0.3), Color(red: 0.78, green: 0.3, blue: 0.08), Color(red: 1, green: 0.92, blue: 0.62)]
         case .rainbowHolo:
-            return [Color.red, Color.orange, Color.yellow, Color.green, Color.cyan, Color.blue, Color.purple, Color.pink, Color.red]
+            // Concept art: bright silver holographic foil with soft rainbow micro-tints.
+            return [
+                Color(white: 0.97),
+                Color(red: 0.93, green: 0.87, blue: 0.97),
+                Color(white: 0.99),
+                Color(red: 0.83, green: 0.94, blue: 0.97),
+                Color(white: 0.94),
+                Color(red: 0.98, green: 0.93, blue: 0.8),
+                Color(white: 0.98),
+                Color(red: 0.87, green: 0.96, blue: 0.89),
+                Color(white: 0.96)
+            ]
         }
     }
 
@@ -5917,7 +5981,7 @@ private enum RarityMetalTier: Int {
         case .crosshatchedSilver: return Color.wildCyan
         case .iridescentPearl: return Color(red: 0.8, green: 0.5, blue: 0.94)
         case .invertedFoil: return Color.orange
-        case .rainbowHolo: return Color.wildGold
+        case .rainbowHolo: return Color(white: 0.92)
         }
     }
 }
@@ -5957,9 +6021,10 @@ private struct RarityMetalShader: ViewModifier {
         case .rainbowHolo:
             content
                 .shaderContext(tilt: tilt, time: 0)
-                .shader(.foil(intensity: 0.94))
-                .shader(.rainbowGlitter(intensity: 0.62))
-                .shader(.shimmer(intensity: 0.52))
+                .shader(.foil(intensity: 0.78))
+                .shader(.rainbowGlitter(intensity: 0.58))
+                .shader(.shimmer(intensity: 0.38))
+                .shader(.metallicCrosshatch(intensity: 0.24))
                 .shader(.edgeShine)
         }
     }
@@ -6267,34 +6332,25 @@ struct WildButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.headline.weight(.heavy))
+            .font(.system(size: 16, weight: .semibold))
             .padding(.vertical, 13)
             .padding(.horizontal, 14)
             .background {
                 if kind == .primary {
                     Capsule()
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Color(red: 0.43, green: 0.52, blue: 0.15),
-                                    Color(red: 0.27, green: 0.34, blue: 0.08)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .fill(Color(red: 0.36, green: 0.44, blue: 0.13))
                 } else {
                     Capsule()
-                        .fill(Color.black.opacity(0.34))
+                        .fill(Color.black.opacity(0.42))
                 }
             }
             .foregroundStyle(.white)
             .overlay(
                 Capsule().stroke(
                     kind == .primary
-                        ? Color.wildLime.opacity(0.86)
-                        : Color(red: 0.43, green: 0.55, blue: 0.13).opacity(0.9),
-                    lineWidth: 1.6
+                        ? Color.clear
+                        : Color.white.opacity(0.55),
+                    lineWidth: 1.2
                 )
             )
             .shadow(color: kind == .primary ? Color.black.opacity(0.28) : .clear, radius: 12, x: 0, y: 8)
