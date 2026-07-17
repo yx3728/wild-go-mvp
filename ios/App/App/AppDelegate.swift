@@ -5001,7 +5001,7 @@ struct FriendsShowcaseDeck: View {
                 .offset(x: isShowcaseDropped ? 16 : 54, y: isShowcaseDropped ? -14 : -12)
                 .scaleEffect(isShowcaseDropped ? 0.96 : 1)
         }
-        .scaleEffect(0.94)
+        .scaleEffect(1.04)
         .frame(maxWidth: .infinity)
         .frame(height: 350)
         .animation(.spring(response: 0.42, dampingFraction: 0.8), value: isFlipped)
