@@ -10,10 +10,10 @@ const conceptSpecs = {
     actual: process.env.WILDGO_CAPTURE_ACTUAL ??
       "qa-shots/swiftui-native-capture-layout-final.png",
     concept: "docs/card-visuals/capture-holo-unlock.png",
-    minimumComposite: 0.824,
-    minimumThumbnail: 0.858,
-    minimumHistogram: 0.639,
-    minimumBand: 0.896,
+    minimumComposite: 0.829,
+    minimumThumbnail: 0.865,
+    minimumHistogram: 0.643,
+    minimumBand: 0.899,
   },
   binder: {
     actual: process.env.WILDGO_BINDER_ACTUAL ??

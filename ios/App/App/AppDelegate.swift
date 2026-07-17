@@ -2253,7 +2253,7 @@ struct CaptureScreen: View {
                                 isCardFlipped: $isCardFlipped,
                                 isDepthPreviewing: $isDepthPreviewing
                             )
-                                .padding(.top, compactHeight ? -6 : 0)
+                                .padding(.top, compactHeight ? 6 : 0)
 
                             PageDots(activeIndex: activeCardIndex)
                                 .padding(.top, compactHeight ? 7 : 8)
