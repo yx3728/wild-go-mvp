@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Simulator-free guard for the interaction QA suite.
 #
-# Parses every `wait_for_event "toast:..."` / `"launch:..."` / `"tab:..."`
+# Parses every `wait_for_event "toast:..."` / `"launch:..."` / `"tab:..."` /
+# `"offline:..."`
 # assertion in
 # qa-interactions.sh and confirms the matching source exists in AppDelegate.swift
 # (a showToast literal, or a WildGoTab.qaName value). This catches the common
@@ -47,13 +48,19 @@ while IFS= read -r event; do
         missing=$((missing + 1))
       fi
       ;;
+    offline)
+      if ! grep -Fq "QAInteractionProbe.record(\"$event\")" "$SOURCE"; then
+        echo "MISSING offline recognition event in AppDelegate.swift: \"$event\"" >&2
+        missing=$((missing + 1))
+      fi
+      ;;
     *)
       echo "Unknown event kind in assertion: $event" >&2
       missing=$((missing + 1))
       ;;
   esac
 done < <(
-  grep -oE 'wait_for_event "(toast|launch|tab|carousel):[^"]*"' "$INTERACTIONS" \
+  grep -oE 'wait_for_event "(toast|launch|tab|carousel|offline):[^"]*"' "$INTERACTIONS" \
     | sed -E 's/^wait_for_event "([^"]*)"$/\1/' \
     | sort -u
 )

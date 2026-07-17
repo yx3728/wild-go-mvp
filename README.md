@@ -54,7 +54,7 @@ open ios/App/App.xcodeproj
 
 The native app uses generated image assets from `ios/App/App/GeneratedAssets` for demo cards, while newly captured or imported JPEGs are saved under the app support `ObservationPhotos` folder and referenced from SwiftData cards. Supabase setup lives in `supabase/`; local app keys are read from `ios/debug.xcconfig` or Xcode build settings (`ios/debug.xcconfig.example` is provided). Captured images are sent to the `identify-species` Edge Function, which verifies signed-in user JWTs through Supabase Auth, uploads to private Supabase Storage, and writes card metadata to Postgres with the service role key. Profile → avatar opens Supabase email/password auth, refreshes short-lived Supabase access tokens with the saved refresh token before cloud requests, uploads local-only card photos to private Storage when available, pushes binder card metadata, pulls the signed-in user's Postgres observations back into SwiftData, and caches private Storage images locally when available.
 
-Optional offline recognition is prepared in `ios/ml/`: run `ios/ml/build-model.sh <labeled_dataset>` to train a Create ML image classifier, compile it to `WildGoSpeciesClassifier.mlmodelc`, and install it into `GeneratedAssets` for the next iOS build.
+Offline recognition ships with a deterministic seven-species Core ML starter model. `npm run ios:verify-model` runs all bundled demo samples through Vision/Core ML on macOS, while `npm run ios:offline-recognition` verifies the installed app bundle and inference path in Simulator. The starter proves plumbing only; run `ios/ml/build-model.sh <labeled_dataset>` to replace it with a Create ML classifier trained on real photos.
 
 To test the Supabase Edge Function's cloud-recognition result contract without
 live secrets, run:
@@ -63,8 +63,9 @@ live secrets, run:
 npm run supabase:test
 ```
 
-To run every Simulator-free guard in one gate (goal-stack audit, QA event
-consistency, concept-fidelity audit, Edge Function tests, and the web build),
+To run every Simulator-free guard in one gate (goal-stack audit, bundled Core ML
+runtime check, QA event consistency, concept-fidelity audit, Edge Function tests,
+and the web build),
 use the aggregate command. It fails fast and needs no Mac Simulator, so it is
 the recommended pre-commit / CI check:
 

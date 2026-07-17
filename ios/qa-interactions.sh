@@ -10,7 +10,7 @@ LAUNCH_TIMEOUT_SECONDS="${LAUNCH_TIMEOUT_SECONDS:-12}"
 LAUNCH_ATTEMPTS="${LAUNCH_ATTEMPTS:-2}"
 EVENT_TIMEOUT_SECONDS="${EVENT_TIMEOUT_SECONDS:-5}"
 TAP_SETTLE_SECONDS="${TAP_SETTLE_SECONDS:-0.8}"
-QA_INTERACTION_SUITES="${QA_INTERACTION_SUITES:-navigation map capture binder profile}"
+QA_INTERACTION_SUITES="${QA_INTERACTION_SUITES:-navigation map capture binder profile offline}"
 STRICT_SHARE_COORDINATE_QA="${STRICT_SHARE_COORDINATE_QA:-1}"
 QA_LOG_RELATIVE_PATH="Documents/wildgo-qa-events.log"
 
@@ -82,11 +82,25 @@ run_with_timeout() {
 
 launch_tab() {
   local tab="$1"
+  shift
+  local -a extra_arguments
+  extra_arguments=("$@")
 
   for attempt in $(seq 1 "$LAUNCH_ATTEMPTS"); do
-    if run_with_timeout "$LAUNCH_TIMEOUT_SECONDS" "simctl launch $tab" \
-      xcrun simctl launch --terminate-running-process "$DEVICE_ID" "$BUNDLE_ID" \
-        --wildgo-tab "$tab" --wildgo-qa-interactions --wildgo-reset-qa-log; then
+    local launch_status=0
+    if (( ${#extra_arguments[@]} )); then
+      run_with_timeout "$LAUNCH_TIMEOUT_SECONDS" "simctl launch $tab" \
+        xcrun simctl launch --terminate-running-process "$DEVICE_ID" "$BUNDLE_ID" \
+          --wildgo-tab "$tab" --wildgo-qa-interactions --wildgo-reset-qa-log \
+          "${extra_arguments[@]}" || launch_status=$?
+    else
+      run_with_timeout "$LAUNCH_TIMEOUT_SECONDS" "simctl launch $tab" \
+        xcrun simctl launch --terminate-running-process "$DEVICE_ID" "$BUNDLE_ID" \
+          --wildgo-tab "$tab" --wildgo-qa-interactions --wildgo-reset-qa-log \
+          || launch_status=$?
+    fi
+
+    if [[ "$launch_status" -eq 0 ]]; then
       return 0
     fi
 
@@ -388,10 +402,11 @@ run_binder_suite() {
   wait_for_event "launch:binder"
   refresh_display_metrics
 
-  tap_relative 0.90 0.20 "binder list layout"
+  tap_relative 0.90 0.18 "binder list layout"
   wait_for_event "toast:List view selected"
+  sleep 1.5
 
-  tap_relative 0.81 0.20 "binder grid layout"
+  tap_relative 0.81 0.18 "binder grid layout"
   wait_for_event "toast:Grid view selected"
 
   drag_relative 0.50 0.81 0.50 0.55 "binder scroll to tips"
@@ -430,6 +445,12 @@ run_profile_suite() {
   wait_for_event "tab:capture"
 }
 
+run_offline_suite() {
+  echo "==> Interaction suite: offline recognition"
+  launch_tab "capture" --wildgo-qa-offline-recognition
+  wait_for_event "offline:recognition:blue_jay"
+}
+
 echo "==> Installing $BUNDLE_ID on $DEVICE_ID"
 xcrun simctl install "$DEVICE_ID" "$APP_PATH"
 
@@ -450,6 +471,9 @@ for suite in "${suites[@]}"; do
       ;;
     profile)
       run_profile_suite
+      ;;
+    offline)
+      run_offline_suite
       ;;
     *)
       echo "Unknown interaction suite: $suite" >&2

@@ -13,6 +13,15 @@ import Vision
 
 @main
 struct WildGoApp: App {
+    init() {
+        QAInteractionProbe.prepareForLaunch()
+        if QAOfflineRecognitionProbe.isRequested {
+            Task.detached {
+                await QAOfflineRecognitionProbe.run()
+            }
+        }
+    }
+
     var body: some Scene {
         WindowGroup {
             WildGoRootView()
@@ -195,6 +204,44 @@ enum QAInteractionProbe {
     }
 }
 
+enum QAOfflineRecognitionProbe {
+    static var isRequested: Bool {
+        ProcessInfo.processInfo.arguments.contains("--wildgo-qa-offline-recognition")
+    }
+
+    static func run() async {
+        guard isRequested else { return }
+
+        do {
+            guard let imageURL = Bundle.main.url(
+                forResource: "capture-blue-jay-landscape-gen-v2",
+                withExtension: "png",
+                subdirectory: "GeneratedAssets"
+            ) ?? Bundle.main.url(
+                forResource: "capture-blue-jay-landscape-gen-v2",
+                withExtension: "png"
+            ) else {
+                QAInteractionProbe.record("offline:recognition:failed")
+                return
+            }
+
+            let result = try await LocalSpeciesRecognizer().identify(
+                imageData: Data(contentsOf: imageURL),
+                coordinate: nil
+            )
+
+            guard result.commonName == "Blue Jay", result.confidence >= 0.5 else {
+                QAInteractionProbe.record("offline:recognition:failed")
+                return
+            }
+
+            QAInteractionProbe.record("offline:recognition:blue_jay")
+        } catch {
+            QAInteractionProbe.record("offline:recognition:failed")
+        }
+    }
+}
+
 @MainActor
 final class WildGoViewModel: ObservableObject {
     @Published var selectedTab: WildGoTab = .explore
@@ -210,7 +257,6 @@ final class WildGoViewModel: ObservableObject {
         if let qaSelectedTab = ProcessInfo.processInfo.arguments.qaSelectedTab {
             selectedTab = qaSelectedTab
         }
-        QAInteractionProbe.prepareForLaunch()
         QAInteractionProbe.record("launch:\(selectedTab.qaName)")
     }
 
@@ -701,7 +747,13 @@ struct LocalSpeciesRecognizer: SpeciesRecognizing {
             throw WildGoError.localRecognitionUnavailable
         }
 
-        let mlModel = try MLModel(contentsOf: modelURL, configuration: MLModelConfiguration())
+        let configuration = MLModelConfiguration()
+#if targetEnvironment(simulator)
+        configuration.computeUnits = .cpuOnly
+#else
+        configuration.computeUnits = .all
+#endif
+        let mlModel = try MLModel(contentsOf: modelURL, configuration: configuration)
         let visionModel = try VNCoreMLModel(for: mlModel)
         let request = VNCoreMLRequest(model: visionModel)
         request.imageCropAndScaleOption = .centerCrop
@@ -1697,7 +1749,7 @@ enum WildGoError: LocalizedError {
         case .identificationFailed:
             "The cloud species identifier did not return a valid result."
         case .localRecognitionUnavailable:
-            "Local Vision and Core ML recognition is not bundled yet."
+            "Local Vision and Core ML recognition is unavailable for this image."
         case .authFailed(let message):
             message
         }

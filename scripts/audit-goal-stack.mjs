@@ -30,6 +30,8 @@ checkFile("iOS app source", "ios/App/App/AppDelegate.swift", [
   "LocalSpeciesRecognizer",
   "VNCoreMLRequest",
   "MLModel(contentsOf:",
+  "--wildgo-qa-offline-recognition",
+  "offline:recognition:blue_jay",
 ]);
 
 checkFile("ShaderKit Swift package dependency", "ios/App/App.xcodeproj/project.pbxproj", [
@@ -138,11 +140,40 @@ checkFile("Create ML trainer", "ios/ml/train_species_classifier.swift", [
   "WildGoSpeciesClassifier.mlmodel",
 ]);
 
+checkFile("Simulator-compatible starter model builder", "ios/ml/build_starter_model.py", [
+  "NeuralNetworkBuilder",
+  "average_pool",
+  "prototype_scores",
+  "capture-blue-jay-landscape-gen-v2.png",
+]);
+
+checkFile("Core ML runtime verifier", "ios/ml/verify_species_classifier.swift", [
+  "MLModel(contentsOf:",
+  "VNCoreMLModel",
+  "VNCoreMLRequest",
+  "minimumConfidence",
+  "model.modelDescription.classLabels",
+]);
+
+checkFile("Core ML verification launcher", "ios/ml/verify-model.sh", [
+  "WildGoSpeciesClassifier.mlmodelc",
+  "capture-blue-jay-landscape-gen-v2.png",
+  "binder-cardinal-gen.png",
+  "binder-squirrel-gen.png",
+  "binder-flower-gen.png",
+  "binder-pigeon-gen.png",
+  "binder-butterfly-gen.png",
+  "binder-turkey-tail-gen.png",
+]);
+
 checkFile("Package scripts", "package.json", [
   "\"ios:build\"",
   "\"ios:smoke\"",
   "\"ios:visual-check\"",
+  "\"ios:build-starter-model\"",
+  "\"ios:verify-model\"",
   "\"ios:verify-events\"",
+  "\"ios:offline-recognition\"",
   "\"ios:interactions\"",
   "\"supabase:test\"",
   "\"supabase:verify\"",
@@ -184,7 +215,7 @@ checkAsset("Profile native reference", "qa-shots/swiftui-native-friends-profile-
 checkAsset("Map native reference", "qa-shots/tuned-map.png");
 checkAsset("ShaderKit capture material reference", "qa-shots/swiftui-native-capture-shaderkit-v1.png");
 checkAsset("ShaderKit six-tier binder reference", "qa-shots/swiftui-native-binder-shaderkit-rarity-v1.png");
-checkAsset("Bundled offline classifier", "ios/App/App/GeneratedAssets/WildGoSpeciesClassifier.mlmodelc/model1/coremldata.bin");
+checkAsset("Bundled offline classifier", "ios/App/App/GeneratedAssets/WildGoSpeciesClassifier.mlmodelc/model.espresso.weights");
 
 const failures = checks.filter((check) => !check.ok);
 for (const check of checks) {

@@ -1,0 +1,91 @@
+{
+  "layers" : [
+    {
+      "pad_r" : 0,
+      "debug_info" : "average_pool",
+      "pad_fill_mode" : 0,
+      "pad_b" : 0,
+      "pad_l" : 0,
+      "size_x" : 30,
+      "top" : "pooled",
+      "top_shape_style" : 0,
+      "stride_x" : 30,
+      "avg_or_max" : 0,
+      "average_count_exclude_padding" : 1,
+      "type" : "pool",
+      "name" : "average_pool",
+      "pad_t" : 0,
+      "stride_y" : 30,
+      "bottom" : "image",
+      "weights" : {
+
+      },
+      "pad_mode" : 2,
+      "size_y" : 30,
+      "pad_value" : 0
+    },
+    {
+      "bottom" : "pooled",
+      "weights" : {
+
+      },
+      "mode" : 0,
+      "nd_axis" : 0,
+      "debug_info" : "flatten",
+      "top" : "features",
+      "type" : "flatten",
+      "name" : "flatten"
+    },
+    {
+      "nB" : 432,
+      "top" : "scores",
+      "has_biases" : 1,
+      "weights" : {
+
+      },
+      "nC" : 7,
+      "blob_weights" : 3,
+      "type" : "inner_product",
+      "has_relu" : 0,
+      "bottom" : "features",
+      "blob_biases" : 1,
+      "has_tanh" : 0,
+      "debug_info" : "prototype_scores",
+      "name" : "prototype_scores",
+      "has_prelu" : 0
+    },
+    {
+      "bottom" : "scores",
+      "weights" : {
+
+      },
+      "debug_info" : "probabilities",
+      "top" : "probabilities",
+      "C" : 2,
+      "type" : "softmax",
+      "name" : "probabilities"
+    }
+  ],
+  "transform_params" : {
+    "image" : {
+      "bias_a" : 0,
+      "bias_g" : 0,
+      "bias_r" : 0,
+      "bias_b" : 0,
+      "center_mean" : 0,
+      "is_network_bgr" : 0,
+      "scale" : 0.0039215688593685627
+    }
+  },
+  "storage" : "model.espresso.weights",
+  "metadata_in_weights" : [
+
+  ],
+  "properties" : {
+
+  },
+  "analyses" : {
+
+  },
+  "format_version" : 200
+}

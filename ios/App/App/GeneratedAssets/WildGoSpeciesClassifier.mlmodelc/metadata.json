@@ -1,15 +1,8 @@
 [
   {
-    "shortDescription" : "Urban nature species classifier for offline Wild Go card identification.",
+    "shortDescription" : "Simulator-compatible urban nature starter classifier.",
     "metadataOutputVersion" : "3.0",
     "outputSchema" : [
-      {
-        "isOptional" : "0",
-        "formattedType" : "String",
-        "type" : "String",
-        "name" : "target",
-        "shortDescription" : ""
-      },
       {
         "isOptional" : "0",
         "keyType" : "String",
@@ -17,41 +10,42 @@
         "type" : "Dictionary",
         "name" : "targetProbability",
         "shortDescription" : ""
+      },
+      {
+        "isOptional" : "0",
+        "formattedType" : "String",
+        "type" : "String",
+        "name" : "target",
+        "shortDescription" : ""
       }
     ],
-    "version" : "1.0",
+    "version" : "2.0",
     "modelParameters" : [
 
     ],
     "author" : "Wild Go",
-    "specificationVersion" : 8,
+    "specificationVersion" : 1,
+    "storagePrecision" : "Float32",
+    "computePrecision" : "Float16",
     "stateSchema" : [
 
     ],
     "isUpdatable" : "0",
     "availability" : {
-      "macOS" : "14.0",
-      "tvOS" : "17.0",
+      "macOS" : "10.13",
+      "tvOS" : "11.0",
       "visionOS" : "1.0",
-      "watchOS" : "unavailable",
-      "iOS" : "17.0",
-      "macCatalyst" : "17.0"
+      "watchOS" : "4.0",
+      "iOS" : "11.0",
+      "macCatalyst" : "11.0"
     },
     "modelType" : {
-      "name" : "MLModelType_imageClassifier",
-      "structure" : [
-        {
-          "name" : "MLModelType_visionFeaturePrint"
-        },
-        {
-          "name" : "MLModelType_glmClassifier"
-        }
-      ]
+      "name" : "MLModelType_neuralNetworkClassifier"
     },
     "inputSchema" : [
       {
         "height" : "360",
-        "colorspace" : "BGR",
+        "colorspace" : "RGB",
         "isOptional" : "0",
         "width" : "360",
         "isColor" : "1",
@@ -73,7 +67,13 @@
     ],
     "generatedClassName" : "WildGoSpeciesClassifier",
     "userDefinedMetadata" : {
-      "com.apple.createml.version" : "26.5.2"
+
+    },
+    "neuralNetworkLayerTypeHistogram" : {
+      "PoolingAverage" : 1,
+      "Softmax" : 1,
+      "InnerProduct" : 1,
+      "Flatten" : 1
     },
     "method" : "predict"
   }

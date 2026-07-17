@@ -1,6 +1,6 @@
 # Wild Go MVP Handoff
 
-## Latest Handoff — July 14, 2026
+## Latest Handoff — July 17, 2026
 
 - Working branch: `codex/native-mvp-stack-sync`
 - GitHub PR: <https://github.com/yx3728/wild-go-mvp/pull/1>
@@ -27,7 +27,8 @@
 - Current tracked layout references: `qa-shots/swiftui-native-capture-layout-final.png`, `qa-shots/swiftui-native-binder-grid-layout-final.png`, `qa-shots/swiftui-native-friends-profile-v17.png`. Material-history shots `swiftui-native-capture-shaderkit-v1.png` and `swiftui-native-binder-shaderkit-rarity-v1.png` remain for ShaderKit presence checks.
 - The July 13 Friends/Profile geometry pass fixed the three viewport defects against `friends-showcase-stack.png`: the second Friend Activity row no longer hides behind the action rail, the hero no longer overlaps "Drag to showcase", and the white Profile bottom bar uses "Collection". Those fixes remain.
 - Real-coordinate automation remains green across navigation, Map, Capture, Binder, and Profile when the Simulator window is visible and Cursor (or the host terminal) has macOS Accessibility. Profile rail taps use `0.85` of the Simulator display height after the July 13 compaction.
-- A starter `WildGoSpeciesClassifier.mlmodelc` (56 KB) is bundled under `GeneratedAssets/` via `ios/ml/build-model.sh` on synthetic augmentations of the seven demo species. Treat it as a pipeline placeholder; re-train with a real labeled dataset for production accuracy.
+- A deterministic seven-species `WildGoSpeciesClassifier.mlmodelc` is bundled under `GeneratedAssets/`. It uses standard Core ML neural-network operators so both the macOS Vision verifier and the installed Simulator app can execute it. Treat it as a pipeline placeholder; re-train with a real labeled dataset for production accuracy.
+- Offline recognition now has two gates: `npm run ios:verify-model` classifies all seven bundled samples through Vision/Core ML, and `npm run ios:offline-recognition` launches the installed app with a QA probe and verifies `offline:recognition:blue_jay`. Simulator inference is CPU-only; devices keep all compute units.
 - Resume from here by (1) optional targeted concept polish on one screen/element at a time, (2) configuring a live Supabase project, (3) verifying AVFoundation on physical hardware, and (4) re-training Core ML with real photos.
 
 ## Project Summary
@@ -107,7 +108,7 @@ Implementation note: card physics and material should use existing MIT-licensed 
 - Edge Function cloud-recognition output is normalized before persistence so generous model responses still become card-safe rarity, finish, stars, confidence, notes, and alternative matches.
 - Supabase Auth sessions persist the refresh token and expiry time; capture/import recognition and Profile collection sync refresh stale access tokens before sending signed-in cloud requests.
 - Signed-in collection sync now uploads local-only SwiftData card photos to private Storage when the app still has the local JPEG, pushes card metadata to Postgres, pulls the user's cloud observations back into SwiftData, and caches private Storage images locally when the authenticated download succeeds.
-- Vision/Core ML local recognition is wired through `VNCoreMLRequest`. `ios/ml/build-model.sh` trains (Create ML), compiles, and installs `WildGoSpeciesClassifier.mlmodelc` into the bundled `GeneratedAssets/` folder; `LocalSpeciesRecognizer` auto-discovers it there to enable local fallback/offline classification without any Xcode target edits.
+- Vision/Core ML local recognition is wired through `VNCoreMLRequest`. `ios/ml/build-starter-model.sh` reproducibly builds the Simulator-compatible QA model, while `ios/ml/build-model.sh` trains a replacement with Create ML. Both install `WildGoSpeciesClassifier.mlmodelc` into `GeneratedAssets/`, where `LocalSpeciesRecognizer` discovers it without Xcode target edits.
 - Camera capture is Simulator-hardened: `CameraSession` skips configuration on Simulator, waits briefly for a ready photo connection on device, and prevents overlapping captures, so `Add to Binder` reliably uses the demo fallback when no hardware capture is available.
 - Restored iOS AppIcon asset catalog and LaunchScreen storyboard build resources.
 - Six-star holographic unlock card for the capture result.
@@ -152,7 +153,7 @@ Commands run:
 ```bash
 npm install
 npm outdated
-npm run verify   # aggregate, Simulator-free gate: goal:audit + ios:verify-events + concept:audit + supabase:verify + build
+npm run verify   # aggregate gate: goal:audit + ios:verify-model + ios:verify-events + concept:audit + supabase:verify + build
 npm run build
 npm run goal:audit
 npm run concept:audit
@@ -161,6 +162,8 @@ npm run supabase:verify
 plutil -lint ios/App/App/Info.plist
 npm run ios:build
 npm run ios:verify-events
+npm run ios:verify-model
+npm run ios:offline-recognition
 npm run ios:visual-check
 npm run ios:smoke
 npm run ios:interactions
@@ -324,7 +327,7 @@ Capture -> AI likely match -> six-star/rarity reveal -> add to binder -> share/s
    - Secrets are now gitignored (`ios/debug.xcconfig` holds only the public anon key + URL; `.env`/service-role/OpenAI keys never get committed).
 3. ~~Add Supabase Auth screens and user-account syncing for card collections.~~ **Done:** Profile avatar opens the auth sheet; signed-in users refresh expired access tokens, upload local card photos to private Storage when available, push binder metadata to Postgres, and pull cloud observations back into SwiftData.
 4. Test AVFoundation still-photo capture on physical devices (needs hardware). ~~Tune simulator fallbacks.~~ **Done:** `CameraSession` short-circuits on Simulator, polls up to 1.5s for a ready photo connection before falling back, and guards against overlapping captures so the demo fallback stays reliable.
-5. ~~Train/export `WildGoSpeciesClassifier.mlmodelc` and add it to the Xcode target to activate local/offline classification.~~ **Done (starter model):** a 56 KB classifier trained on synthetic augmentations of the seven demo-species images is bundled in `GeneratedAssets/` and verified with Vision spot checks, so the offline path is live. Re-run `ios/ml/build-model.sh <real_dataset>` with real labeled photos to replace it for production-grade accuracy (no `.pbxproj` edits needed).
+5. ~~Train/export `WildGoSpeciesClassifier.mlmodelc` and add it to the Xcode target to activate local/offline classification.~~ **Done (starter model):** a deterministic classifier for the seven demo species is bundled in `GeneratedAssets/` and verified both on macOS and inside the installed Simulator app. Re-run `ios/ml/build-model.sh <real_dataset>` with real labeled photos to replace it for production-grade accuracy, then validate that model on physical hardware (no `.pbxproj` edits needed).
 6. ~~Expand card backs with habitat, seasonality, safety guidance, and confidence alternatives.~~ **Done:** `SpeciesFieldGuide` powers capture card backs and cloud responses can return `alternativeMatches`.
 7. ~~Add share-card export as an image.~~ **Done:** Share Card now exports a rendered card image plus text through the native share sheet.
 8. ~~Add privacy rules for sensitive species and exact locations.~~ **Done:** `PrivacyLocationPolicy` softens map pins and locality labels for sensitive/high-rarity finds.
@@ -334,5 +337,5 @@ Capture -> AI likely match -> six-star/rarity reveal -> add to binder -> share/s
 - The SwiftUI app includes local SwiftData persistence and a Supabase Edge Function path for Storage/Postgres persistence, but live cloud recognition requires project secrets. Missing `OPENAI_API_KEY` is now a hard configuration error unless local demo fallback is explicitly enabled.
 - Authentication is implemented with email/password against Supabase Auth, including persisted refresh-token sessions for capture/import recognition and Profile sync. Edge Function requests with signed-in JWTs are verified through Supabase Auth before assigning `user_id`; magic-link confirmation may still be required depending on project auth settings.
 - Collection sync now has a bidirectional Postgres/SwiftData merge plus authenticated local-photo Storage upload, but conflict handling is intentionally simple: local rows are matched by UUID or uploaded Storage path, and remote-only rows use generated placeholder art when private Storage image download is unavailable.
-- Vision + Core ML local recognition now ships with a bundled starter classifier, but it was trained on synthetic augmentations of the seven demo images, so real-world photos of unlisted species will fall back to the generic card. Replace it by running `ios/ml/build-model.sh` with a real labeled dataset.
+- Vision + Core ML local recognition now ships with a deterministic seven-demo-species pipeline classifier. It is not a production recognition model, so real-world photos and unlisted species remain unsupported until it is replaced with `ios/ml/build-model.sh` using a real labeled dataset and verified on physical hardware.
 - Physical-device AVFoundation capture still needs on-hardware verification; the Simulator path is covered by the demo fallback.
