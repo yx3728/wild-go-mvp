@@ -20,8 +20,8 @@ const conceptSpecs = {
       "qa-shots/swiftui-native-binder-grid-layout-final.png",
     concept: "docs/card-visuals/binder-rarity-grid.png",
     minimumComposite: 0.825,
-    minimumThumbnail: 0.858,
-    minimumHistogram: 0.598,
+    minimumThumbnail: 0.860,
+    minimumHistogram: 0.596,
     minimumBand: 0.933,
   },
   friends: {

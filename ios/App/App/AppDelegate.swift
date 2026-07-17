@@ -3371,7 +3371,7 @@ struct BinderBoard: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let contentWidth = min(max(proxy.size.width - 34, 326), 368)
+            let contentWidth = min(max(proxy.size.width - 28, 326), 374)
             let topSpacing: CGFloat = 10
             let primaryWidth = min((contentWidth - topSpacing) * 0.57, 204)
             let secondaryWidth = contentWidth - primaryWidth - topSpacing
@@ -3416,8 +3416,8 @@ struct BinderBoard: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
-                .padding(.leading, 20)
-                .padding(.trailing, 14)
+                .padding(.leading, 17)
+                .padding(.trailing, 11)
             }
             .clipped()
         }
