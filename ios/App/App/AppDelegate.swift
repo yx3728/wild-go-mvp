@@ -2283,7 +2283,7 @@ struct CaptureScreen: View {
                                 .accessibilityIdentifier("capture.shareCard")
                             }
                             .frame(maxWidth: 350)
-                            .padding(.top, compactHeight ? 0 : 2)
+                            .padding(.top, compactHeight ? 18 : 14)
                         }
                         .padding(.horizontal, compactHeight ? 24 : 28)
                         .padding(.bottom, compactHeight ? 24 : 34)
@@ -2586,9 +2586,9 @@ struct CaptureCardStage: View {
                 .rotation3DEffect(.degrees(isFlipped ? 0 : 180), axis: (x: 0, y: 1, z: 0), perspective: 0.62)
         }
         .frame(width: cardWidth, height: 472)
-        .rotationEffect(.degrees(3.8))
+        .rotationEffect(.degrees(1.1))
         .rotation3DEffect(
-            .degrees((isDepthPreviewing ? 13 : 6) + Double(dragTranslation.width / 22)),
+            .degrees((isDepthPreviewing ? 13 : 2) + Double(dragTranslation.width / 22)),
             axis: (
                 x: isDepthPreviewing ? 0.18 : Double(-dragTranslation.height / 150),
                 y: 1.0,
