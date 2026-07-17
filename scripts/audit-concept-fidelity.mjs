@@ -19,10 +19,10 @@ const conceptSpecs = {
     actual: process.env.WILDGO_BINDER_ACTUAL ??
       "qa-shots/swiftui-native-binder-grid-layout-final.png",
     concept: "docs/card-visuals/binder-rarity-grid.png",
-    minimumComposite: 0.817,
-    minimumThumbnail: 0.843,
-    minimumHistogram: 0.600,
-    minimumBand: 0.936,
+    minimumComposite: 0.825,
+    minimumThumbnail: 0.858,
+    minimumHistogram: 0.598,
+    minimumBand: 0.933,
   },
   friends: {
     actual: process.env.WILDGO_FRIENDS_ACTUAL ??

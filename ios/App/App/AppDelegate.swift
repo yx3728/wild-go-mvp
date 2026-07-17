@@ -3026,7 +3026,7 @@ struct BinderScreen: View {
                             .frame(height: 1)
                     }
 
-                    VStack(spacing: 7) {
+                    VStack(spacing: 4) {
                         BinderFilterBar(sortLabel: $sortLabel, layoutMode: $layoutMode)
                             .padding(.top, 5)
                             .padding(.horizontal, 16)
@@ -3390,7 +3390,7 @@ struct BinderBoard: View {
                             observation: primary,
                             role: .primary,
                             cardWidth: primaryWidth,
-                            cardHeight: 276
+                            cardHeight: 289
                         )
                             .zIndex(1)
 
@@ -3398,7 +3398,7 @@ struct BinderBoard: View {
                             observation: secondary,
                             role: .secondary,
                             cardWidth: secondaryWidth,
-                            cardHeight: 268
+                            cardHeight: 281
                         )
                     }
                     .frame(width: contentWidth, alignment: .center)
@@ -3408,7 +3408,7 @@ struct BinderBoard: View {
                             BinderSmallCard(
                                 observation: observation,
                                 cardWidth: smallWidth,
-                                cardHeight: 164
+                                cardHeight: 175
                             )
                         }
                     }
@@ -3421,7 +3421,7 @@ struct BinderBoard: View {
             }
             .clipped()
         }
-        .frame(height: 468)
+        .frame(height: 492)
     }
 }
 
@@ -3566,7 +3566,7 @@ struct BinderFeatureCard: View {
     }
 
     private var imageHeight: CGFloat {
-        isPrimary ? 144 : 146
+        cardHeight * (isPrimary ? 0.52 : 0.545)
     }
 
     private var cornerRadius: CGFloat {
@@ -3757,7 +3757,7 @@ struct BinderSmallCard: View {
             ZStack(alignment: .top) {
                 BundleImage(name: observation.imageName)
                     .scaledToFill()
-                    .frame(width: cardWidth - 10, height: 74)
+                    .frame(width: cardWidth - 10, height: cardHeight * 0.45)
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(observation.accentColor.opacity(0.72), lineWidth: 1))
 
@@ -3891,8 +3891,8 @@ struct BinderRarityGuideStrip: View {
             }
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 7)
-        .frame(height: 74)
+        .padding(.vertical, 4)
+        .frame(height: 66)
         .background(Color.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
