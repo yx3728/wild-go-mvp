@@ -3381,7 +3381,7 @@ struct BinderBoard: View {
             ZStack(alignment: .leading) {
                 BinderLeatherSurface()
 
-                BinderRings()
+                BinderRings(height: 492)
                     .offset(x: -14)
 
                 VStack(spacing: 8) {
@@ -3432,7 +3432,7 @@ struct BinderListBoard: View {
         ZStack(alignment: .leading) {
             BinderLeatherSurface()
 
-            BinderRings()
+            BinderRings(height: 482)
                 .offset(x: -14)
 
             VStack(spacing: 8) {
@@ -3511,42 +3511,51 @@ struct BinderListRow: View {
 }
 
 struct BinderRings: View {
+    let height: CGFloat
+    private let verticalAnchors: [CGFloat] = [0.105, 0.325, 0.833]
+
     var body: some View {
-        VStack(spacing: 118) {
-            ForEach(0..<2, id: \.self) { _ in
-                ZStack {
-                    Circle()
-                        .fill(Color.black.opacity(0.9))
-                        .frame(width: 12, height: 12)
-
-                    Circle()
-                        .stroke(
-                            LinearGradient(
-                                colors: [.white.opacity(0.96), .gray.opacity(0.55), .white.opacity(0.78)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 2.8
-                        )
-                        .frame(width: 20, height: 20)
-
-                    Circle()
-                        .trim(from: 0.14, to: 0.86)
-                        .stroke(
-                            LinearGradient(
-                                colors: [.white.opacity(0.98), Color(white: 0.72), .white.opacity(0.92)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            style: StrokeStyle(lineWidth: 4.2, lineCap: .round)
-                        )
-                        .frame(width: 30, height: 30)
-                        .rotationEffect(.degrees(-90))
-                        .offset(x: -8)
-                }
-                .shadow(color: .black.opacity(0.42), radius: 2, x: 1, y: 2)
+        ZStack(alignment: .topLeading) {
+            ForEach(verticalAnchors.indices, id: \.self) { index in
+                ring
+                    .offset(y: height * verticalAnchors[index] - 15)
             }
         }
+        .frame(width: 30, height: height, alignment: .topLeading)
+    }
+
+    private var ring: some View {
+        ZStack {
+            Circle()
+                .fill(Color.black.opacity(0.9))
+                .frame(width: 12, height: 12)
+
+            Circle()
+                .stroke(
+                    LinearGradient(
+                        colors: [.white.opacity(0.96), .gray.opacity(0.55), .white.opacity(0.78)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 2.8
+                )
+                .frame(width: 20, height: 20)
+
+            Circle()
+                .trim(from: 0.14, to: 0.86)
+                .stroke(
+                    LinearGradient(
+                        colors: [.white.opacity(0.98), Color(white: 0.72), .white.opacity(0.92)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    style: StrokeStyle(lineWidth: 4.2, lineCap: .round)
+                )
+                .frame(width: 30, height: 30)
+                .rotationEffect(.degrees(-90))
+                .offset(x: -8)
+        }
+        .shadow(color: .black.opacity(0.42), radius: 2, x: 1, y: 2)
     }
 }
 
