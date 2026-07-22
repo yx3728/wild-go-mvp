@@ -13,27 +13,73 @@ Open `http://127.0.0.1:5173`.
 
 ## iOS MVP
 
-This repo now includes a Capacitor iOS shell.
+The iOS app has been moved to a native SwiftUI shell with SwiftData, AVFoundation camera preview and still capture, MapKit, PhotosUI, and CoreLocation.
+Every rarity tier now uses the MIT-licensed [`ShaderKit`](https://github.com/jamesrochabrun/ShaderKit) Swift Package for Metal-based card materials. The package is pinned to `1.2.4`, and the shared rarity system maps 1-star through 6-star cards to matte steel, colored alloy, crosshatched silver, iridescent pearl, inverted foil, and rainbow holo treatments. Capture drag tilt is passed directly into ShaderKit while flip and four-card pagination remain independent interactions.
 
 ```bash
-npm install
-npm run ios:sync
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -project ios/App/App.xcodeproj -target App -configuration Debug -sdk iphonesimulator26.5 CODE_SIGNING_ALLOWED=NO build
+npm run ios:build
+```
+
+With a Simulator already booted, run the native launch smoke to install the app,
+open the key tabs through `--wildgo-tab`, and save verification screenshots:
+
+```bash
+npm run ios:smoke
+```
+
+To verify the main SwiftUI controls with real Simulator-window coordinate taps,
+run the interaction smoke. It launches the app, taps the full bottom navigation
+bar plus Capture, Cards, and Profile/Friends controls, and checks the app's
+QA-only action log:
+
+```bash
+npm run ios:interactions
+```
+
+`ios:interactions` first runs a fast, Simulator-free consistency check that
+confirms every `wait_for_event` assertion in `ios/qa-interactions.sh` still maps
+to a `showToast` string (or tab `qaName`) in `AppDelegate.swift`, so renamed or
+inverted toast copy fails immediately instead of after a full build + launch. Run
+it on its own in CI with:
+
+```bash
+npm run ios:verify-events
 ```
 
 To open the project in Xcode:
 
 ```bash
-npm run ios:open
+open ios/App/App.xcodeproj
 ```
 
-The native app starts the Capacitor bridge programmatically and includes the restored LaunchScreen storyboard plus AppIcon asset catalog for the current local Xcode/simulator setup.
+The native app uses generated image assets from `ios/App/App/GeneratedAssets` for demo cards, while newly captured or imported JPEGs are saved under the app support `ObservationPhotos` folder and referenced from SwiftData cards. Supabase setup lives in `supabase/`; local app keys are read from `ios/debug.xcconfig` or Xcode build settings (`ios/debug.xcconfig.example` is provided). Captured images are sent to the `identify-species` Edge Function, which verifies signed-in user JWTs through Supabase Auth, uploads to private Supabase Storage, and writes card metadata to Postgres with the service role key. Profile → avatar opens Supabase email/password auth, refreshes short-lived Supabase access tokens with the saved refresh token before cloud requests, uploads local-only card photos to private Storage when available, pushes binder card metadata, pulls the signed-in user's Postgres observations back into SwiftData, and caches private Storage images locally when available.
+
+Offline recognition ships with a deterministic seven-species Core ML starter model. `npm run ios:verify-model` runs all bundled demo samples through Vision/Core ML on macOS, while `npm run ios:offline-recognition` verifies the installed app bundle and inference path in Simulator. The starter proves plumbing only; run `ios/ml/build-model.sh <labeled_dataset>` to replace it with a Create ML classifier trained on real photos.
+
+To test the Supabase Edge Function's cloud-recognition result contract without
+live secrets, run:
+
+```bash
+npm run supabase:test
+```
+
+To run every Simulator-free guard in one gate (goal-stack audit, bundled Core ML
+runtime check, QA event consistency, concept-fidelity audit, Edge Function tests,
+and the web build),
+use the aggregate command. It fails fast and needs no Mac Simulator, so it is
+the recommended pre-commit / CI check:
+
+```bash
+npm run verify
+```
 
 ## Prototype Highlights
 
 - Six-star holographic card reveal.
-- Physical-feeling card interactions using `react-parallax-tilt` for tilt/glare and `card-foil` for rarity foil finishes.
-- Rarity-based card binder.
+- Physical-feeling card interactions in the SwiftUI shell: foil shimmer, press-depth, front/back card flip, add-to-binder fallback, share sheet, and a social showcase drop state.
+- Cloud-first species recognition through a Supabase Edge Function, private Storage upload, Postgres persistence, model-output normalization, and a Vision/Core ML local-recognition path that runs when a compiled `WildGoSpeciesClassifier.mlmodelc` is bundled.
+- Real capture/import photos become local collectible card images before syncing to cloud Storage.
+- Rarity-based card binder with reference-style grid, real list toggle, and sorting that reorders visible cards.
 - Friends activity built around card stacks, visible showcase slots, and collection milestones.
 - Privacy and wildlife-safety copy baked into the card system.
 

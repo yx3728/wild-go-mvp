@@ -1,13 +1,13 @@
 {
-  "originHash" : "782a78f09082bc775c1342953c2a375c508e82bfb1526ecf6a4baca2564e86a6",
+  "originHash" : "0807f458540568366986acb9d388477cd7b3653dd4f7c9710181510c60241cf9",
   "pins" : [
     {
-      "identity" : "capacitor-swift-pm",
+      "identity" : "shaderkit",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/ionic-team/capacitor-swift-pm.git",
+      "location" : "https://github.com/jamesrochabrun/ShaderKit",
       "state" : {
-        "revision" : "2231987d85b8b0b289320b1d0947b4ae8345cde4",
-        "version" : "8.4.1"
+        "revision" : "cfa7858252adfcf6f0ac94aea58399bc8a6b2dcf",
+        "version" : "1.2.4"
       }
     }
   ],

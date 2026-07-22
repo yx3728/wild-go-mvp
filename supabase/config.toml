@@ -1,0 +1,4 @@
+project_id = "wild-go-mvp"
+
+[functions.identify-species]
+verify_jwt = true

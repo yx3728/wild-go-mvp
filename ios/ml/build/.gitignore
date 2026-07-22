@@ -1,0 +1,3 @@
+# Local training artifacts; the compiled model is installed into GeneratedAssets.
+*
+!.gitignore

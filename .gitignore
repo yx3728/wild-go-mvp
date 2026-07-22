@@ -3,3 +3,21 @@ dist/
 .npm-cache/
 .DS_Store
 *.log
+
+# Secrets — never commit filled-in values
+ios/debug.xcconfig
+supabase/functions/**/.env
+supabase/functions/**/.env.local
+.env
+.env.local
+
+# iOS build output
+ios/App/build/
+ios/App/build-native/
+
+# Supabase CLI local state
+supabase/.branches/
+supabase/.temp/
+
+# Generated native smoke screenshots
+qa-shots/native-smoke/

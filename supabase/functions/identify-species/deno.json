@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "strict": true
+  },
+  "tasks": {
+    "serve": "supabase functions serve identify-species --env-file .env.local"
+  }
+}
