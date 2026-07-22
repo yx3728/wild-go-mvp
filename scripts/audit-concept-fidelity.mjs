@@ -28,10 +28,10 @@ const conceptSpecs = {
     actual: process.env.WILDGO_FRIENDS_ACTUAL ??
       "qa-shots/swiftui-native-friends-profile-v17.png",
     concept: "docs/card-visuals/friends-showcase-stack.png",
-    minimumComposite: 0.837,
-    minimumThumbnail: 0.831,
+    minimumComposite: 0.838,
+    minimumThumbnail: 0.8319,
     minimumHistogram: 0.740,
-    minimumBand: 0.927,
+    minimumBand: 0.9288,
   },
 };
 

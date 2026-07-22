@@ -308,9 +308,16 @@ run_capture_suite() {
   wait_for_event "launch:capture"
   refresh_display_metrics
 
-  tap_relative 0.50 0.87 "capture add to binder"
-  wait_for_event "toast:Capturing card..."
-  wait_for_event "toast:Simulator fallback card added"
+  tap_relative 0.50 0.87 "capture take photo"
+  wait_for_event "toast:Opening camera..."
+  wait_for_event "capture:photoReady"
+  wait_for_event "toast:Simulator photo ready to save"
+
+  tap_relative 0.50 0.87 "capture save to binder"
+  wait_for_event "capture:savedToBinder"
+  wait_for_event "toast:Saved to Binder"
+  wait_for_event "tab:binder"
+  wait_for_event "binder:containsCapturedPhoto"
 
   launch_tab "capture"
   sleep 2
@@ -357,11 +364,8 @@ run_map_suite() {
   wait_for_event "launch:map"
   refresh_display_metrics
 
-  tap_relative 0.20 0.62 "map near me"
-  wait_for_event "toast:Map centered nearby"
-
-  tap_relative 0.50 0.62 "map capture"
-  wait_for_event "toast:Opening Capture from Map"
+  tap_relative 0.50 0.53 "map placeholder capture"
+  wait_for_event "toast:Opening Capture"
   wait_for_event "tab:capture"
 
   launch_tab "map"
@@ -369,8 +373,8 @@ run_map_suite() {
   wait_for_event "launch:map"
   refresh_display_metrics
 
-  tap_relative 0.80 0.62 "map cards"
-  wait_for_event "toast:Opening Binder from Map"
+  tap_relative 0.50 0.61 "map placeholder binder"
+  wait_for_event "toast:Opening Binder"
   wait_for_event "tab:binder"
 }
 
@@ -422,27 +426,18 @@ run_profile_suite() {
   wait_for_event "launch:profile"
   refresh_display_metrics
 
-  tap_relative 0.34 0.59 "profile add to showcase"
-  wait_for_event "toast:Added to Showcase"
-
-  tap_relative 0.73 0.59 "profile flip showcase"
-  wait_for_event "toast:Showcase card flipped"
-
-  tap_relative 0.14 0.85 "profile send card"
-  wait_for_event "toast:Send Card opened"
-
-  tap_relative 0.34 0.85 "profile compare"
-  wait_for_event "toast:Compare mode opened"
-
-  tap_relative 0.68 0.85 "profile rail add to showcase"
-  wait_for_event "toast:Added to Showcase"
-
-  tap_relative 0.88 0.85 "profile trade later"
-  wait_for_event "toast:Trade reminder saved"
-
-  tap_relative 0.50 0.85 "profile rail capture"
+  tap_relative 0.50 0.53 "friends placeholder capture"
   wait_for_event "toast:Opening Capture"
   wait_for_event "tab:capture"
+
+  launch_tab "profile"
+  sleep 2
+  wait_for_event "launch:profile"
+  refresh_display_metrics
+
+  tap_relative 0.50 0.61 "friends placeholder binder"
+  wait_for_event "toast:Opening Binder"
+  wait_for_event "tab:binder"
 }
 
 run_offline_suite() {

@@ -188,7 +188,7 @@ checkFile("Native visual QA", "scripts/verify-native-smoke-images.mjs", [
   "referenceSpecs",
   "swiftui-native-capture-layout-final.png",
   "swiftui-native-binder-grid-layout-final.png",
-  "swiftui-native-friends-profile-v17.png",
+  "swiftui-native-friends-placeholder-final.png",
   "tuned-map.png",
 ]);
 
@@ -212,6 +212,10 @@ checkAsset("Capture generated landscape art", "ios/App/App/GeneratedAssets/captu
 checkAsset("Capture web landscape art", "public/assets/capture-blue-jay-landscape-gen-v2.png");
 checkAsset("Binder native reference", "qa-shots/swiftui-native-binder-grid-layout-final.png");
 checkAsset("Profile native reference", "qa-shots/swiftui-native-friends-profile-v17.png");
+checkAsset(
+  "Friends MVP placeholder reference",
+  "qa-shots/swiftui-native-friends-placeholder-final.png",
+);
 checkAsset("Map native reference", "qa-shots/tuned-map.png");
 checkAsset("ShaderKit capture material reference", "qa-shots/swiftui-native-capture-shaderkit-v1.png");
 checkAsset("ShaderKit six-tier binder reference", "qa-shots/swiftui-native-binder-shaderkit-rarity-v1.png");

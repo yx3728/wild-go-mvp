@@ -159,6 +159,26 @@ struct InteractionToast: Identifiable, Equatable {
     var message: String
 }
 
+struct CaptureDraft: Equatable {
+    var imageName: String
+    var capturedAt: Date
+
+    var observation: WildObservation {
+        WildObservation(
+            commonName: "New Find",
+            latinName: "AI ID coming soon",
+            imageName: imageName,
+            rarity: "Field Note",
+            finish: "Matte Steel",
+            stars: 1,
+            confidence: 0,
+            locality: "Saved on device",
+            note: "Your photo is ready. Species identification will arrive in a future update.",
+            createdAt: capturedAt
+        )
+    }
+}
+
 enum QAInteractionProbe {
     private static let fileName = "wildgo-qa-events.log"
 
@@ -248,9 +268,10 @@ final class WildGoViewModel: ObservableObject {
     @Published var selectedUIImage: UIImage?
     @Published var selectedImageName: String?
     @Published var recognitionState: RecognitionState = .idle
+    @Published var captureDraft: CaptureDraft?
     @Published var toast: InteractionToast?
 
-    let locationManager = LocationManager()
+    lazy var locationManager = LocationManager()
     private let recognizer = SpeciesRecognitionPipeline()
 
     init() {
@@ -348,6 +369,27 @@ final class WildGoViewModel: ObservableObject {
                 }
             }
         }
+    }
+
+    func prepareCapture(imageData: Data) throws {
+        let normalizedImageData = Self.normalizedJPEGData(from: imageData)
+        let imageName = try ObservationPhotoStore.saveJPEGData(normalizedImageData)
+        selectedImageName = imageName
+        selectedUIImage = UIImage(data: normalizedImageData)
+        captureDraft = CaptureDraft(imageName: imageName, capturedAt: .now)
+        recognitionState = .idle
+        QAInteractionProbe.record("capture:photoReady")
+    }
+
+    @discardableResult
+    func saveCaptureToBinder(modelContext: ModelContext) throws -> WildObservation {
+        guard let captureDraft else { throw WildGoError.missingCaptureDraft }
+        let observation = captureDraft.observation
+        modelContext.insert(observation)
+        try modelContext.save()
+        self.captureDraft = nil
+        QAInteractionProbe.record("capture:savedToBinder")
+        return observation
     }
 
     private static func normalizedJPEGData(from imageData: Data) -> Data {
@@ -1686,7 +1728,9 @@ enum CollectionSyncService {
 enum WildCardShareExporter {
     @MainActor
     static func shareItems(for observation: WildObservation) -> [Any] {
-        let text = "Wild Go card: \(observation.commonName) (\(observation.latinName)), \(observation.stars)-star \(observation.rarity), \(Int(observation.confidence * 100))% AI confidence."
+        let text = observation.isAwaitingIdentification
+            ? "Wild Go find saved to my Binder. Species identification is coming soon."
+            : "Wild Go card: \(observation.commonName) (\(observation.latinName)), \(observation.stars)-star \(observation.rarity), \(Int(observation.confidence * 100))% AI confidence."
         if let image = renderShareImage(for: observation) {
             return [image, text]
         }
@@ -1737,6 +1781,7 @@ enum WildGoError: LocalizedError {
     case identificationFailed
     case localRecognitionUnavailable
     case authFailed(String)
+    case missingCaptureDraft
 
     var errorDescription: String? {
         switch self {
@@ -1752,6 +1797,8 @@ enum WildGoError: LocalizedError {
             "Local Vision and Core ML recognition is unavailable for this image."
         case .authFailed(let message):
             message
+        case .missingCaptureDraft:
+            "Take or choose a photo before saving it."
         }
     }
 }
@@ -1957,6 +2004,10 @@ extension WildObservation {
         }
     }
 
+    var isAwaitingIdentification: Bool {
+        latinName == "AI ID coming soon"
+    }
+
     var shortDateText: String {
         switch commonName {
         case "Black-eyed Susan":
@@ -1984,7 +2035,11 @@ struct WildGoRootView: View {
                     ExploreScreen()
                         .tag(WildGoTab.explore)
 
-                    SoftMapScreen()
+                    ComingSoonScreen(
+                        feature: "Map",
+                        subtitle: "Private discovery maps are coming after the photo-to-Binder MVP.",
+                        systemImage: "map.fill"
+                    )
                         .tag(WildGoTab.map)
 
                     CaptureScreen()
@@ -1993,7 +2048,11 @@ struct WildGoRootView: View {
                     BinderScreen()
                         .tag(WildGoTab.binder)
 
-                    ProfileScreen()
+                    ComingSoonScreen(
+                        feature: "Friends",
+                        subtitle: "Profiles, sharing, and friend activity are planned for a later release.",
+                        systemImage: "person.2.fill"
+                    )
                         .tag(WildGoTab.profile)
                 }
                 .toolbar(.hidden, for: .tabBar)
@@ -2069,7 +2128,11 @@ struct WildGoBottomTabBar: View {
         .padding(.horizontal, usesLightMaterial ? 8 : 10)
         .background {
             if usesLightMaterial {
-                RoundedRectangle(cornerRadius: 30, style: .continuous)
+                UnevenRoundedRectangle(
+                    topLeadingRadius: 30,
+                    topTrailingRadius: 30,
+                    style: .continuous
+                )
                     .fill(Color.white.opacity(0.97))
                     .shadow(color: Color.black.opacity(0.12), radius: 8, x: 0, y: -2)
             } else {
@@ -2083,9 +2146,9 @@ struct WildGoBottomTabBar: View {
                     .frame(height: 1)
             }
         }
-        .padding(.horizontal, usesLightMaterial ? 12 : 0)
+        .padding(.horizontal, 0)
         .padding(.top, usesLightMaterial ? 4 : 0)
-        .padding(.bottom, usesLightMaterial ? 6 : 0)
+        .padding(.bottom, 0)
     }
 
     private func standardItem(tab: WildGoTab, title: String, systemName: String) -> some View {
@@ -2157,6 +2220,10 @@ struct CaptureScreen: View {
     }
 
     private var displayObservation: WildObservation {
+        if let captureDraft = viewModel.captureDraft {
+            return captureDraft.observation
+        }
+
         guard case .success(let result) = viewModel.recognitionState else {
             return demoObservation
         }
@@ -2171,8 +2238,6 @@ struct CaptureScreen: View {
             confidence: result.confidence,
             locality: "Approx location",
             note: result.note,
-            latitude: viewModel.locationManager.currentCoordinate?.latitude,
-            longitude: viewModel.locationManager.currentCoordinate?.longitude,
             uploadedPath: result.storagePath
         )
     }
@@ -2259,18 +2324,29 @@ struct CaptureScreen: View {
                                 .padding(.top, compactHeight ? 7 : 8)
 
                             VStack(spacing: compactHeight ? 9 : 14) {
-                                Button {
-                                    viewModel.showToast("Capturing card...")
-                                    Task {
-                                        await captureCameraImage()
+                                if viewModel.captureDraft == nil {
+                                    Button {
+                                        viewModel.showToast("Opening camera...")
+                                        Task {
+                                            await captureCameraImage()
+                                        }
+                                    } label: {
+                                        Label(isCapturing ? "Taking Photo..." : "Take Photo", systemImage: "camera.fill")
+                                            .frame(maxWidth: .infinity)
                                     }
-                                } label: {
-                                    Label(isCapturing ? "Capturing" : "Add to Binder", systemImage: "book.closed")
-                                        .frame(maxWidth: .infinity)
+                                    .buttonStyle(.wildPrimary)
+                                    .disabled(isCapturing)
+                                    .accessibilityIdentifier("capture.takePhoto")
+                                } else {
+                                    Button {
+                                        saveDraftToBinder()
+                                    } label: {
+                                        Label("Save to Binder", systemImage: "book.closed.fill")
+                                            .frame(maxWidth: .infinity)
+                                    }
+                                    .buttonStyle(.wildPrimary)
+                                    .accessibilityIdentifier("capture.addToBinder")
                                 }
-                                .buttonStyle(.wildPrimary)
-                                .disabled(isCapturing)
-                                .accessibilityIdentifier("capture.addToBinder")
 
                                 Button {
                                     isShowingShareSheet = true
@@ -2303,7 +2379,6 @@ struct CaptureScreen: View {
         }
         .onAppear {
             camera.start()
-            viewModel.locationManager.requestLocation()
         }
         .onDisappear {
             camera.stop()
@@ -2313,15 +2388,11 @@ struct CaptureScreen: View {
             Task {
                 viewModel.showToast("Importing photo...")
                 if let data = try? await item.loadTransferable(type: Data.self) {
-                    viewModel.selectedUIImage = UIImage(data: data)
-                    let accessToken = await accessTokenForCloudRequest()
-                    await viewModel.identify(
-                        imageData: data,
-                        modelContext: modelContext,
-                        accessToken: accessToken
-                    )
-                    if case .success(let result) = viewModel.recognitionState {
-                        viewModel.showToast("\(result.commonName) added to Binder")
+                    do {
+                        try viewModel.prepareCapture(imageData: data)
+                        viewModel.showToast("Photo ready to save")
+                    } catch {
+                        viewModel.showToast("Could not prepare photo")
                     }
                 } else {
                     viewModel.showToast("Photo import was cancelled")
@@ -2362,15 +2433,12 @@ struct CaptureScreen: View {
         }
     }
 
-    private func identifyDemoImage() async {
+    private func prepareDemoImage() throws {
         guard let image = UIImage.namedInWildGoBundle("capture-blue-jay-landscape-gen-v2.png"),
-              let data = image.jpegData(compressionQuality: 0.88) else { return }
-        let accessToken = await accessTokenForCloudRequest()
-        await viewModel.identify(
-            imageData: data,
-            modelContext: modelContext,
-            accessToken: accessToken
-        )
+              let data = image.jpegData(compressionQuality: 0.88) else {
+            throw WildGoError.cameraCaptureFailed
+        }
+        try viewModel.prepareCapture(imageData: data)
     }
 
     @MainActor
@@ -2381,22 +2449,34 @@ struct CaptureScreen: View {
 
         do {
             let data = try await camera.capturePhotoData()
-            viewModel.selectedUIImage = UIImage(data: data)
-            let accessToken = await accessTokenForCloudRequest()
-            await viewModel.identify(
-                imageData: data,
-                modelContext: modelContext,
-                accessToken: accessToken
-            )
-            if case .success(let result) = viewModel.recognitionState {
-                viewModel.showToast("\(result.commonName) added to Binder")
-            }
+            try viewModel.prepareCapture(imageData: data)
+            viewModel.showToast("Photo ready to save")
         } catch WildGoError.cameraUnavailable {
-            await identifyDemoImage()
-            viewModel.showToast("Simulator fallback card added")
+            if CameraSession.isSimulator {
+                do {
+                    try prepareDemoImage()
+                    viewModel.showToast("Simulator photo ready to save")
+                } catch {
+                    viewModel.showToast("Could not prepare demo photo")
+                }
+            } else {
+                viewModel.showToast("Allow camera access in Settings")
+            }
         } catch {
             viewModel.recognitionState = .failure(error.localizedDescription)
             viewModel.showToast("Capture failed")
+        }
+    }
+
+    @MainActor
+    private func saveDraftToBinder() {
+        do {
+            let observation = try viewModel.saveCaptureToBinder(modelContext: modelContext)
+            viewModel.showToast("Saved to Binder")
+            viewModel.selectedTab = .binder
+            QAInteractionProbe.record("binder:saved:\(observation.id.uuidString)")
+        } catch {
+            viewModel.showToast(error.localizedDescription)
         }
     }
 
@@ -2569,7 +2649,7 @@ struct CaptureCardStage: View {
         ZStack {
             HeroCollectibleCard(
                 observation: observation,
-                localityLabel: "Approx location",
+                localityLabel: observation.isAwaitingIdentification ? "Saved on device" : "Approx location",
                 cardWidth: cardWidth,
                 foilTilt: shaderTilt
             )
@@ -2727,7 +2807,10 @@ struct CaptureCardBack: View {
             Spacer(minLength: 0)
 
             HStack(spacing: 8) {
-                MetricPill(label: "AI Match", value: "\(Int(observation.confidence * 100))%")
+                MetricPill(
+                    label: observation.isAwaitingIdentification ? "AI ID" : "AI Match",
+                    value: observation.isAwaitingIdentification ? "Soon" : "\(Int(observation.confidence * 100))%"
+                )
                 MetricPill(label: "Saved", value: observation.cardDateText)
             }
         }
@@ -2931,7 +3014,6 @@ enum BinderLayoutMode {
 }
 
 struct BinderScreen: View {
-    @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var viewModel: WildGoViewModel
     @Query(sort: \WildObservation.createdAt, order: .reverse) private var observations: [WildObservation]
     @State private var selectedMode = "My Binder"
@@ -2953,15 +3035,14 @@ struct BinderScreen: View {
         }
     }
 
+    private var savedCards: [WildObservation] {
+        observations.filter { $0.imageName.hasPrefix("wildgo-local://") }
+    }
+
     private var binderCards: [WildObservation] {
-        [
-            referenceCard(named: "Northern Cardinal"),
-            referenceCard(named: "Eastern Gray Squirrel"),
-            referenceCard(named: "Rock Pigeon"),
-            referenceCard(named: "Black-eyed Susan"),
-            referenceCard(named: "Monarch Butterfly"),
-            referenceCard(named: "Turkey Tail")
-        ]
+        let capturedNames = Set(savedCards.map(\.commonName))
+        let starterCards = referenceCards.filter { !capturedNames.contains($0.commonName) }
+        return Array((savedCards + starterCards).prefix(6))
     }
 
     private var visibleCards: [WildObservation] {
@@ -3002,7 +3083,7 @@ struct BinderScreen: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 0) {
                     VStack(spacing: 4) {
-                        BinderTopBar()
+                        BinderTopBar(savedCount: savedCards.count)
                             .padding(.top, 0)
                             .padding(.horizontal, 18)
 
@@ -3027,7 +3108,11 @@ struct BinderScreen: View {
                     }
 
                     VStack(spacing: 4) {
-                        BinderFilterBar(sortLabel: $sortLabel, layoutMode: $layoutMode)
+                        BinderFilterBar(
+                            sortLabel: $sortLabel,
+                            layoutMode: $layoutMode,
+                            savedCount: savedCards.count
+                        )
                             .padding(.top, 5)
                             .padding(.horizontal, 16)
 
@@ -3063,7 +3148,9 @@ struct BinderScreen: View {
             .toolbarColorScheme(.dark, for: .tabBar)
             .statusBarHidden(true)
             .onAppear {
-                seedIfNeeded()
+                if observations.contains(where: { $0.imageName.hasPrefix("wildgo-local://") }) {
+                    QAInteractionProbe.record("binder:containsCapturedPhoto")
+                }
             }
             .alert("Binder Tips", isPresented: $isShowingBinderTips) {
                 Button("Got it", role: .cancel) {
@@ -3082,11 +3169,6 @@ struct BinderScreen: View {
             ?? WildObservation.samples[0]
     }
 
-    private func seedIfNeeded() {
-        guard observations.isEmpty else { return }
-        WildObservation.samples.forEach(modelContext.insert)
-        try? modelContext.save()
-    }
 }
 
 struct BinderNightBackground: View {
@@ -3124,6 +3206,7 @@ struct BinderNightBackground: View {
 
 struct BinderTopBar: View {
     @EnvironmentObject private var viewModel: WildGoViewModel
+    let savedCount: Int
 
     var body: some View {
         HStack(alignment: .center, spacing: 10) {
@@ -3151,12 +3234,12 @@ struct BinderTopBar: View {
                 .buttonStyle(.plain)
                 .accessibilityIdentifier("binder.collectionSelector")
 
-                ProgressView(value: 0.49)
+                ProgressView(value: min(Double(savedCount) / 12, 1))
                     .tint(Color.wildLime)
                     .frame(width: 124)
                     .scaleEffect(y: 1.35)
 
-                Text("243 / 500 species")
+                Text("\(savedCount) saved on device")
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(.white.opacity(0.74))
                     .lineLimit(1)
@@ -3246,6 +3329,7 @@ struct BinderFilterBar: View {
     @EnvironmentObject private var viewModel: WildGoViewModel
     @Binding var sortLabel: String
     @Binding var layoutMode: BinderLayoutMode
+    let savedCount: Int
 
     var body: some View {
         HStack {
@@ -3280,7 +3364,7 @@ struct BinderFilterBar: View {
 
             Spacer()
 
-            Text("134 Cards")
+            Text(savedCount == 1 ? "1 Saved" : "\(savedCount) Saved")
                 .font(.system(size: 15, weight: .bold))
                 .foregroundStyle(.white.opacity(0.88))
                 .lineLimit(1)
@@ -3492,7 +3576,7 @@ struct BinderListRow: View {
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
 
-                    Text("\(Int(observation.confidence * 100))% AI")
+                    Text(observation.isAwaitingIdentification ? "AI ID soon" : "\(Int(observation.confidence * 100))% AI")
                         .foregroundStyle(.white.opacity(0.68))
 
                     Spacer(minLength: 4)
@@ -3677,18 +3761,20 @@ struct BinderFeatureCard: View {
                         .frame(width: 1, height: isPrimary ? 38 : 30)
 
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("AI Confidence")
+                        Text(observation.isAwaitingIdentification ? "AI Identification" : "AI Confidence")
                             .font(.system(size: isPrimary ? 8 : 7, weight: .bold))
                             .textCase(.uppercase)
                             .foregroundStyle(.white.opacity(0.56))
                             .lineLimit(1)
                             .minimumScaleFactor(0.5)
-                        Text("\(Int(observation.confidence * 100))%")
+                        Text(observation.isAwaitingIdentification ? "Soon" : "\(Int(observation.confidence * 100))%")
                             .font(.system(size: isPrimary ? 14 : 12, weight: .bold, design: .rounded))
                             .foregroundStyle(.white.opacity(0.88))
-                        ProgressView(value: observation.confidence)
-                            .tint(Color.wildLime)
-                            .frame(width: isPrimary ? 48 : 34)
+                        if !observation.isAwaitingIdentification {
+                            ProgressView(value: observation.confidence)
+                                .tint(Color.wildLime)
+                                .frame(width: isPrimary ? 48 : 34)
+                        }
                     }
                 }
 
@@ -3818,10 +3904,10 @@ struct BinderSmallCard: View {
                 Spacer(minLength: 2)
 
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text("AI")
+                    Text(observation.isAwaitingIdentification ? "AI ID" : "AI")
                         .font(.system(size: 5, weight: .bold))
                         .textCase(.uppercase)
-                    Text("\(Int(observation.confidence * 100))%")
+                    Text(observation.isAwaitingIdentification ? "Soon" : "\(Int(observation.confidence * 100))%")
                         .font(.system(size: 8, weight: .bold, design: .rounded))
                 }
             }
@@ -4045,6 +4131,79 @@ struct SoftMapScreen: View {
             withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) {
                 cameraPosition = .region(Self.region(center: coordinate))
             }
+        }
+    }
+}
+
+struct ComingSoonScreen: View {
+    @EnvironmentObject private var viewModel: WildGoViewModel
+    var feature: String
+    var subtitle: String
+    var systemImage: String
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 22) {
+                Spacer()
+
+                Image(systemName: systemImage)
+                    .font(.system(size: 52, weight: .semibold))
+                    .foregroundStyle(Color.wildLime)
+                    .frame(width: 104, height: 104)
+                    .background(Color.wildInk, in: Circle())
+
+                VStack(spacing: 9) {
+                    Text("COMING SOON")
+                        .font(.caption.weight(.black))
+                        .tracking(1.4)
+                        .foregroundStyle(Color.wildGreen)
+                    Text(feature)
+                        .font(.system(size: 34, weight: .bold, design: .serif))
+                        .foregroundStyle(Color.wildInk)
+                    Text(subtitle)
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: 320)
+                }
+
+                VStack(spacing: 12) {
+                    Button {
+                        viewModel.selectedTab = .capture
+                        viewModel.showToast("Opening Capture")
+                    } label: {
+                        Label("Take a Photo", systemImage: "camera.fill")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.wildPrimary)
+                    .accessibilityIdentifier("placeholder.capture")
+
+                    Button {
+                        viewModel.selectedTab = .binder
+                        viewModel.showToast("Opening Binder")
+                    } label: {
+                        Label("Open Binder", systemImage: "rectangle.stack.fill")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.wildSecondaryLight)
+                    .accessibilityIdentifier("placeholder.binder")
+                }
+                .frame(maxWidth: 340)
+
+                Spacer()
+                Spacer()
+            }
+            .padding(.horizontal, 24)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(
+                LinearGradient(
+                    colors: [Color.white, Color.wildMist.opacity(0.82), Color(.systemBackground)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
+            )
+            .toolbar(.hidden, for: .navigationBar)
         }
     }
 }
@@ -4349,16 +4508,18 @@ struct DashboardHeroCard: View {
                         .frame(width: 1, height: 34)
 
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("AI CONFIDENCE")
+                        Text(observation.isAwaitingIdentification ? "AI IDENTIFICATION" : "AI CONFIDENCE")
                             .font(.caption2.weight(.heavy))
                             .foregroundStyle(.white.opacity(0.62))
                         HStack(spacing: 8) {
-                            Text("\(Int(observation.confidence * 100))%")
+                            Text(observation.isAwaitingIdentification ? "Coming soon" : "\(Int(observation.confidence * 100))%")
                                 .font(.headline.weight(.bold))
                                 .foregroundStyle(.white)
-                            ProgressView(value: observation.confidence)
-                                .tint(Color.wildLime)
-                                .frame(width: 58)
+                            if !observation.isAwaitingIdentification {
+                                ProgressView(value: observation.confidence)
+                                    .tint(Color.wildLime)
+                                    .frame(width: 58)
+                            }
                         }
                     }
 
@@ -5769,7 +5930,10 @@ struct CollectibleCard: View {
 
             if size != .compact {
                 HStack(spacing: 8) {
-                    MetricPill(label: "AI Match", value: "\(Int(observation.confidence * 100))%")
+                    MetricPill(
+                        label: observation.isAwaitingIdentification ? "AI ID" : "AI Match",
+                        value: observation.isAwaitingIdentification ? "Soon" : "\(Int(observation.confidence * 100))%"
+                    )
                     MetricPill(label: "First Seen", value: observation.createdAt.formatted(date: .abbreviated, time: .omitted))
                 }
             }
@@ -5883,16 +6047,18 @@ struct HeroCollectibleCard: View {
                         .frame(height: 68)
 
                     VStack(alignment: .trailing, spacing: 2) {
-                        Text("Likely match")
+                        Text(observation.isAwaitingIdentification ? "AI ID" : "Likely match")
                             .font(.caption.weight(.bold))
                             .foregroundStyle(Color.wildGold)
-                        Text("\(Int(observation.confidence * 100))%")
-                            .font(.system(size: 28, weight: .black, design: .rounded))
+                        Text(observation.isAwaitingIdentification ? "Soon" : "\(Int(observation.confidence * 100))%")
+                            .font(.system(size: observation.isAwaitingIdentification ? 22 : 28, weight: .black, design: .rounded))
                             .foregroundStyle(.white)
-                        ProgressView(value: observation.confidence)
-                            .tint(Color.wildLime)
-                            .frame(width: 64)
-                        Text("AI confidence")
+                        if !observation.isAwaitingIdentification {
+                            ProgressView(value: observation.confidence)
+                                .tint(Color.wildLime)
+                                .frame(width: 64)
+                        }
+                        Text(observation.isAwaitingIdentification ? "Future update" : "AI confidence")
                             .font(.caption2)
                             .foregroundStyle(.white.opacity(0.62))
                     }
@@ -5916,7 +6082,11 @@ struct HeroCollectibleCard: View {
                             .foregroundStyle(Color.wildLime)
                             .lineLimit(1)
 
-                        Text("Jul 4, 2026 • 8:47 AM")
+                        Text(
+                            observation.isAwaitingIdentification
+                                ? observation.createdAt.formatted(date: .abbreviated, time: .shortened)
+                                : "Jul 4, 2026 • 8:47 AM"
+                        )
                             .font(.caption2.weight(.medium))
                             .foregroundStyle(.white.opacity(0.78))
                             .lineLimit(1)
@@ -5924,7 +6094,11 @@ struct HeroCollectibleCard: View {
 
                     Spacer()
 
-                    Text("#WGO-26-0704-1178")
+                    Text(
+                        observation.isAwaitingIdentification
+                            ? "#WGO-\(observation.id.uuidString.prefix(8))"
+                            : "#WGO-26-0704-1178"
+                    )
                         .font(.system(size: 8, weight: .semibold, design: .rounded))
                         .foregroundStyle(Color.wildGold)
                         .lineLimit(1)
@@ -6380,6 +6554,25 @@ extension ButtonStyle where Self == WildButtonStyle {
 
     static var wildSecondary: WildButtonStyle {
         WildButtonStyle(kind: .secondary)
+    }
+}
+
+extension ButtonStyle where Self == WildSecondaryLightButtonStyle {
+    static var wildSecondaryLight: WildSecondaryLightButtonStyle {
+        WildSecondaryLightButtonStyle()
+    }
+}
+
+struct WildSecondaryLightButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 16, weight: .semibold))
+            .padding(.vertical, 13)
+            .padding(.horizontal, 14)
+            .foregroundStyle(Color.wildInk)
+            .background(Color.white.opacity(0.72), in: Capsule())
+            .overlay(Capsule().stroke(Color.wildInk.opacity(0.28), lineWidth: 1.2))
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
     }
 }
 
